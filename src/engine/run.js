@@ -42,10 +42,16 @@ export const runMethods = {
     run.screen = 'blessing';
     run.blessing = this.rollBlessings();
     this.meta.runs++;
-    this.meta.heroes[heroId].runs++;
+    this.heroMeta(heroId).runs++;
     this.saveMeta();
     this.save();
     return run;
+  },
+
+  heroMeta(id) {
+    const h = this.meta.heroes;
+    if (!h[id]) h[id] = { unlocked: true, renown: 0, level: 0, wins: 0, runs: 0, bestAct: 0, ascMax: 0 };
+    return h[id];
   },
 
   buildRelicPool() {
@@ -223,7 +229,7 @@ export const runMethods = {
     if (cb.kind === 'boss') {
       reward.boss = true;
       if (run.act < 3) reward.bossRelics = [0, 1, 2].map(() => this.takeRelicFromPool('boss')).filter(Boolean);
-      this.meta.heroes[run.hero].bestAct = Math.max(this.meta.heroes[run.hero].bestAct || 0, run.act + 1);
+      this.heroMeta(run.hero).bestAct = Math.max(this.heroMeta(run.hero).bestAct || 0, run.act + 1);
       this.markBossDefeated(cb.encounter);
     }
     reward.items = reward.items.filter((it) => it.type !== 'relic' || it.id);
@@ -803,7 +809,7 @@ export const runMethods = {
     if (run.over) return;
     run.over = true;
     const meta = this.meta;
-    const H = meta.heroes[run.hero];
+    const H = this.heroMeta(run.hero);
     const s = run.stats;
     const renown = s.floors * 5 + s.elites * 15 + s.bosses * 40 + (won ? 150 : 0) + run.asc * 10;
     const before = H.level;

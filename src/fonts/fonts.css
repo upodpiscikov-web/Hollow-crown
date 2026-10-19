@@ -1,5 +1,4 @@
-@font-face { font-family: 'Alegreya'; font-style: italic; font-weight: 400; font-display: swap; src: url(fonts/Alegreya-400i.woff2) format('woff2'); }
-@font-face { font-family: 'Alegreya'; font-style: normal; font-weight: 400; font-display: swap; src: url(fonts/Alegreya-400.woff2) format('woff2'); }
-@font-face { font-family: 'Alegreya'; font-style: normal; font-weight: 700; font-display: swap; src: url(fonts/Alegreya-700.woff2) format('woff2'); }
-@font-face { font-family: 'IM Fell English SC'; font-style: normal; font-weight: 400; font-display: swap; src: url(fonts/IMFellEnglishSC-400.woff2) format('woff2'); }
-@font-face { font-family: 'Silkscreen'; font-style: normal; font-weight: 400; font-display: swap; src: url(fonts/Silkscreen-400.woff2) format('woff2'); }
+@font-face { font-family: 'Alegreya'; font-style: italic; font-weight: 400; font-display: swap; src: url(Alegreya-400i.woff2) format('woff2'); }
+@font-face { font-family: 'Alegreya'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(Alegreya-400.woff2) format('woff2'); }
+@font-face { font-family: 'IM Fell English SC'; font-style: normal; font-weight: 400; font-display: swap; src: url(IMFellEnglishSC-400.woff2) format('woff2'); }
+@font-face { font-family: 'Silkscreen'; font-style: normal; font-weight: 400; font-display: swap; src: url(Silkscreen-400.woff2) format('woff2'); }

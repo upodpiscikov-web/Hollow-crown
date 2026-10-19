@@ -168,6 +168,12 @@ export const combatMethods = {
       if (!tgt.isPlayer && ENEMIES[tgt.id]?.immune?.includes(id)) { this.emit('negated', { e: tgt, id }); return false; }
     }
     if (!n) return false;
+    // A duration debuff the enemy puts on the player during the enemy phase must
+    // survive this round's decay, or it would expire before it ever mattered.
+    if (tgt.isPlayer && d.decay === 'ownerTurnEnd' && this.cb && this.cb.phase === 'enemy') {
+      tgt.justApplied = tgt.justApplied || {};
+      tgt.justApplied[id] = true;
+    }
     this.addStatus(tgt, id, n);
     this.trigger('statusApplied', tgt, id, n, src);
     return true;
@@ -894,7 +900,6 @@ export const combatMethods = {
         } else this.discardCard(c, false);
       }
       for (const p of ['hand', 'draw', 'discard', 'exhaust']) for (const c of cb[p]) delete c.costTurn;
-      this.decay(P);
       this.emit('handDiscarded', {});
       await this.ui.wait(250);
       await this.enemyPhase();
@@ -919,6 +924,8 @@ export const combatMethods = {
       if (this.checkEnd()) return;
       await this.ui.wait(160);
     }
+    // Player duration statuses tick at the end of the round (after enemies act).
+    this.decay(this.player);
     this.trigger('roundEnd', cb.turn);
     if (this.checkEnd()) return;
     for (const e of this.enemies) this.rollIntent(e);
