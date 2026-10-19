@@ -1,0 +1,21 @@
+// Loads all game content. Order matters only for readability.
+import '../engine/statuses.js';
+import './heroes.js';
+import './cards/common.js';
+import './cards/knight.js';
+import './cards/witch.js';
+import './cards/wren.js';
+import './cards/cantor.js';
+import './cards/neutral.js';
+import './relics.js';
+import './potions.js';
+import './enemies/act1.js';
+import './enemies/act2.js';
+import './enemies/act3.js';
+import './events/act1.js';
+import './events/act2.js';
+import './events/act3.js';
+import './events/any.js';
+import './events/story.js';
+import './events/hub.js';
+import './events/lore.js';

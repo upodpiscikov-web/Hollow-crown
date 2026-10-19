@@ -1,0 +1,11 @@
+{
+  "name": "hollow-crown",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sim": "node tools/sim.mjs",
+    "build": "node tools/build.mjs",
+    "dev": "npx http-server src -c-1 -p 8080"
+  }
+}
