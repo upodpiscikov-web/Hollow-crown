@@ -56,6 +56,9 @@ export const SPIRITS = {
 
 export const DRAUGHTS = ['draught_bile', 'draught_ash', 'draught_ember', 'draught_clarity', 'draught_marrow'];
 
+// Status/enemy hooks with these names are only ever called on their owner.
+const OWNER_ONLY = new Set(['turnStart', 'turnEnd', 'hpLost', 'onAttacked', 'died']);
+
 const num = (x, g, e) => (typeof x === 'function' ? x(g, e) : x);
 
 export const combatMethods = {
@@ -86,9 +89,9 @@ export const combatMethods = {
         for (const id of Object.keys(e.st)) {
           if (!e.st[id]) continue;
           const d = STATUSES[id];
-          if (d && d[evt] && evt !== 'turnStart' && evt !== 'turnEnd') d[evt](this, e, e.st[id], ...args);
+          if (d && d[evt] && !OWNER_ONLY.has(evt)) d[evt](this, e, e.st[id], ...args);
         }
-        if (!e.isPlayer && !e.dead) {
+        if (!e.isPlayer && !e.dead && !OWNER_ONLY.has(evt) && evt !== 'death') {
           const ed = ENEMIES[e.id];
           if (ed && ed.on && ed.on[evt]) ed.on[evt](this, e, ...args);
         }
