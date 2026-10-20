@@ -1,0 +1,55 @@
+/* Card component. 10em x 14em; set font-size on .card to scale everything. */
+.card { --tc: #7a767a; --tc2: #4a474b; position: relative; width: 10em; height: 14em; flex: none; font-size: 8.4px; color: #1a1410; border-radius: .75em;
+  background: #141018; box-shadow: 0 .25em .7em rgba(0,0,0,.6); }
+.card.t-attack { --tc: #a8322e; --tc2: #5c1614; }
+.card.t-skill { --tc: #4f7ea3; --tc2: #233f57; }
+.card.t-power { --tc: #8a62b8; --tc2: #3e2860; }
+.card.t-curse { --tc: #6a5a74; --tc2: #2a2230; }
+.card.t-status { --tc: #77747a; --tc2: #38363a; }
+.c-frame { position: absolute; inset: 0; border-radius: .75em; border: .3em solid var(--rc, #6b6470);
+  background: linear-gradient(180deg, var(--tc2) 0%, #17121c 55%, #120e16 100%); box-shadow: inset 0 0 0 .12em rgba(0,0,0,.65), inset 0 0 1.4em rgba(0,0,0,.5); }
+.card.r-starter .c-frame { --rc: #9a927c; } .card.r-common .c-frame { --rc: #8a8590; } .card.r-uncommon .c-frame { --rc: #78b0d8; }
+.card.r-rare .c-frame { --rc: #e2b93c; box-shadow: inset 0 0 0 .12em rgba(0,0,0,.65), inset 0 0 1.4em rgba(0,0,0,.5), 0 0 .8em rgba(226,185,60,.35); }
+.card.r-special .c-frame { --rc: #b49ad6; } .card.r-curse .c-frame { --rc: #5d4a68; }
+.c-art { position: absolute; left: .7em; right: .7em; top: 2.5em; height: 4.55em; border: .15em solid #0b0a0d; border-radius: .2em; overflow: hidden;
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--hc) 38%, #221d28), #0f0c12 85%); box-shadow: 0 0 0 .1em var(--hc); }
+.c-art::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0 .7em rgba(0,0,0,.6); pointer-events: none; }
+.c-artimg { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+.c-artph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font: 2.4em var(--f-title); color: var(--hc); opacity: .5; }
+.c-name { position: absolute; left: .75em; right: .75em; top: .6em; height: 1.65em; display: flex; align-items: center; justify-content: center; padding: 0 1.4em;
+  background: linear-gradient(180deg, #2c2532, #1b1620); border: .12em solid var(--rc, #6b6470); border-radius: .25em; font-family: var(--f-title); font-size: 1em; color: var(--parch); letter-spacing: .02em; line-height: 1; text-align: center; }
+.c-name span { white-space: nowrap; overflow: hidden; text-overflow: clip; max-width: 100%; display: block; }
+.card.up .c-name { color: #9be07a; }
+.c-cost { position: absolute; left: -.55em; top: -.55em; width: 2.5em; height: 2.5em; border-radius: 50%; z-index: 2; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 35% 30%, #5f8fc4 0%, #27456b 60%, #162a45 100%); border: .16em solid #0b0a0d; box-shadow: 0 0 0 .13em #c9a227, 0 .15em .4em rgba(0,0,0,.6); }
+.c-cost span { font-family: var(--f-num); font-size: 1.35em; color: #fff; text-shadow: .08em .08em 0 #0b0a0d; line-height: 1; }
+.c-cost.cheap { background: radial-gradient(circle at 35% 30%, #7fd06a, #2f7a2a 60%, #17441a); } .c-cost.cheap span { color: #eaffd8; }
+.c-cost.dear { background: radial-gradient(circle at 35% 30%, #d06a5f, #7a2a24 60%, #441a17); }
+.c-type { position: absolute; left: 50%; top: 7.15em; transform: translateX(-50%); display: flex; align-items: center; gap: .4em; height: 1.2em; padding: 0 .9em; background: #0f0c12; border: .1em solid var(--rc, #6b6470); border-radius: .6em; z-index: 1; }
+.c-type span { font-family: var(--f-num); font-size: .56em; letter-spacing: .12em; color: var(--bone); text-transform: uppercase; line-height: 1; }
+.c-gem { width: .55em; height: .55em; transform: rotate(45deg); background: var(--rc, #6b6470); box-shadow: 0 0 .3em var(--rc); }
+.card.r-rare .c-gem { background: #ffd24a; } .card.r-uncommon .c-gem { background: #8fd0ff; }
+.c-text { position: absolute; left: .7em; right: .7em; top: 8.45em; bottom: .7em; display: flex; align-items: center; justify-content: center; text-align: center;
+  background: linear-gradient(180deg, #e8dcc0 0%, #d3c39c 100%); border: .1em solid #0b0a0d; border-radius: .2em; padding: .2em .35em; box-shadow: inset 0 0 .8em rgba(90,60,20,.4); overflow: hidden; }
+.c-tx { font-family: var(--f-body); font-size: .84em; line-height: 1.12; color: #1d160f; font-weight: 500; }
+.c-tx.small { font-size: .75em; } .c-tx.tiny { font-size: .66em; line-height: 1.08; }
+.c-tx .kw { color: #000; font-weight: 800; }
+.c-tx .num { font-weight: 800; } .c-tx .num.up { color: #1b7a2a; } .c-tx .num.down { color: #a3201c; } .c-tx .num.upg { color: #1b7a2a; text-decoration: underline; text-decoration-style: dotted; }
+.c-tx .kwline { display: block; margin-top: .25em; font-style: italic; }
+.c-price { position: absolute; left: 50%; bottom: -1.6em; transform: translateX(-50%); font: 1.1em var(--f-num); color: var(--candle); }
+.card.t-curse .c-text, .card.t-status .c-text { background: linear-gradient(180deg, #b9ae9a, #9a907d); }
+.card.silhouette { background: #17131c; border: .25em solid #2a232f; display: flex; align-items: center; justify-content: center; }
+.card.silhouette span { font: 4em var(--f-title); color: #2f2836; }
+.card.unknown .c-name span { opacity: .5; }
+.card.burning { filter: sepia(1) brightness(1.4); }
+
+/* hand cards in combat */
+.hcard { position: absolute; left: 0; top: 0; width: 84px; height: 118px; transform-origin: 50% 100%; transition: transform .24s cubic-bezier(.2,.8,.3,1), opacity .2s; pointer-events: auto; touch-action: none; cursor: pointer; }
+.hcard .card { width: 100%; height: 100%; }
+.hcard:not(.playable) .card { filter: brightness(.72) saturate(.7); }
+.hcard.playable .card { box-shadow: 0 .2em .6em rgba(0,0,0,.7), 0 0 0 .15em rgba(240,210,122,.0); }
+.hcard.selected .card, .hcard.dragging .card { box-shadow: 0 0 1.2em rgba(240,210,122,.75), 0 .4em 1em rgba(0,0,0,.8); filter: none; }
+.hcard.dragging { transition: none; z-index: 60 !important; }
+.hcard.dragging.will-play .card { box-shadow: 0 0 1.4em rgba(143,174,58,.9), 0 .4em 1em rgba(0,0,0,.8); }
+.hcard.flying { pointer-events: none; transition: none; }
+.hcard.flying .card { box-shadow: 0 0 1em rgba(240,210,122,.6); }

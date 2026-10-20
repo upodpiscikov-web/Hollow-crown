@@ -1439,11 +1439,11 @@ function build() {
     g.gain.value = v;
     return g;
   };
-  const master = gain(0.8);
+  const master = gain(0.72);
   const comp = c.createDynamicsCompressor();
   comp.threshold.value = -16;
   comp.knee.value = 12;
-  comp.ratio.value = 4;
+  comp.ratio.value = 6;
   comp.attack.value = 0.004;
   comp.release.value = 0.22;
   const out = gain(1);

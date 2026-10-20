@@ -108,8 +108,8 @@ defineEvents([
       },
       sheriff: {
         text: P(
-          '"Thomas Gallow," says Dickon. "Sheriff of the Marches. Hanged two hundred of us, regular. Then his own deputies hanged *him*, night before Ashfall, for taking poachers\' bribes. Which is rich, seeing as he took ours."',
-          '"Rope held. He didn\'t die. Cut himself down at dawn with the noose still on and went straight back to work. Keeps the King\'s peace like a man with something to prove. He hangs us to remind himself that hanging works."',
+          '"Thomas Gallow," says Dickon. "Sheriff of the Marches. Hanged three hundred of us, regular, all by the King\'s law. Then the King died on Ashfall night, and the Sheriff\'s heart just stopped. Nobody told *him*. Carries on regardless, rope still round his own neck."',
+          '"He doesn\'t hate us," says the eldest. "That\'s the worst of it. He can\'t think what else a sheriff\'s *for*. He hangs us to be sure hanging still works."',
           'A writ is nailed to the gibbet post, the ink still glossy. It lists their names and their crime, and beneath, underlined three times: *to be repeated as necessary.*',
         ),
         choices: [
@@ -326,8 +326,8 @@ defineEvents([
       },
       collar: {
         text: P(
-          'You crouch, slowly, as near as you dare. The big wolf allows it. The collar is stamped with a snarling hound\'s head and the motto of the house of Bragg: *WE HUNT WHAT RUNS.*',
-          '"Lord Bragg\'s," the shepherd calls. "His hounds went mad at Ashfall. Ran off into the fen with the wolves, and him after them on all fours, howling. He hunts with them now. Every dawn you hear his horn."',
+          'You crouch, slowly, as near as you dare. The big wolf allows it. The collar is stamped with a snarling hound\'s head and a line of tidy letters: *BRAGG\'S LEVY. FEED FIRST.*',
+          '"Bragg\'s," the shepherd calls. "Captain of the Marcher levy, till Ashfall. Lord of every cutthroat from here to the Wood, now. Feeds his hounds first and his men second, and this lot ran off from him to run with the wolves. Can\'t blame them. You hear his horn at dawn, some days, trying to call them back."',
           'The wolf yawns, showing you a great deal of tooth. On the inside of the collar, where it would lie against the throat, is a name scratched by some kennel-boy long ago: *Faithful.*',
         ),
         choices: [
@@ -672,7 +672,7 @@ defineEvents([
       start: {
         text: (g) => P(
           'A man sits on an upturned barrel outside the Drowned Dog, sharpening a knife on his boot. On a pole across his shoulders hang thirty rats by their tails, and every one of them is moving.',
-          '"Can\'t kill \'em," he says, without looking up. "Not since Ashfall. Knock \'em on the head, they get up. Drown \'em, they swim. So I catch \'em and carry \'em, and the town pays me a penny a rat to keep \'em off the floor." He jerks his chin north. "They all come from Sallow End. The *Mother\'s* there. Big as a cart, she is, and growing."',
+          '"Can\'t kill \'em," he says, without looking up. "Not since Ashfall. Knock \'em on the head, they get up. Drown \'em, they swim. So I catch \'em and carry \'em, and the town pays me a penny a rat to keep \'em off the floor." He jerks his chin north. "They all come from Saltmarsh. The *Mother\'s* there. Big as a cart, she is, and growing."',
           '"I\'ll sell you what I know. Or I\'ll sell you poison: real poison, kills anything that *can* die. Or you can take a turn with the pole and see how you like it."',
           byHero(g, { wren: 'You ask what the rats are called. He stares at you. "Called?" You begin, quietly, to name them.' }),
         ),
@@ -686,9 +686,9 @@ defineEvents([
       },
       know: {
         text: P(
-          '"Sallow End," he says, pocketing your coin. "Plague village, north edge of the fen. Midwife there name of Agathe. Finest midwife in the Marches. Never lost a mother nor a babe in sixty year."',
-          '"When the Blight came she wouldn\'t leave her sleepers. Sat with \'em. Fed \'em. Kept the rats off. And then, I dunno. Rats and her came to an arrangement. Now she\'s mostly rats and they\'re mostly her, and she sits in the middle of that village singing to folk who\'ll never wake, and anything that comes near, she *feeds* to \'em."',
-          'He looks up at his pole. "Lovely voice, mind. You can hear her from here, some nights."',
+          '"Saltmarsh," he says, pocketing your coin. "Plague village, south of the fen. They dug the pits there in a hurry, first years of the Blight, and never filled \'em proper. Ten year they\'ve been burying their stopped down there. Ten year something\'s been eating \'em."',
+          '"Grown big, it has. Big as a cart. And it\'s had *children*. Every rat you see is hers, and the crows, and some other things that come up the pit-stairs of a night. She tends \'em. Lovely mother, by all accounts." He spits. "They leave bread at the pit-lip. Say it\'s for the dead. It\'s not for the dead."',
+          'He looks up at his pole. "You can hear her from here, some nights. She hums."',
         ),
         choices: [leave()],
       },
@@ -703,7 +703,7 @@ defineEvents([
       helped: {
         text: P(
           'You took the pole, and the rats chewed through the cord in a heartbeat, and they did not scatter. They turned, all together, and came for you.',
-          'Now the rat-catcher picks his way through the twitching bodies with his hat in his hand. "Never seen \'em do that," he says. "Never seen \'em go for a body *together*. Like they\'d been told." He looks north toward Sallow End and shivers. Then he starts gathering them up again by the tails.',
+          'Now the rat-catcher picks his way through the twitching bodies with his hat in his hand. "Never seen \'em do that," he says. "Never seen \'em go for a body *together*. Like they\'d been told." He looks south toward Saltmarsh and shivers. Then he starts gathering them up again by the tails.',
           '"Penny a rat," he mutters. "That\'s a good morning\'s work." He gives you a share. It is a very fair share, from a man with so little, and you haven\'t the heart to refuse it.',
         ),
         choices: [leave()],

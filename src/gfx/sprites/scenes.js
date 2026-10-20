@@ -208,7 +208,7 @@ function spire(p, x, y, w, h, col, opts = {}) {
   p.rect(x, y - h, w, h, col);
   const ph = opts.ph || w * 2.2;
   p.tri(x - (opts.flare || 0.5), y - h + 0.5, x + w + (opts.flare || 0.5), y - h + 0.5, x + w / 2, y - h - ph, opts.roof || col);
-  if (opts.gild) { p.line(x + w / 2, y - h - ph, x + w / 2 + (w > 4 ? 1 : 0), y - h - ph * 0.4, opts.gild); }
+  if (opts.gild) { p.line(x + w / 2, y - h - ph, x + w / 2, y - h - ph + Math.min(4, ph * 0.3), opts.gild); p.px(x + w / 2, y - h - ph, PAL.candle); }
   if (opts.win) for (let yy = y - h + 3; yy < y - 3; yy += opts.winGap || 6) if (w >= 3) p.px(x + Math.floor(w / 2), yy, opts.win);
 }
 function dome(p, x, y, r, col, gild) {
@@ -404,8 +404,11 @@ defineSprites({
       spire(p, 128, 106, 6, 54, cat, { ph: 18, roof: cat, gild: PAL.gold });
       spire(p, 166, 106, 6, 60, cat, { ph: 18, roof: cat, gild: PAL.gold });
       p.erase(182, 36, 3, 4); p.erase(130, 52, 2, 3); // broken stone
-      for (const x of [118, 126, 140, 152, 164, 174]) opening(S, x, 90, 2, 6, 4, grad(mix(PAL.night, PAL.wine, 0.4), mix(PAL.flame, PAL.ember, 0.4)));
-      opening(S, 149, 106, 5, 8, 8, grad(mix(PAL.ink, PAL.wine, 0.3), mix(PAL.flame, PAL.ember, 0.5)));
+      const lit = mix(PAL.flame, PAL.ember, 0.45), unlit = mix(PAL.night, PAL.wine, 0.25);
+      for (const [x, y] of [[118, 84], [126, 84], [172, 84], [180, 84], [118, 72], [180, 70], [128, 70], [170, 70]]) { p.rect(x, y, 2, 5, hash2(x, y, 4) < 0.55 ? lit : unlit); }
+      opening(S, 149, 106, 5, 8, 7, () => mix(PAL.ember, PAL.wine, 0.35));
+      p.line(112, 58, 186, 58, mix(PAL.gold, PAL.wine, 0.45)); p.line(112, 59, 186, 59, mix(PAL.gold, PAL.wine, 0.7));
+      p.line(132, 40, 166, 40, mix(PAL.gold, PAL.wine, 0.55));
       for (const [x, y] of [[149, 30], [111, 40], [185, 32], [131, 49], [169, 44]]) p.px(x, y, PAL.candle);
       S.fog(104, 5, PAL.flame, 0.2, 63, 24);
       // near wall and gate-road
@@ -424,54 +427,55 @@ defineSprites({
   bg_act4: {
     ...BG,
     draw(p) {
-      const S = surf(p), d = p.d, vx = 128, vy = 84;
-      const stone = C(mix(PAL.dusk, PAL.stone, 0.18)), void_ = C(PAL.void), bone = C(mix(PAL.bone, PAL.ghost, 0.3)), glowc = C(mix(PAL.ghost, PAL.bone, 0.45));
+      const S = surf(p), d = p.d, vx = 128, vy = 82;
+      const stone = C(mix(PAL.stone, PAL.bruise, 0.3)), void_ = C(PAL.void), bone = C(mix(PAL.bone, PAL.ghost, 0.3)), glowc = C(mix(PAL.ghost, PAL.bone, 0.5));
       const mixc = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t, 255];
+      const L66 = Math.log(0.66);
       for (let y = 0; y < 144; y++) for (let x = 0; x < 256; x++) {
-        const dx = x - vx, dy = y - vy, ax = Math.abs(dx) / 128;
-        const ay = dy < 0 ? -dy / 90 * (1 + ax * 0.15) : dy / 56;
-        const m = Math.pow(Math.pow(ax, 2.7) + Math.pow(ay, 2.7), 1 / 2.7);
-        const b = m >= 1 ? 0 : Math.log(Math.max(m, 0.003)) / Math.log(0.66);
+        const dx = x - vx, dy = y - vy, ax = Math.abs(dx) / 126;
+        const ay = dy < 0 ? (-dy / 84) * (1 + ax * 0.2) : dy / 60;
+        const m = Math.cbrt(ax * ax * ax + ay * ay * ay);
+        const b = m >= 1 ? 0 : Math.log(Math.max(m, 0.004)) / L66;
         const k = Math.floor(b), fr = b - k;
-        const depth = Math.min(1, Math.max(0, b / 10));       // 0 near .. 1 far
+        const depth = Math.min(1, b / 9);
+        const lum = 0.12 + depth * 0.55;
         let c;
-        const lum = 0.1 + depth * depth * 0.62;
-        const rib = fr < 0.3;
-        if (m < 0.012) c = glowc;
-        else {
-          let base = rib ? stone : mixc(stone, void_, 0.5);
-          // wall bands shaded across the band; rib lit on its top edge
-          base = mixc(void_, base, Math.min(1, lum * 1.5));
-          if (!rib && dy < 0) {
-            // ossuary skulls packed into the walls (not in the calm lower third)
-            const cs = Math.max(2, Math.round(2 + m * 4));
+        if (m < 0.02) c = glowc;
+        else if (fr < 0.26) {
+          // stone rib: lit along its upper-left edge, dark on the lower-right
+          const edge = fr < 0.07 ? 1.25 : fr > 0.2 ? 0.55 : 1;
+          c = mixc(void_, stone, Math.min(1, lum * 1.7 * edge));
+        } else {
+          let base = mixc(void_, stone, lum * 0.5);
+          if (dy < 0 && y < 116) {
+            // ossuary: skulls packed into the vault walls
+            const cs = Math.max(2, Math.round(2 + m * 4.5));
             const cx = Math.floor(x / cs), cy = Math.floor(y / cs);
-            if (y < 112 && hash2(cx, cy, 3) < 0.4) {
+            if (hash2(cx, cy, 3) < 0.55) {
               const lx = x - cx * cs, ly = y - cy * cs;
               const eye = cs >= 3 && ly === 1 && (lx === 1 || lx === cs - 2);
-              const jaw = cs >= 4 && ly === cs - 1 && lx % 2 === 0;
-              if (!jaw) base = mixc(base, eye ? void_ : bone, eye ? 0.9 : 0.55 * Math.min(1, lum * 2.2));
-            } else if (hash2(x, y, 9) < 0.08) base = mixc(base, bone, 0.18);
-          }
-          if (dy > 0) base = mixc(base, void_, 0.18 + (y - vy) / 120 * 0.3); // floor
-          const g = Math.max(0, 1 - m * 1.4);                   // glow bleeding from the far end
-          c = mixc(base, glowc, g * g * 0.8);
+              const dark = cs >= 4 && ly === cs - 1;
+              base = eye || dark ? mixc(base, void_, 0.8) : mixc(base, bone, Math.min(0.85, 0.25 + lum * 1.25));
+            }
+          } else if (dy > 0) base = mixc(base, void_, 0.15);
+          c = base;
         }
+        const g = Math.max(0, 1 - m * 1.6);
+        if (g > 0) c = mixc(c, glowc, g * g * 0.7);
         const i = (y * 256 + x) * 4; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
       }
-      // pale light pooling on the floor
-      shaft(S, vx, vy + 4, vx, 144, 10, 70, PAL.ghost, 0.2);
-      S.glow(vx, vy + 2, 38, PAL.bone, 0.3, 24);
+      // pale light pooling on the floor, far below
+      shaft(S, vx, vy + 4, vx, 144, 12, 60, PAL.ghost, 0.18);
+      S.glow(vx, vy + 1, 30, PAL.bone, 0.22, 16);
       // roots breaking through the vaults
       const rr = rng(88);
-      for (let i = 0; i < 16; i++) {
-        const x0 = rr() * 256, len = 14 + rr() * 38;
-        p.path([[x0, 0], [x0 + (rr() - 0.5) * 8, len * 0.5], [x0 + (rr() - 0.5) * 12, len]], mix(PAL.bark, PAL.void, 0.35), 1 + ((rr() * 2) | 0));
+      for (let i = 0; i < 18; i++) {
+        const x0 = rr() * 256, len = 12 + rr() * 40;
+        p.path([[x0, 0], [x0 + (rr() - 0.5) * 8, len * 0.5], [x0 + (rr() - 0.5) * 12, len]], mix(PAL.bark, PAL.void, 0.3), 1 + ((rr() * 2) | 0));
       }
-      for (let i = 0; i < 8; i++) { const x0 = rr() * 256, y0 = 10 + rr() * 50; p.px(x0, y0, PAL.bile); }
-      S.fog(vy + 12, 7, PAL.ghost, 0.25, 71, 30);
+      for (let i = 0; i < 10; i++) { const x0 = rr() * 256, y0 = 8 + rr() * 60; p.px(x0, y0, mix(PAL.bile, PAL.moss, 0.4)); }
       S.ash(40, 72, [PAL.bone, PAL.ghost], 0, 120);
-      S.vignette(0.9);
+      S.vignette(0.95);
     },
   },
 
@@ -530,6 +534,127 @@ defineSprites({
       S.fog(112, 5, PAL.bruise, 0.28, 84, 32);
       S.ash(40, 88, [PAL.fog, PAL.stone], 0, 120);
       S.vignette(0.8);
+    },
+  },
+
+  // ---------------------------------------------------------------- Throne room
+  bg_throne: {
+    ...BG,
+    draw(p) {
+      const S = surf(p), VX = 128, VY = 72;
+      const wall = mix(PAL.night, PAL.dusk, 0.45), wallD = mix(PAL.ink, PAL.night, 0.5), floor = mix(PAL.ink, PAL.dusk, 0.4), ceil = mix(PAL.void, PAL.night, 0.5);
+      const pj = (z) => 1 / (1 + z);
+      // shell
+      p.rect(0, 0, 256, 144, ceil);
+      p.poly([[0, 0], [90, 31], [90, 93], [0, 144]], wall, { shade: 0.15 });
+      p.poly([[256, 0], [166, 31], [166, 93], [256, 144]], wallD, { shade: 0.15 });
+      p.rect(90, 31, 76, 62, mix(PAL.night, PAL.wine, 0.25));
+      p.poly([[0, 144], [90, 93], [166, 93], [256, 144]], floor);
+      S.sky(93, 144, [mix(PAL.dusk, PAL.wine, 0.28), mix(PAL.ink, PAL.wine, 0.15), PAL.void], 0, 256);
+      // restore floor shape: repaint the walls over the gradient
+      p.poly([[0, 0], [90, 31], [90, 93], [0, 144]], wall, { shade: 0.15 });
+      p.poly([[256, 0], [166, 31], [166, 93], [256, 144]], wallD, { shade: 0.15 });
+      for (let y = 93; y < 144; y++) { const t = (y - 93) / 51; const xl = Math.round(90 - 90 * t), xr = Math.round(166 + 90 * t); for (let x = xl; x < xr; x++) S.set(x, y, mixFloor(x, y)); }
+      function mixFloor(x, y) {
+        const z = 72 / (y - 72) - 1, u = ((x - 128) * (1 + z)) / 128;
+        const tile = (Math.floor(z * 3) + Math.floor(u * 7)) & 1;
+        const base = mix(PAL.ink, PAL.dusk, tile ? 0.34 : 0.22), fadeT = Math.min(1, (y - 93) / 51);
+        let c = mix(base, PAL.void, 0.15 + fadeT * 0.55);
+        if (Math.abs(u) < 0.25) c = mix(mix(PAL.wine, PAL.gore, 0.25), PAL.void, 0.1 + fadeT * 0.5);
+        else if (Math.abs(u) < 0.29) c = mix(PAL.gold, PAL.void, 0.45 + fadeT * 0.4);
+        return c;
+      }
+      // great windows on the left wall throw cold light across the floor
+      for (const [za, zb] of [[0.3, 0.75], [1.0, 1.4], [1.7, 2.0]]) {
+        const xa = 128 - 128 * pj(za), xb = 128 - 128 * pj(zb);
+        const ta = 72 - 130 * pj(za), tb = 72 - 130 * pj(zb), ba = 72 - 14 * pj(za), bb = 72 - 14 * pj(zb);
+        p.poly([[xa, ta], [xb, tb], [xb, bb], [xa, ba]], mix(PAL.fog, PAL.frost, 0.2), { shade: 0 });
+        p.poly([[xa, ta], [xb, tb], [xb, tb + (bb - tb) * 0.35], [xa, ta + (ba - ta) * 0.35]], mix(PAL.fog, PAL.bone, 0.45));
+        p.line((xa + xb) / 2, (ta + tb) / 2, (xa + xb) / 2, (ba + bb) / 2, wallD, 1);
+        p.line(xa, (ta + ba) / 2, xb, (tb + bb) / 2, wallD, 1);
+        shaft(S, (xa + xb) / 2, (ba + bb) / 2, (xa + xb) / 2 + 64 * pj(za) * 2.2, 140 * (1 - pj(za) * 0.2), 10 * pj(za) * 2, 38 * pj(za) * 2, PAL.bone, 0.16);
+      }
+      // columns, banners and ribs (back to front)
+      for (const z of [2.0, 1.3, 0.65, 0.12]) {
+        const s = pj(z), xl = 128 - 128 * s, xr = 128 + 128 * s, yb = 72 + 72 * s, yt = 72 - 140 * s, w = Math.max(3, 17 * s);
+        const col = mix(PAL.ash, PAL.dusk, 0.45 + z * 0.1);
+        p.path([[xl, yt - 2], [128, yt - 36 * s - 12], [xr, yt - 2]], mix(PAL.ink, PAL.dusk, 0.3), Math.max(1, 3 * s));
+        for (const [xc, dir] of [[xl, 1], [xr, -1]]) {
+          p.rect(xc - w / 2, yt, w, yb - yt, col, { shade: 0.35 });
+          p.rect(xc - w * 0.75, yb - 5 * s - 1, w * 1.5, 5 * s + 1, mix(col, PAL.void, 0.3));
+          p.rect(xc - w * 0.7, yt, w * 1.4, 4 * s + 1, mix(col, PAL.gold, 0.18));
+          // tattered banner
+          const bx = xc + dir * w * 0.9, bw = Math.max(3, 9 * s), bh = 62 * s, by0 = yt + 10 * s;
+          p.poly([[bx - bw / 2, by0], [bx + bw / 2, by0], [bx + bw / 2, by0 + bh], [bx + bw / 4, by0 + bh - 6 * s], [bx, by0 + bh + 1], [bx - bw / 4, by0 + bh - 5 * s], [bx - bw / 2, by0 + bh - 2 * s]], mix(PAL.wine, PAL.void, 0.2 + z * 0.1), { shade: 0.3 });
+          p.rect(bx - bw / 2, by0, bw, Math.max(1, 3 * s), PAL.gold);
+          p.rect(bx - Math.max(1, bw * 0.15), by0 + 8 * s, Math.max(1, bw * 0.3), Math.max(2, 10 * s), mix(PAL.gold, PAL.wine, 0.4));
+        }
+      }
+      // the dais and the throne
+      p.rect(100, 90, 52, 3, mix(PAL.dusk, PAL.ash, 0.2)); p.rect(106, 87, 40, 3, mix(PAL.dusk, PAL.ash, 0.3)); p.rect(112, 84, 28, 3, mix(PAL.dusk, PAL.ash, 0.4));
+      p.rect(118, 84, 16, 9, mix(PAL.wine, PAL.gore, 0.2));
+      p.poly([[117, 84], [117, 52], [122, 40], [128, 33], [134, 40], [139, 52], [139, 84]], mix(PAL.ink, PAL.dusk, 0.25), { shade: 0.25 });
+      p.line(117, 84, 117, 52, mix(PAL.gold, PAL.bark, 0.4)); p.line(139, 84, 139, 52, mix(PAL.gold, PAL.bark, 0.55));
+      p.path([[117, 52], [122, 40], [128, 33], [134, 40], [139, 52]], mix(PAL.gold, PAL.bark, 0.35), 1);
+      p.rect(115, 74, 5, 10, mix(PAL.ink, PAL.dusk, 0.3)); p.rect(136, 74, 5, 10, mix(PAL.ink, PAL.dusk, 0.3)); // arms
+      p.rect(120, 76, 16, 8, mix(PAL.wine, PAL.void, 0.45));
+      // the Crown, waiting on the seat
+      S.glow(128, 74, 16, PAL.rose, 0.35, 10);
+      p.rect(124, 73, 8, 2, PAL.iron); p.px(124, 71, PAL.steel); p.px(126, 70, PAL.steel); p.px(128, 70, PAL.steel); p.px(130, 70, PAL.steel); p.px(131, 71, PAL.steel); p.px(128, 74, PAL.wine);
+      // atmosphere
+      shaft(S, 128, 20, 128, 100, 6, 48, PAL.bone, 0.05);
+      S.fog(96, 6, PAL.fog, 0.2, 91, 36, 90, 166);
+      S.ash(110, 92, [PAL.fog, PAL.bone, PAL.stone], 0, 130);
+      S.vignette(0.9);
+    },
+  },
+
+  // ---------------------------------------------------------------- Title
+  bg_title: {
+    ...BG,
+    draw(p) {
+      const S = surf(p);
+      S.sky(0, 144, [PAL.void, mix(PAL.ink, PAL.night, 0.5), mix(PAL.night, PAL.wine, 0.25), mix(PAL.ink, PAL.wine, 0.15)]);
+      // the great window: cold pewter light
+      opening(S, 128, 104, 34, 44, 52, grad(mix(PAL.ash, PAL.fog, 0.2), mix(PAL.fog, PAL.bone, 0.55)));
+      S.glow(128, 56, 60, PAL.bone, 0.2, 70);
+      for (const x of [112, 128, 144]) p.rect(x - 0.5, 6, 1, 98, PAL.ink);
+      for (const y of [30, 52, 76]) p.rect(94, y, 68, 1, PAL.ink);
+      p.ring(128, 22, 9, PAL.ink, 1); p.ring(128, 22, 4, PAL.ink, 1);
+      for (const x of [94, 162]) p.rect(x - 1, 60, 2, 44, PAL.void);
+      // god-rays through falling ash
+      shaft(S, 116, 40, 60, 140, 14, 46, PAL.bone, 0.12);
+      shaft(S, 128, 40, 128, 140, 16, 60, PAL.bone, 0.14);
+      shaft(S, 140, 40, 196, 140, 14, 46, PAL.bone, 0.12);
+      // back columns, hazy
+      for (const x of [58, 198]) { p.rect(x - 7, 14, 14, 100, mix(PAL.night, PAL.dusk, 0.4), { shade: 0.3 }); p.rect(x - 9, 14, 18, 5, mix(PAL.dusk, PAL.ash, 0.2)); p.rect(x - 9, 108, 18, 6, mix(PAL.dusk, PAL.ash, 0.2)); }
+      S.fog(100, 9, PAL.fog, 0.28, 95, 30);
+      // floor: dark polished stone with the window's reflection
+      S.sky(112, 144, [mix(PAL.ink, PAL.dusk, 0.3), PAL.void]);
+      shaft(S, 128, 112, 128, 144, 22, 50, PAL.bone, 0.14);
+      for (let i = 0; i < 7; i++) p.line(128 + (i - 3) * 6, 112, 128 + (i - 3) * 44, 144, mix(PAL.void, PAL.dusk, 0.35), 1);
+      for (const y of [118, 126, 136]) p.rect(0, y, 256, 1, mix(PAL.void, PAL.dusk, 0.3));
+      // the throne, backlit
+      const T = mix(PAL.ink, PAL.void, 0.3), rimc = mix(PAL.ash, PAL.fog, 0.4);
+      p.rect(72, 124, 112, 6, mix(PAL.night, PAL.dusk, 0.4)); p.rect(88, 118, 80, 6, mix(PAL.night, PAL.dusk, 0.5)); p.rect(102, 112, 52, 6, mix(PAL.night, PAL.dusk, 0.6));
+      p.poly([[108, 112], [108, 60], [114, 46], [122, 34], [128, 22], [134, 34], [142, 46], [148, 60], [148, 112]], T);
+      p.path([[108, 112], [108, 60], [114, 46], [122, 34], [128, 22], [134, 34], [142, 46], [148, 60], [148, 112]], rimc, 1);
+      p.tri(104, 62, 110, 62, 107, 48, T); p.tri(146, 62, 152, 62, 149, 48, T);
+      p.rect(104, 98, 8, 14, T); p.rect(144, 98, 8, 14, T); p.rect(106, 96, 44, 4, T); // arms + seat
+      p.line(104, 98, 111, 98, rimc); p.line(145, 98, 152, 98, rimc);
+      p.rect(113, 100, 30, 12, mix(PAL.wine, PAL.void, 0.5));
+      p.line(128, 30, 128, 90, mix(PAL.ink, PAL.dusk, 0.35)); // seam in the backrest
+      // the Hollow Crown, floating above the empty seat
+      S.glow(128, 88, 30, PAL.wine, 0.5, 20); S.glow(128, 88, 14, PAL.rose, 0.35, 9);
+      p.poly([[116, 90], [140, 90], [140, 94], [134, 96], [128, 97], [122, 96], [116, 94]], PAL.iron, { shade: 0.4 });
+      for (const [x, t, w] of [[117, 80, 3], [123, 77, 3], [128, 72, 3], [133, 77, 3], [139, 80, 3]]) p.tri(x - w, 91, x + w, 91, x, t, PAL.iron, { shade: 0.3 });
+      p.line(116, 91, 140, 91, PAL.steel); p.px(128, 72, PAL.fog); p.px(123, 77, PAL.stone); p.px(133, 77, PAL.stone);
+      p.ellipse(128, 93, 2, 1.6, PAL.void); p.glow(128, 93, PAL.rose, 3);
+      p.px(119, 93, PAL.ember).px(137, 94, PAL.ember);
+      // ash, heavy and slow
+      S.ash(380, 96, [PAL.fog, PAL.stone, PAL.bone], 0, 144);
+      S.ash(90, 97, [PAL.bone, PAL.frost], 0, 112, 86, 172);
+      S.vignette(1.1);
     },
   },
 });

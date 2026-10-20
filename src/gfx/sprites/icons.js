@@ -1603,5 +1603,194 @@ S.st_heart = M(10, 10, [
   '..........',
 ]);
 
+// =================================================================== RELIC ICONS (16×16)
+// T = tint ramp [darkest, dark, base, light, highlight] built from opts.c.
+function pip(pts, x, y) {
+  let c = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [xi, yi] = pts[i], [xj, yj] = pts[j];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+}
+// Polygon filled with top-left lighting from a colour array (dark→light).
+function fillLit(p, pts, cols, o = {}) {
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  for (const [x, y] of pts) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, rx = (x1 - x0) / 2 || 1, ry = (y1 - y0) / 2 || 1;
+  const lx = o.lx ?? 0.4, ly = o.ly ?? 0.42;
+  for (let y = Math.floor(y0); y <= Math.ceil(y1); y++) for (let x = Math.floor(x0); x <= Math.ceil(x1); x++) {
+    if (!pip(pts, x + 0.5, y + 0.5)) continue;
+    const t = 0.52 - lx * ((x + 0.5 - cx) / rx) - ly * ((y + 0.5 - cy) / ry) + (o.bias || 0);
+    p.px(x, y, lit(cols, t, x, y, o.d ?? 0.3));
+  }
+}
+// Cylinder shading: vertical (light left→right) or horizontal (top→bottom).
+function cyl(p, x, y, w, h, cols, vert = true) {
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+    const t = vert ? 1 - (i + 0.5) / w * 0.95 : 1 - (j + 0.5) / h * 0.95;
+    p.px(x + i, y + j, lit(cols, t, x + i, y + j, 0.25));
+  }
+}
+const RL = (def, fn) => ({
+  w: 16, h: 16,
+  draw(p, o) {
+    const c = (o && o.c) || def, t = ramp(c);
+    fn(p, [t['='], t['-'], t['#'], t['+'], t['*']], c);
+  },
+});
+const BR = ['#4a3527', '#6e5039', '#977049', '#c29a68']; // wood / leather
+S.rl_amulet = RL('#c9a227', (p, T) => {
+  p.line(2, 0, 7, 9, '#8e98a3'); p.line(13, 0, 8, 9, '#545a63'); p.line(3, 0, 7, 8, '#bccfd9');
+  fillLit(p, [[8, 6], [13.5, 10.5], [8, 16], [2.5, 10.5]], T);
+  p.line(8, 7, 3, 11, T[4]); p.line(8, 7, 13, 11, T[2]);
+  ball(p, 8, 11, 2.6, ['#3a0b10', '#8a1c1c', '#b8302a', '#e0644c']);
+  p.px(7, 10, '#fbf3df');
+});
+S.rl_coin = RL('#c9a227', (p, T) => {
+  p.circle(8, 8, 7.2, T[1]); p.circle(8, 8, 6.4, T[2]);
+  fillLit(p, [[3, 8], [4, 4], [8, 1.6], [12, 4], [13, 8], [12, 12], [8, 14.4], [4, 12]], [T[2], T[3], T[4]], { bias: -0.05 });
+  p.ring(8, 8, 7.2, T[0], 1); p.ring(8, 8, 4.8, T[1], 1);
+  p.rect(7, 5, 2, 6, T[1]); p.rect(5, 7, 6, 2, T[1]); p.px(7, 6, T[4]); p.px(6, 7, T[4]);
+  p.px(4, 4, T[4]); p.px(5, 3, T[4]);
+});
+S.rl_skull = RL('#d8cfb8', (p, T) => {
+  ball(p, 8, 6.8, 6, T, 5.6);
+  fillLit(p, [[4.5, 10], [11.5, 10], [11, 15], [5, 15]], T);
+  p.ellipse(5.6, 7.6, 1.8, 2.1, '#0b0a0d'); p.ellipse(10.4, 7.6, 1.8, 2.1, '#0b0a0d');
+  p.px(8, 10, '#0b0a0d'); p.px(7, 11, '#0b0a0d'); p.px(8, 11, '#0b0a0d');
+  for (const x of [6, 8, 10]) p.line(x, 13, x, 15, T[0]);
+  p.px(5, 5, T[4]); p.px(6, 4, T[4]);
+});
+S.rl_bottle = RL('#5c7a2a', (p, T) => {
+  cyl(p, 6, 4, 4, 4, T);
+  p.rect(5, 1, 6, 3, '#6e5039'); p.rect(5, 1, 6, 1, '#977049'); p.rect(10, 2, 1, 2, '#4a3527');
+  ball(p, 8, 10.6, 5.4, T, 5);
+  p.rect(5, 6, 6, 2, T[2]); p.px(6, 7, T[3]);
+  p.rect(5, 10, 6, 3, '#e8dcc0'); p.rect(6, 11, 4, 1, '#977049'); p.px(7, 11, '#5e1212'); p.px(9, 11, '#5e1212');
+  p.px(5, 8, T[4]); p.px(5, 9, T[4]); p.px(6, 7, T[4]);
+});
+S.rl_tooth = RL('#e8dcc0', (p, T) => {
+  fillLit(p, [[2.5, 1], [13.5, 1], [14.5, 4], [13.5, 8.5], [2.5, 8.5], [1.5, 4]], T, { bias: 0.1 });
+  fillLit(p, [[3, 8], [7, 8], [6.4, 15], [5, 15]], T, { bias: -0.05 });
+  fillLit(p, [[9, 8], [13, 8], [11.2, 15], [9.6, 15]], T, { bias: -0.15 });
+  p.line(8, 2, 8, 6, T[1]); p.line(5, 4, 11, 4, T[1]);
+  p.px(4, 2, T[4]); p.px(5, 2, T[4]); p.px(3, 3, T[4]);
+});
+S.rl_feather = RL('#cfc6b0', (p, T) => {
+  fillLit(p, [[1, 15], [2.5, 9.5], [6, 4.5], [14, 0.5], [14.5, 7], [10, 11.5], [4.5, 14.5]], T, { lx: 0.25, ly: 0.25 });
+  p.line(0, 15, 12, 2, T[0]); p.line(0, 14, 12, 1, T[3]);
+  p.line(6, 9, 10, 8, T[1]); p.line(5, 12, 9, 11, T[1]); p.line(8, 6, 12, 5, T[1]);
+  p.line(13, 1, 14, 0, T[4]);
+});
+S.rl_key = RL('#c9a227', (p, T) => {
+  p.ring(4.5, 4.5, 4.8, T[1], 3); p.ring(4.5, 4.5, 4.8, T[2], 2); p.ring(4.5, 4.5, 4.8, T[4], 1);
+  p.ring(4.5, 4.5, 3, T[0], 1);
+  p.line(7, 7, 13, 13, T[1], 2); p.line(7, 6, 13, 12, T[3], 1);
+  p.rect(12, 10, 3, 2, T[1]); p.rect(13, 12, 3, 2, T[2]); p.rect(10, 13, 2, 2, T[1]);
+  p.px(14, 14, T[4]);
+});
+S.rl_book = RL('#7a2a4a', (p, T) => {
+  p.rect(4, 2, 10, 13, '#e8dcc0'); p.rect(13, 3, 1, 11, '#a19c9c');
+  cyl(p, 2, 1, 11, 14, T, false);
+  p.rect(2, 1, 3, 14, T[1]); p.rect(2, 1, 1, 14, T[2]); p.line(5, 1, 5, 14, T[0]);
+  p.rect(7, 4, 5, 5, T[1]); p.rect(8, 5, 3, 3, T[3]);
+  p.rect(9, 6, 1, 1, '#c9a227'); p.rect(2, 1, 3, 2, '#c9a227'); p.rect(2, 13, 3, 2, '#8f6f1a');
+  p.rect(11, 1, 2, 2, '#c9a227'); p.rect(11, 13, 2, 2, '#8f6f1a');
+  p.rect(7, 11, 5, 1, T[1]); p.px(7, 10, T[4]);
+});
+S.rl_candle = RL('#e8dcc0', (p, T) => {
+  p.ellipse(8, 14, 5.5, 1.6, '#5e4612'); p.ellipse(8, 13.6, 5, 1.2, '#c9a227'); p.rect(6, 12, 4, 2, '#8f6f1a');
+  cyl(p, 5, 6, 6, 8, T);
+  p.rect(5, 6, 6, 1, T[4]); p.px(4, 8, T[3]); p.px(4, 9, T[3]); p.px(11, 10, T[1]);
+  p.line(8, 4, 8, 6, '#2c1e16');
+  p.poly([[8, 0], [10, 3], [9.4, 5], [6.6, 5], [6, 3]], '#e8a33a');
+  p.poly([[8, 2], [9, 4], [8, 5], [7, 4]], '#fff3c4');
+});
+S.rl_bell = RL('#c9a227', (p, T) => {
+  p.ring(8, 2.4, 2, T[1], 1);
+  fillLit(p, [[6, 3], [10, 3], [11.3, 6], [12.2, 11], [14.6, 13], [1.4, 13], [3.8, 11], [4.7, 6]], T);
+  p.rect(2, 12, 12, 1, T[4]); p.rect(2, 13, 12, 1, T[0]);
+  p.line(6, 4, 5, 10, T[4]);
+  ball(p, 8, 14.6, 1.5, [T[0], T[1], T[2], T[3]]);
+});
+S.rl_chalice = RL('#c9a227', (p, T) => {
+  fillLit(p, [[2.5, 1], [13.5, 1], [12.5, 6], [10, 9], [6, 9], [3.5, 6]], T);
+  p.ellipse(8, 1.8, 5.2, 1.1, '#5e1212'); p.ellipse(7.5, 1.6, 3, 0.6, '#b8302a');
+  p.line(3, 1, 13, 1, T[4]);
+  cyl(p, 7, 9, 2, 3, T);
+  ball(p, 8, 10.6, 1.9, T);
+  fillLit(p, [[3.5, 14.5], [12.5, 14.5], [10.5, 12], [5.5, 12]], T);
+  p.rect(3, 14, 10, 1, T[0]);
+});
+S.rl_dagger = RL('#bccfd9', (p, T) => {
+  fillLit(p, [[8, 0], [10.4, 3], [10.4, 10], [5.6, 10], [5.6, 3]], T, { lx: 0.55, ly: 0.1 });
+  p.line(8, 1, 8, 9, T[0]); p.line(7, 2, 7, 9, T[4]);
+  p.rect(3, 10, 10, 2, '#c9a227'); p.rect(3, 10, 10, 1, '#f0d27a'); p.px(2, 9, '#c9a227'); p.px(13, 9, '#8f6f1a');
+  cyl(p, 7, 12, 2, 3, ['#2c1e16', '#4a3527', '#6e5039']); p.px(7, 13, '#977049');
+  ball(p, 8, 15, 1.4, ['#8f6f1a', '#c9a227', '#f0d27a']);
+});
+S.rl_gem = RL('#b8302a', (p, T) => {
+  p.poly([[5, 2], [11, 2], [10, 6], [6, 6]], T[4]);
+  p.poly([[5, 2], [6, 6], [1.8, 6]], T[3]);
+  p.poly([[11, 2], [14.2, 6], [10, 6]], T[2]);
+  p.poly([[1.8, 6], [6, 6], [8, 14.5]], T[2]);
+  p.poly([[6, 6], [10, 6], [8, 14.5]], T[3]);
+  p.poly([[10, 6], [14.2, 6], [8, 14.5]], T[1]);
+  p.line(6, 6, 10, 6, T[4]); p.px(6, 3, '#ffffff'); p.px(7, 3, '#ffffff'); p.px(4, 5, '#ffffff'); p.px(7, 8, T[4]);
+});
+S.rl_eye = RL('#7b5aa6', (p, T) => {
+  ball(p, 8, 8, 6.6, ['#79747a', '#a19c9c', '#cfc6b0', '#e8dcc0', '#fbf3df']);
+  p.path([[2, 9], [4, 8], [5, 9]], '#b8302a', 1); p.path([[14, 7], [12, 8], [11, 7]], '#b8302a', 1); p.path([[8, 14], [9, 12]], '#b8302a', 1); p.path([[7, 2], [8, 3]], '#b8302a', 1);
+  ball(p, 8, 8, 3.7, T);
+  p.circle(8, 8, 1.7, '#0b0a0d');
+  p.px(6, 6, '#ffffff'); p.px(7, 6, '#ffffff'); p.px(6, 7, T[4]);
+});
+S.rl_hand = RL('#c9a48a', (p, T) => {
+  const finger = (x, y, w, h) => cyl(p, x, y, w, h, T);
+  finger(2.5, 5, 2, 6); finger(5, 2, 2, 8); finger(7.5, 1, 2, 9); finger(10, 3, 2, 7); finger(12.5, 6, 2, 5);
+  ball(p, 8.4, 10.5, 5.6, T, 4.6);
+  fillLit(p, [[1, 9], [4, 9], [6, 13], [3, 13]], T, { bias: -0.05 });
+  p.rect(4, 13, 9, 3, '#2b2135'); p.rect(4, 13, 9, 1, '#4b3b5e');
+  for (const [x, y] of [[3, 5], [5, 2], [8, 1], [10, 3], [13, 6]]) p.px(x, y, T[4]);
+  for (const x of [2, 4, 7, 9, 11]) p.px(x + 1, 6 + (x > 5 ? -2 : 1), T[0]);
+});
+S.rl_horn = RL('#d8cfb8', (p, T) => {
+  const pts = [];
+  for (let t = 0; t <= 1.001; t += 0.04) {
+    const x = (1 - t) * (1 - t) * 3 + 2 * t * (1 - t) * 1 + t * t * 14, y = (1 - t) * (1 - t) * 14 + 2 * t * (1 - t) * 3 + t * t * 2;
+    pts.push([x, y, 3.2 * (1 - t) + 0.6]);
+  }
+  for (const [x, y, w] of pts) p.circle(x, y, w, T[1]);
+  for (const [x, y, w] of pts) p.circle(x - 0.5, y - 0.5, w * 0.8, T[2]);
+  for (const [x, y, w] of pts) p.circle(x - 1, y - 1, w * 0.45, T[3]);
+  for (const k of [6, 11]) { const [x, y, w] = pts[k]; p.circle(x, y, w, T[0], { shade: 0 }); p.circle(x - 0.5, y - 0.5, w * 0.7, T[1]); }
+  const [bx, by] = pts[0]; p.ellipse(bx, by + 1, 3.4, 1.4, '#2c1e16'); p.ellipse(bx - 0.4, by + 0.7, 2.8, 0.8, '#6e5039');
+  const [tx, ty] = pts[pts.length - 2]; p.px(Math.round(tx), Math.round(ty), T[4]);
+});
+S.rl_bone = RL('#d8cfb8', (p, T) => {
+  p.line(3, 12, 12, 3, T[1], 3); p.line(3, 11, 12, 2, T[2], 2); p.line(2, 11, 11, 2, T[4], 1);
+  for (const [x, y] of [[2.5, 13], [4, 14], [1, 11.5], [2.5, 10]]) ball(p, x, y, 1.9, T);
+  for (const [x, y] of [[13, 2.5], [14.5, 4], [12, 1], [11, 3]]) ball(p, x, y, 1.9, T);
+  p.px(8, 7, T[0]); p.px(9, 6, T[0]);
+});
+S.rl_rosary = RL('#8a1c1c', (p, T) => {
+  for (let k = 0; k < 12; k++) {
+    const a = (k / 12) * Math.PI * 2 - Math.PI / 2 + 0.26, x = 8 + Math.cos(a) * 5.6, y = 6 + Math.sin(a) * 5;
+    if (y > 10.8 && Math.abs(x - 8) < 2.5) continue;
+    ball(p, x, y, k % 3 === 0 ? 1.6 : 1.25, T);
+  }
+  p.px(8, 11, T[1]); ball(p, 8, 11.5, 1.2, T); ball(p, 8, 13, 1.1, T);
+  p.rect(7, 13, 2, 3, '#c9a227'); p.rect(6, 14, 4, 1, '#c9a227'); p.px(7, 13, '#f0d27a'); p.px(6, 14, '#f0d27a');
+});
+S.rl_sigil = RL('#e0644c', (p, T) => {
+  p.circle(8, 8, 7.3, '#363040'); p.circle(8, 8, 6.6, '#241f2b');
+  fillLit(p, [[2, 6], [4, 3], [8, 1.4], [12, 3], [14, 6], [14, 10], [12, 13], [8, 14.6], [4, 13], [2, 10]], ['#241f2b', '#363040', '#57535c'], { bias: -0.2 });
+  p.ring(8, 8, 6.4, T[1], 1); p.ring(8, 8, 5.4, T[2], 1);
+  const pts = []; for (let k = 0; k < 5; k++) { const a = -Math.PI / 2 + (k * 4 * Math.PI) / 5; pts.push([8 + Math.cos(a) * 5, 8 + Math.sin(a) * 5]); }
+  p.path([...pts, pts[0]].map(([x, y]) => [Math.round(x - 0.5), Math.round(y - 0.5)]), T[3], 1);
+  p.px(7, 7, T[4]); p.px(8, 7, T[4]); p.px(7, 8, T[4]); p.px(8, 8, T[4]);
+});
+
 defineSprites(S);
 export const ICON_IDS = Object.keys(S);

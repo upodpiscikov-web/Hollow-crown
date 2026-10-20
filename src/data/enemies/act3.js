@@ -1236,3 +1236,122 @@ defineSprites({
     },
   },
 });
+
+// ---- Heralds share a body; palette and headgear tell the twins apart.
+function heraldBody(p, c) {
+  p.poly([[20, 28], [40, 28], [47, 70], [13, 70]], c.cloth, { shade: 0.35 });            // tabard
+  p.poly([[26, 30], [34, 30], [37, 70], [24, 70]], c.trim);
+  p.rect(13, 66, 35, 4, c.trim); p.rect(13, 54, 34, 2, c.dusk);
+  fray(p, 70, 13, 48, 5, 3);
+  p.circle(30, 40, 5, c.emblem, { shade: 0.3 });                                          // emblem
+  if (c.sun) for (let a = 0; a < 8; a++) { const r = (a * Math.PI) / 4; p.line(30 + Math.cos(r) * 6, 40 + Math.sin(r) * 6, 30 + Math.cos(r) * 9, 40 + Math.sin(r) * 9, c.emblem, 1); }
+  else p.circle(32, 39, 4, c.cloth);
+  p.ellipse(30, 27, 10, 4, c.cloth, { shade: 0.3 });
+  p.ellipse(30, 25, 8, 3, PAL.bone, { shade: 0.3 });                                      // ruff
+}
+const heraldHead = (p, c, hx, hy) => {
+  p.ellipse(hx, hy, 6, 7, PAL.bone, { shade: 0.3 });
+  p.ellipse(hx - 3, hy - 1, 2, 2, PAL.void); p.ellipse(hx + 2, hy - 1, 2, 2, PAL.void);
+  p.rect(hx - 4, hy + 3, 6, 2, PAL.void);
+  for (let x = hx - 3; x < hx + 2; x += 2) p.px(x, hy + 4, PAL.bone);
+  eyes(p, [[hx - 3, hy - 1], [hx + 2, hy - 1]], c.eye, 1);
+};
+
+defineSprites({
+  // ------------------------------------------------------------ elites
+  en_kings_executioner: {
+    w: 74, h: 80,
+    draw(p) {
+      p.rect(30, 62, 11, 17, PAL.ink, { shade: 0.3 }); p.rect(46, 62, 11, 17, PAL.ink, { shade: 0.3 });   // boots
+      p.poly([[26, 24], [62, 22], [68, 50], [58, 66], [30, 66], [22, 48]], PAL.pale, { shade: 0.4 });     // torso, bare
+      p.path([[34, 30], [38, 44]], PAL.wine, 1); p.path([[48, 28], [44, 40], [48, 50]], PAL.wine, 1);     // old scars
+      p.poly([[30, 40], [58, 40], [62, 78], [26, 78]], PAL.leather, { shade: 0.35 });                       // apron
+      p.rect(26, 44, 34, 3, PAL.iron); for (let x = 30; x < 58; x += 6) p.px(x, 45, PAL.steel);
+      p.circle(44, 60, 3, PAL.bone); p.px(43, 60, PAL.void); p.px(45, 60, PAL.void);                         // belt skull
+      p.path([[56, 47], [58, 56], [56, 62]], PAL.iron, 1);
+      p.ellipse(62, 26, 9, 8, PAL.pale, { shade: 0.35 });                                                    // far shoulder
+      p.path([[62, 30], [66, 44], [64, 54]], PAL.pale, 9);
+      p.ellipse(28, 26, 10, 9, PAL.pale, { shade: 0.4 });                                                    // near shoulder
+      p.path([[26, 32], [20, 44], [16, 52]], PAL.pale, 10);                                                  // near arm
+      p.rect(12, 46, 9, 5, PAL.iron, { shade: 0.3 });                                                        // bracer
+      p.path([[20, 68], [8, 8]], PAL.wood, 3);                                                               // axe haft
+      p.poly([[17, 0], [9, 1], [4, 5], [1, 12], [2, 19], [6, 25], [12, 28], [17, 28]], PAL.steel, { shade: 0.45 });  // blade
+      p.path([[3, 7], [1, 13], [3, 20], [7, 25]], PAL.frost, 1); p.rect(13, 8, 3, 12, PAL.iron);
+      p.circle(15, 52, 4, PAL.pale, { shade: 0.3 });                                                         // hands
+      p.circle(17, 60, 3.5, PAL.pale);
+      p.poly([[34, 4], [54, 3], [56, 22], [34, 24]], PAL.ink, { shade: 0.4 });                                // hood
+      p.poly([[34, 4], [44, -1], [54, 3]], PAL.ink);
+      p.rect(35, 11, 7, 2, PAL.void); p.rect(46, 11, 6, 2, PAL.void);
+      eyes(p, [[38, 12], [49, 12]], PAL.ember, 2);
+      p.path([[34, 22], [44, 28], [54, 22]], PAL.leather, 2);                                                 // noose
+      p.path([[44, 28], [44, 36]], PAL.leather, 1);
+      p.speckle(PAL.blood, 0.025, 2, [10, 40, 70, 78]);
+    },
+  },
+  en_herald_morning: {
+    w: 56, h: 74,
+    draw(p) {
+      const c = { cloth: PAL.bone, trim: PAL.gold, dusk: PAL.dusk, emblem: PAL.gold, sun: true, eye: PAL.candle };
+      p.path([[24, 40], [14, 30], [6, 16]], PAL.gold, 3);                                  // trumpet raised high
+      p.poly([[3, 20], [0, 6], [10, 8], [12, 16]], PAL.gold, { shade: 0.4 });              // bell
+      p.ellipse(5, 9, 5, 2, PAL.candle);
+      p.glow(5, 9, PAL.candle, 4);
+      p.path([[8, 22], [20, 40]], PAL.candle, 1);
+      heraldBody(p, c);
+      p.path([[26, 33], [22, 40], [20, 44]], PAL.bone, 4); p.circle(20, 44, 2.5, PAL.bone, { shade: 0.3 });
+      p.path([[36, 33], [40, 46]], PAL.bone, 4);
+      heraldHead(p, c, 28, 15);
+      p.poly([[19, 10], [22, 0], [25, 8], [28, -2], [31, 8], [34, 0], [37, 10]], PAL.gold, { shade: 0.3 });  // sunburst crown
+      p.rect(20, 8, 17, 3, PAL.gold, { shade: 0.2 });
+    },
+  },
+  en_herald_mourning: {
+    w: 56, h: 74,
+    draw(p) {
+      const c = { cloth: PAL.bruise, trim: PAL.dusk, dusk: PAL.void, emblem: PAL.lilac, sun: false, eye: PAL.spirit };
+      p.path([[24, 42], [14, 52], [4, 58]], PAL.iron, 3);                                  // muffled horn, lowered
+      p.poly([[1, 54], [0, 66], [10, 64], [10, 56]], PAL.iron, { shade: 0.4 });
+      p.poly([[0, 62], [2, 72], [6, 66], [9, 73], [10, 64]], PAL.night);                   // crepe
+      p.path([[6, 66], [5, 72]], PAL.ink, 1);
+      heraldBody(p, c);
+      p.path([[26, 33], [22, 42], [18, 48]], PAL.bruise, 4); p.circle(17, 49, 2.5, PAL.bone, { shade: 0.3 });
+      p.path([[36, 33], [40, 46]], PAL.bruise, 4);
+      p.ellipse(28, 14, 12, 13, PAL.night, { shade: 0.35 });                                 // hood
+      p.poly([[17, 18], [40, 18], [42, 38], [34, 31], [22, 31], [15, 40]], PAL.night, { shade: 0.35 });   // veil
+      heraldHead(p, c, 28, 16);
+      p.poly([[19, 14], [30, 14], [32, 34], [24, 38], [17, 32]], PAL.ink, { shade: 0.2 });
+      p.erase(20, 18, 1, 1);
+      p.speckle(PAL.lilac, 0.05, 6, [14, 30, 44, 68]);
+      eyes(p, [[24, 17], [29, 17]], PAL.spirit, 1);
+      p.ring(28, 4, 4, PAL.lilac, 1); p.eraseEllipse(30, 3, 3, 3);                             // crescent on the hood
+    },
+  },
+  en_gilded_saint: {
+    w: 70, h: 80,
+    draw(p) {
+      p.circle(36, 16, 15, PAL.candle, { shade: 0.3 });                                    // halo disc behind
+      p.circle(36, 16, 11, PAL.gold, { shade: 0.2 });
+      for (let a = 0; a < 14; a++) { const r = (a * Math.PI * 2) / 14; p.tri(36 + Math.cos(r - 0.12) * 14, 16 + Math.sin(r - 0.12) * 14, 36 + Math.cos(r) * 22, 16 + Math.sin(r) * 22, 36 + Math.cos(r + 0.12) * 14, 16 + Math.sin(r + 0.12) * 14, PAL.gold); }
+      p.glow(36, 16, PAL.candle, 12);
+      p.poly([[26, 30], [46, 30], [66, 78], [6, 78]], PAL.gold, { shade: 0.4 });           // bell robe
+      p.poly([[31, 32], [41, 32], [48, 78], [24, 78]], PAL.bone, { shade: 0.3 });          // white inner panel
+      for (const y of [44, 56, 68]) p.path([[20 + (66 - y) * 0.1, y], [52 - (66 - y) * 0.1, y]], PAL.gold, 2);   // tiers
+      p.rect(33, 38, 6, 8, PAL.ink); p.rect(34, 39, 4, 6, PAL.rose); p.glow(36, 42, PAL.rose, 3);             // reliquary window
+      p.path([[28, 34], [30, 50], [29, 60]], PAL.bone, 1); p.path([[44, 34], [43, 52], [45, 62]], PAL.bone, 1);   // relic chains
+      p.circle(29, 60, 2, PAL.gold); p.circle(45, 62, 2, PAL.gold);
+      fray(p, 78, 6, 66, 5, 2);
+      p.ellipse(36, 30, 12, 5, PAL.gold, { shade: 0.35 });                                  // mantle
+      p.path([[28, 32], [16, 38], [6, 38]], PAL.gold, 5);                                  // arm out, palm open
+      p.poly([[2, 34], [8, 34], [8, 42], [1, 40]], PAL.candle, { shade: 0.3 });
+      p.path([[44, 32], [54, 40], [62, 38]], PAL.gold, 5);
+      p.poly([[60, 34], [66, 36], [66, 43], [60, 42]], PAL.candle, { shade: 0.3 });
+      p.glow(4, 38, PAL.candle, 4);
+      p.ellipse(36, 17, 7, 9, PAL.parch, { shade: 0.3 });                                   // porcelain-gold mask face
+      p.line(30, 17, 34, 17, PAL.ink, 1); p.line(37, 17, 41, 17, PAL.ink, 1);                // closed eyes
+      p.path([[32, 18], [32, 26]], PAL.rose, 1); p.path([[39, 18], [39, 24]], PAL.rose, 1);  // weeping lines
+      p.rect(34, 23, 5, 1, PAL.gold);
+      crown(p, 27, 7, 18, PAL.gold, 5, 7);
+      p.rect(33, 0, 6, 8, PAL.gold, { shade: 0.2 }); p.tri(33, 0, 36, -2, 39, 0, PAL.candle);
+    },
+  },
+});

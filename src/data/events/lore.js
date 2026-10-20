@@ -206,27 +206,27 @@ defineLore([
 
   // ------------------------------------------------------------------ BESTIARY
   {
-    id: 'lore_bragg', cat: 'bestiary', title: 'The Hound-Lord Bragg',
+    id: 'lore_bragg', cat: 'bestiary', title: 'Bragg the Hound-Lord',
     text: P(
-      'Lord Osric Bragg held the Marches for the Crown, and the Marches\' poachers for the gibbet. He kept two hundred hounds and fed them better than his tenants. His house motto was *We Hunt What Runs*, and he meant it.',
-      'On Ashfall night, when the ash came down, the hounds went mad, and so did he. The villagers say he hunts on all fours now, among the pack, and that you can no longer tell which of the howls are his.',
-      'His horn still sounds at dawn. Every dawn. The same dawn.',
+      'Captain of the Marcher levy, which is to say the man the King paid to keep the roads open, and who found the roads were more profitable shut. On Ashfall night the levy lost its pay, its king and its sense of shame in the same hour. Bragg kept the hounds.',
+      'He is lord now of every cutthroat between the fens and the Wood, and keeps them as he keeps his dogs: fed, scarred and not very bright. It is said he feeds the hounds first. Those who have seen the arrangement say this is the humane order.',
+      'His men call him Captain still. He answers to it. He has no other name he likes better.',
     ),
   },
   {
     id: 'lore_hanged_sheriff', cat: 'bestiary', title: 'The Hanged Sheriff',
     text: P(
-      'Sheriff Thomas Gallow hanged two hundred men in the Marches, and was hanged in turn by his own deputies on the eve of Ashfall, for taking bribes from the poachers he was meant to be hanging.',
-      'The rope held. The man did not die. He cut himself down at dawn with the noose still about his neck, and has kept the King\'s peace ever since, with great diligence and very little discrimination.',
-      'He hangs someone every morning. He has, he says, a great deal of catching up to do.',
+      'Sheriff Thomas Gallow hanged three hundred men at the Marcher crossroads, every one by the King\'s law, and kept the tally in the lining of his hat. He had a reputation for fairness. It rested on his hanging the rich on the same rope as the poor, when he could catch them.',
+      'On Ashfall night, when the King died, the Sheriff\'s heart stopped. Nobody told the Sheriff. He has carried on regardless, with the rope still round his neck, because the law was never repealed.',
+      'He hangs someone every dawn. He is not cruel about it. He simply cannot imagine what else a sheriff is for.',
     ),
   },
   {
     id: 'lore_mother_of_rats', cat: 'bestiary', title: 'Mother of Rats',
     text: P(
-      'In the plague village of Sallow End there was a midwife named Agathe who never lost a mother or a child in sixty years. When the Blight came she would not leave her patients, and when the patients stopped, she would not leave them either.',
-      'The rats came for the stopped and found Agathe guarding them. They came to an arrangement. Now the rats are her children, and her hands, and her eyes, and a great deal of her body.',
-      'She still hums lullabies. She still lets no one near her sleepers. She is, in her way, still a very good midwife.',
+      'Under Saltmarsh lie the plague-pits, dug in a hurry in the first years of the Blight and never properly filled. For ten years the village has buried its stopped there. For ten years something has been eating them.',
+      'It has grown very large. It has had a great many children, and they are all hers: the rats, the carrion-birds, the thin pale things that come up the pit-stairs on quiet nights. She tends them. She is, by every account, a devoted mother.',
+      'The people of Saltmarsh leave bread at the pit-lip. They say it is for the dead. It is not for the dead.',
     ),
   },
   {
@@ -240,16 +240,16 @@ defineLore([
   {
     id: 'lore_antlered_king', cat: 'bestiary', title: 'The Antlered King',
     text: P(
-      'Lord of the Weeping Wood, older than the trees he wears. He stands three men tall, crowned in his own antlers, with moss for a mantle and eyes like wet stones.',
-      'Woodcutters\' tales make him a devil. The fae make him a steward, keeping the wood for a mistress who has been a long time away.',
-      'He has never knelt to a king of Morrow. It is said there is one thing in the world he would kneel to, and that he has waited four hundred years to see it walk into his wood.',
+      'Lord of the Weeping Wood and first servant of the Lady Under the Hill. He has worn a fair face for four hundred years: a young man\'s, grave and handsome, beneath a crown of living antlers.',
+      'It was never his face. The woodcutters\' tales are certain of this, and cannot say whose it was. They say that when the face slips, there is only a long dark patience beneath it, very like the patience of a root.',
+      'He has never knelt to a king of Morrow. It is said there is one thing he would kneel to, and that he has waited four hundred years to see it walk into his wood.',
     ),
   },
   {
     id: 'lore_drowned_abbess', cat: 'bestiary', title: 'The Drowned Abbess',
     text: P(
-      'Something walks the flooded nave of the Drowned Abbey in a queen\'s blue gown gone black with water. The drowned monks call it Abbess, out of courtesy. It does not answer to that.',
-      'It carries an empty cradle. It sings the lullabies of the Marches slightly wrong, in the voice of a woman who learned them late.',
+      'Twenty years ago a woman came to the abbey in a blue gown, veiled to the chin. She asked the sisters to hide something for her. They agreed. She lifted the veil to thank them, and the sisters have not spoken of what they saw.',
+      'Then she walked into the mere. What came back out, some years later, was not her, though it wears the gown. It walks the flooded nave carrying an empty cradle. It sings the lullabies of the Marches slightly wrong, in the voice of a woman who learned them late.',
       'Those who hear it feel, briefly and terribly, that they were stolen from somewhere, and ought to go home.',
     ),
   },
@@ -264,25 +264,25 @@ defineLore([
   {
     id: 'lore_choir', cat: 'bestiary', title: 'The Choir Immaculate',
     text: P(
-      'The finest choir in Ashgrave sang at the Long King\'s coronation. It sang at his fiftieth jubilee and at his ninetieth: the same nine voices, never ageing, never missing a note.',
-      'At Ashfall it was singing the Hymn of the Held Hour in the palace chapel, and it has not stopped. The choristers\' throats are long since raw and their eyes long since white. They have grown together, a little, at the shoulders.',
+      'Forty court singers, the finest in Morrow. They sang at the Long King\'s coronation and at his fiftieth jubilee and at his ninetieth, and never aged, and never missed a note.',
+      'On Ashfall night they were singing the Hymn of the Held Hour in the palace chapel, and they did not stop. Their throats are long raw and their eyes long white. They have grown together, in some way the chapel wardens will not describe, into a single throat.',
       'The Regent finds the singing restful.',
     ),
   },
   {
     id: 'lore_crowned_rival', cat: 'bestiary', title: 'The Crowned Rival',
     text: P(
-      'There are four heirs, and one Crown. On some mornings (not this one, the Crown assures you; not yet) one of the others reached the throne first. They took it. They wore it.',
-      'And the Crown, which wastes nothing, kept that morning too, and set its king to guard the door.',
-      'They will have a face you know. They will tell you it stops hurting after the first hundred years. They will be lying, and they will not know it.',
+      'There are four heirs, and one Crown. On some mornings (not this one, the Crown assures you; not yet) one of the others reached the throne first, and took it, and wore it.',
+      'And the Crown, which wastes nothing, kept that morning too, and set its king to guard the door. *Aldous, the Iron King*, who obeyed one order too many. *Isolde, the Blight Queen*, whose kingdom has not rotted since, and has not grown. *Wren, the Thousand-Faced*, who has every face but one. *Cael, the Requiem King*, a dead man crowned, who keeps the kingdom\'s dead the way a miser keeps coin.',
+      'They will tell you it stops hurting after the first hundred years. They will be lying, and they will not know it.',
     ),
   },
   {
     id: 'lore_unspent', cat: 'bestiary', title: 'The Unspent',
     text: P(
-      'Every death the Crown forbade did not vanish. It waited. Four hundred years of the dying who were not permitted to die (the old, the sick, the hanged, the drowned, the soldiers who should have fallen and the children who should have been stillborn) pressed down into the dark beneath the throne like seed into a jar.',
-      'They are not ghosts. Ghosts have finished. The Unspent are still, all of them, in the act of dying, and have been for centuries.',
-      'They would very much like to be done.',
+      'Every death the Crown forbade did not vanish. It waited. The old, the sick, the hanged, the drowned, the soldiers who should have fallen and the children who should have been stillborn: all of it pressed down into the dark beneath the throne like seed into a jar. A century of it, at the least. Some say four.',
+      'They are not ghosts. Ghosts have finished. The Unspent are still, all of them, in the act of dying, and have been for as long as anyone can say.',
+      'They are so tired. They would very much like to be done.',
     ),
   },
   {
