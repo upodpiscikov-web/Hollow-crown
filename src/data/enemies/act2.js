@@ -335,7 +335,7 @@ defineEnemies([
     id: 'fae_courtier', name: 'Fae Courtier', kind: 'normal', act: 2, hp: [20, 24],
     sprite: 'en_fae_courtier',
     desc: 'Masked nobles of the Antlered Court. Their faces are glamours; beneath them, nothing at all.',
-    init(g, e) { g.addStatus(e, 'minion', 1, { silent: true }); },
+    init(g, e) { if (!e.st.minion) g.addStatus(e, 'minion', 1, { silent: true }); },
     moves: {
       rapier: { name: 'Rapier', intent: 'atk', dmg: 7 },
       devotion: {
@@ -450,7 +450,7 @@ defineEnemies([
     id: 'grall', name: 'Mattias Grall', kind: 'boss', act: 2, hp: [326, 336], leader: true,
     sprite: 'en_grall',
     desc: 'The Witchfinder General. He served beside the King\'s Shield once, and believes, with his whole heart, that fire is a kindness.',
-    init(g, e) { g.addStatus(e, 'a2_zealotry', 4, { silent: true }); },
+    init(g, e) { g.addStatus(e, 'a2_zealotry', 3, { silent: true }); },
     moves: {
       open: {
         name: 'Kindle the Faggots', intent: 'debuff',

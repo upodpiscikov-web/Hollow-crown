@@ -228,17 +228,14 @@ defineSprites({
       p.px(37, 9, '#fff3c8').px(37, 10, PAL.flame);
       p.rect(35, 13, 5, 1, PAL.iron);
       p.glow(37, 10, PAL.candle, 4);
-      // translucent: the hem dissolves into nothing (ordered dither, ghost-tinted)
+      // translucent: the cassock dissolves into nothing toward the hem (ordered dither, ghost-tinted)
       const B = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-      for (let y = 38; y < 56; y++) for (let x = 8; x < 35; x++) {
-        const c = p.get(x, y);
-        if (c && x !== 30 && x !== 31) p.px(x, y, [169, 198, 194, Math.round(110 * (y - 38) / 18)]);
-      }
-      for (let y = 46; y < 56; y++) for (let x = 8; x < 35; x++) {
-        const k = (y - 45) / 11;
-        const t = (B[(y & 3) * 4 + (x & 3)] + 0.5) / 16;
-        if (t < k * 0.95) p.erase(x, y);
-        else if (t < k * 1.5 && p.get(x + 1, y + 1)) { p.erase(x, y); p.px(x, y, [169, 198, 194, 80]); }
+      const has = (x, y) => p.d[(y * p.w + x) * 4 + 3] > 0;
+      for (let y = 36; y < 56; y++) for (let x = 8; x < 35; x++) {
+        if (!has(x, y) || x === 30 || x === 31) continue; // keep the pole solid
+        const k = (y - 36) / 19, t = (B[(y & 3) * 4 + (x & 3)] + 0.5) / 16;
+        if (t < k * k * 0.95) p.erase(x, y);
+        else if (t < k * 1.25) p.px(x, y, mix(PAL.ghost, PAL.ash, 0.35 + 0.3 * (1 - k)));
       }
     },
   },

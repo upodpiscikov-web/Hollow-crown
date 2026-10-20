@@ -1008,7 +1008,7 @@ const TRACKS = {
   },
   // Waystone hub: hearth crackle, intimate lute in G dorian, a hum, a rare far bell.
   hub: {
-    root: 55, mode: 'dorian', level: 1,
+    root: 55, mode: 'dorian', level: 1.25,
     setup(T) {
       const { I, t0 } = T;
       const f = fire(I, t0, 0.07);
@@ -1164,7 +1164,7 @@ const TRACKS = {
   },
   // Shop: a sly creeping pizzicato, a peddler's clock, a crooked music box.
   shop: {
-    root: 50, mode: 'dorian', level: 1,
+    root: 50, mode: 'dorian', level: 1.6,
     setup(T) {
       const { I, t0 } = T;
       drone(I, t0, [T.deg(0, -1), T.deg(4, -1)], { type: 'triangle', cut: 520, vel: 0.04 });
@@ -1192,7 +1192,7 @@ const TRACKS = {
   },
   // Rest site: campfire, slow warm harp, a soft hum — comfort, briefly.
   rest: {
-    root: 53, mode: 'ionian', level: 1,
+    root: 53, mode: 'ionian', level: 1.2,
     setup(T) {
       const { I, t0 } = T;
       const f = fire(I, t0, 0.05);
@@ -1222,7 +1222,7 @@ const TRACKS = {
   },
   // Event: curious and uneasy — music-box tines, a glass pad, a low bell.
   event: {
-    root: 47, mode: 'dorian', level: 1,
+    root: 47, mode: 'dorian', level: 1.35,
     setup(T) {
       const { I, t0 } = T;
       const dr = drone(I, t0, [T.deg(0), T.deg(4)], { type: 'triangle', cut: 650, vel: 0.045 });
