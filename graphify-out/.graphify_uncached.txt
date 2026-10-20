@@ -1,4 +1,0 @@
-/home/user/hollow-crown/CONTENT_API.md
-/home/user/hollow-crown/DESIGN.md
-/home/user/hollow-crown/STORY_OUTLINE.md
-/home/user/hollow-crown/src/index.html

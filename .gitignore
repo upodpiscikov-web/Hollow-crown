@@ -2,3 +2,7 @@ node_modules
 dist
 tools/out
 tools/scratch
+graphify-out/.graphify_*
+graphify-out/cache/
+graphify-out/manifest.json
+graphify-out/cost.json
