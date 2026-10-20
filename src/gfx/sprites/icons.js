@@ -808,7 +808,7 @@ const MASK_OWL = sym([
   '......zz',
 ], false, 3);
 S.mask_wolf = M(16, 16, MASK_WOLF);
-S.mask_moth = M(16, 15, MASK_MOTH);
+S.mask_moth = M(16, 16, [...MASK_MOTH, '................']);
 S.mask_owl = M(16, 16, MASK_OWL);
 const maskArt = (mood, rows, ribbon) => art(mood, (p) => {
   p.path([[8, 8], [4, 10], [2, 14]], ribbon, 1); p.path([[24, 8], [28, 10], [30, 13]], ribbon, 1);
@@ -1170,18 +1170,6 @@ S.art_mirror = art('violet', (p) => {
 }, { gy: 9, fx: (p) => { p.px(22, 4, '#fbf3df'); } });
 
 // ---- status samples
-S.st_might = M(10, 10, [
-  '...ZZ.....',
-  '..Zkk.....',
-  '..Zkk.....',
-  '.ZZkZ..ZZ.',
-  '.ZkkZ.Zkk.',
-  'ZkkkkZkkkZ',
-  'ZkkkkkkkkZ',
-  'zZkkkkkkZz',
-  '.zzZZZZzz.',
-  '..zzzzzz..',
-]);
 S.st_guard = M(10, 10, [
   '.ffffffff.',
   'feeeeeeeeI',
@@ -1244,6 +1232,376 @@ S.pt_flask_round = MT(12, 16, [
   '...444444...',
   '............',
 ], '#8a1c1c');
+
+// =================================================================== STATUS ICONS (10×10)
+// Buffs are warm / bright; debuffs are sickly green or blood red. Each has a
+// clear silhouette so it reads at ~2× on a phone.
+const C = (w, h, fn) => ({ w, h, rim: false, draw: fn });
+S.st_might = M(10, 10, [
+  '..PPPPPP..',
+  '.PPpPPpPP.',
+  '.PPPpPPpPp',
+  '.PPPPPPPPp',
+  '.PPPPPPPPp',
+  '..pPPPPPp.',
+  '..pPPPPpp.',
+  '..RRRRRR..',
+  '..RsRsRR..',
+  '..rrrrrr..',
+]);
+S.st_exposed = M(10, 10, [
+  '.ffffffff.',
+  'feeeeSeeeI',
+  'feFeSSeeeI',
+  'feeeeSSeeI',
+  'feeeSSeeeI',
+  '.feeeSeeI.',
+  '.feeSeeeI.',
+  '..feeSeI..',
+  '...feeI...',
+  '....II....',
+]);
+S.st_weak = C(10, 10, (p) => {
+  const d = (cells, c) => cells.forEach(([x, y]) => p.px(x, y, c));
+  d([[4, 5], [5, 4]], '#bccfd9'); d([[5, 5], [6, 4]], '#8e98a3'); d([[4, 6], [5, 6]], '#545a63');
+  d([[7, 2], [8, 1], [9, 0]], '#bccfd9'); d([[8, 2], [9, 1]], '#8e98a3'); d([[7, 3]], '#545a63');
+  d([[6, 3]], '#b8302a'); d([[6, 2], [7, 4]], '#8a1c1c');
+  d([[2, 5], [3, 6], [4, 7]], '#c9a227'); d([[3, 5]], '#8f6f1a'); d([[2, 4]], '#8f6f1a');
+  d([[2, 7], [1, 8]], '#977049'); d([[3, 7]], '#6e5039'); d([[0, 9], [1, 9]], '#c9a227');
+});
+S.st_frail = C(10, 10, (p) => {
+  p.line(2, 7, 7, 2, '#a19c9c', 1); p.line(3, 7, 8, 2, '#cfc6b0', 1); p.line(2, 6, 7, 1, '#e8dcc0', 1);
+  for (const [x, y] of [[0, 6], [1, 8], [1, 5], [3, 9]]) p.px(x, y, '#cfc6b0');
+  for (const [x, y] of [[0, 7], [2, 9], [2, 4]]) p.px(x, y, '#e8dcc0');
+  for (const [x, y] of [[8, 0], [9, 3], [6, 0], [9, 1]]) p.px(x, y, '#cfc6b0');
+  p.px(8, 1, '#e8dcc0'); p.px(7, 0, '#e8dcc0');
+  for (const [x, y] of [[4, 4], [5, 5], [4, 5], [5, 3], [6, 4]]) p.px(x, y, '#5e1212');
+  p.px(4, 4, '#b8302a'); p.px(5, 5, '#b8302a');
+});
+S.st_ward = C(10, 10, (p) => {
+  p.ring(5, 5, 5, '#3f8a80', 1); p.ring(5, 5, 4, '#24504c', 1);
+  p.ring(5, 5, 5, '#7fd1c4', 1);
+  for (const [x, y] of [[1, 2], [1, 3]]) p.px(x, y, '#cff5ec');
+  p.line(5, 2, 5, 7, '#cff5ec', 1); p.line(5, 4, 3, 2, '#7fd1c4', 1); p.line(5, 4, 7, 2, '#7fd1c4', 1); p.line(5, 6, 3, 7, '#7fd1c4', 1); p.line(5, 6, 7, 7, '#7fd1c4', 1);
+});
+S.st_thorns = C(10, 10, (p) => {
+  p.path([[0, 8], [2, 7], [4, 6], [6, 4], [8, 3]], '#3d5226', 1);
+  p.path([[0, 9], [2, 8], [4, 7], [6, 5], [8, 4]], '#5c7a2a', 1);
+  for (const [x, y, dx, dy] of [[2, 7, -1, -2], [4, 6, 0, -3], [6, 4, 1, -3], [3, 8, 0, 1], [5, 7, 1, 2], [7, 5, 2, 1], [8, 3, 2, -1]]) {
+    p.px(x + dx, y + dy, '#e8dcc0'); if (Math.abs(dx) + Math.abs(dy) > 2) p.px(x + Math.sign(dx), y + Math.sign(dy), '#a19c9c');
+  }
+  p.px(9, 2, '#e8dcc0');
+});
+S.st_plating = M(10, 10, [
+  '.ffffffff.',
+  'fcee..eecI',
+  'feeeeeeeeI',
+  'IIIIIIIIii',
+  '.ffffffff.',
+  'fceeeeeecI',
+  'feeeeeeeeI',
+  'IIIIIIIIii',
+  '..iiiiii..',
+  '..........',
+]);
+S.st_mending = M(10, 10, [
+  '...bbbb...',
+  '...bvvG...',
+  '...bvvG...',
+  'bbbbvvGGGG',
+  'bvvvvvvvvG',
+  'bvvvvvvvGG',
+  'bbbbvvGGGG',
+  '...bvvG...',
+  '...bvvG...',
+  '...GGGG...',
+]);
+S.st_rite = C(10, 10, (p) => {
+  p.ring(5, 5, 5, '#c4501e', 1); p.ring(5, 5, 4, '#5e1212', 1); p.ring(5, 5, 5, '#c4501e', 1);
+  p.px(1, 2, '#e8a33a'); p.px(2, 1, '#e8a33a'); p.px(8, 8, '#8a1c1c'); p.px(1, 7, '#8a1c1c');
+  p.poly([[5, 2], [7, 5], [6.5, 7], [5, 8], [3.5, 7], [3, 5], [4, 4]], '#e8a33a');
+  p.poly([[5, 4], [6, 6], [5, 7.5], [4, 6]], '#fff3c4');
+});
+S.st_bulwark = M(10, 10, [
+  'ffffffffff',
+  'feeeeeeeeI',
+  'feeeYYeeeI',
+  'feYYYYYYeI',
+  'feeeYYeeeI',
+  'feeeYYeeeI',
+  'feeeYYeeeI',
+  '.feeYYeeI.',
+  '..feYYeI..',
+  '...IIII...',
+]);
+S.st_soul = M(10, 10, [
+  '....h.....',
+  '....hh....',
+  '...hHHh...',
+  '..hHHHHh..',
+  '..hHHHHT..',
+  '.hHH0H0HT.',
+  '.hHHHHHHT.',
+  '.hHHHHHHT.',
+  '..hhHHhT..',
+  '...TTTT...',
+]);
+S.st_vigor = C(10, 10, (p) => {
+  p.poly([[6.5, 0], [1.5, 5.5], [4.8, 5.5], [3, 10], [8.5, 3.8], [5.4, 3.8], [8, 0]], '#e8a33a');
+  p.poly([[6.6, 1], [3.2, 5.2], [5.6, 5.2], [4.2, 8.3], [7.2, 3.4], [4.6, 3.4], [7, 1]], '#f0d27a');
+  p.px(6, 1, '#fff3c4'); p.px(5, 3, '#fff3c4');
+});
+S.st_shackled = M(10, 10, [
+  '..ffffff..',
+  '.fe....eI.',
+  'fe......eI',
+  'fe......eI',
+  '.fe....eI.',
+  '..eeeeII..',
+  '....fe....',
+  '....fI....',
+  '...feeI...',
+  '...eIIi...',
+]);
+S.st_dread = M(10, 10, [
+  '..........',
+  '..666666..',
+  '.68888886.',
+  '688RRRR886',
+  '688R00R886',
+  '.68RRRR86.',
+  '..666666..',
+  '..B....B..',
+  '..B....B..',
+  '..f....f..',
+]);
+S.st_burning = C(10, 10, (p) => {
+  p.poly([[5, 0], [7, 3], [8.5, 5.5], [8, 8], [5, 9], [2, 8], [1.5, 5.5], [3, 3.5], [3.8, 4.8]], '#8a1c1c');
+  p.poly([[5, 2.5], [7, 5.5], [6.8, 8], [5, 8.6], [3.2, 7.6], [3, 5.5], [4.4, 4.5]], '#c4501e');
+  p.poly([[5, 5], [6.2, 7], [5, 8.2], [3.8, 7]], '#e8a33a');
+  p.px(8, 1, '#79747a'); p.px(1, 2, '#57535c'); p.px(9, 4, '#a19c9c'); p.px(0, 5, '#79747a'); p.px(2, 9, '#363040'); p.px(7, 9, '#363040');
+});
+S.st_phantasm = M(10, 10, [
+  '..hhhhhh..',
+  '.hHHHHHHh.',
+  'hHHHHHHHHh',
+  'hH00HH00Hh',
+  'hH00HH00Hh',
+  'hHHHHHHHHh',
+  'hHHH00HHHT',
+  'hHHHHHHHHT',
+  'hHHHHHHHHT',
+  'hh.hhhh.TT',
+]);
+const EYE = (iris, lash) => [
+  '..........',
+  '..666666..',
+  '.68888886.',
+  '688' + iris[0] + iris[0] + iris[0] + iris[0] + '886',
+  '688' + iris[0] + '00' + iris[0] + '886',
+  '.68' + iris[1] + iris[1] + iris[1] + iris[1] + '86.',
+  '..666666..',
+  '..........',
+  '..........',
+  '..........',
+];
+S.st_insight = C(10, 10, (p) => {
+  pix(p, [
+    '...........',
+  ].slice(0, 0));
+  pix(p, [
+    '..........',
+    '..........',
+    '...6666...',
+    '.68888886.',
+    '68hhhhhh86',
+    '68hH00Hh86',
+    '.68hhhh86.',
+    '...6666...',
+    '..........',
+    '..........',
+  ]);
+  p.px(5, 0, '#f0d27a'); p.px(2, 1, '#e8a33a'); p.px(8, 1, '#e8a33a'); p.px(5, 1, '#fff3c4');
+});
+S.st_eye = M(10, 10, [
+  '..........',
+  '...6666...',
+  '.66888866.',
+  '6888llll86',
+  '688l00ll86',
+  '.688llll6.',
+  '..666666..',
+  '..........',
+  '..........',
+  '..........',
+]);
+S.st_zeal = C(10, 10, (p) => {
+  for (let k = 0; k < 8; k++) {
+    const a = (k / 8) * Math.PI * 2, x = 5 + Math.cos(a) * 4.4, y = 5 + Math.sin(a) * 4.4;
+    p.px(Math.floor(x), Math.floor(y), k % 2 ? '#c9a227' : '#f0d27a');
+    if (k % 2 === 0) p.px(Math.floor(5 + Math.cos(a) * 3.6), Math.floor(5 + Math.sin(a) * 3.6), '#e8a33a');
+  }
+  ball(p, 5, 5, 2.9, ['#c4501e', '#e8a33a', '#f0d27a', '#fff3c4']);
+});
+S.st_enrage = M(10, 10, [
+  'S........S',
+  'sS......Ss',
+  'sS......Ss',
+  '.sS....Ss.',
+  '.sSS..SSs.',
+  '..sSSSSs..',
+  '...ssss...',
+  '...Y..Y...',
+  '..........',
+  '..........',
+]);
+S.st_split = C(10, 10, (p) => {
+  ball(p, 3.2, 5.4, 3.2, ['#3d5226', '#5c7a2a', '#8fae3a', '#c4dc68']);
+  ball(p, 6.8, 5.4, 3.2, ['#3d5226', '#5c7a2a', '#8fae3a', '#c4dc68']);
+  p.px(4, 3, '#253318'); p.px(5, 4, '#253318'); p.px(5, 5, '#253318'); p.px(5, 6, '#253318'); p.px(4, 7, '#253318'); p.px(5, 8, '#253318');
+  p.px(0, 0, '#b8302a'); p.px(9, 0, '#b8302a');
+});
+S.st_minion = M(10, 10, [
+  '..........',
+  '..........',
+  '...8888...',
+  '..888888..',
+  '..800800..',
+  '..888888..',
+  '...8008...',
+  '...8888...',
+  '...8888...',
+  '..........',
+]);
+S.st_oath = C(10, 10, (p) => {
+  p.rect(1, 2, 8, 6, '#e8dcc0'); p.rect(1, 2, 8, 1, '#fbf3df');
+  ball(p, 1.5, 5, 1.6, ['#977049', '#c29a68', '#e8dcc0'], 4); ball(p, 8.5, 5, 1.6, ['#6e5039', '#977049', '#c29a68'], 4);
+  p.rect(3, 3, 4, 1, '#977049'); p.rect(3, 5, 3, 1, '#977049');
+  p.poly([[5, 6], [6.5, 6], [7, 9], [5.8, 8], [4.5, 9]], '#8a1c1c');
+  ball(p, 5.5, 6.2, 2.1, ['#5e1212', '#8a1c1c', '#b8302a', '#e0644c']);
+});
+S.st_mask = M(10, 10, [
+  '..........',
+  '.LLLLLLLL.',
+  'LLLLLLLLLl',
+  'LL00LL00Ll',
+  'LL00LL00Ll',
+  'LLLLLLLLll',
+  '.LLLLLLll.',
+  '..LLLLll..',
+  '...llll...',
+  '..........',
+]);
+S.st_spirit = C(10, 10, (p) => {
+  p.ring(5, 5, 4.8, '#24504c', 1);
+  ball(p, 5, 5, 3.6, ['#24504c', '#3f8a80', '#7fd1c4', '#cff5ec', '#ffffff']);
+  p.px(0, 4, '#7fd1c4'); p.px(9, 5, '#7fd1c4'); p.px(5, 0, '#3f8a80'); p.px(5, 9, '#3f8a80');
+});
+S.st_brew = M(10, 10, [
+  '....ZZ....',
+  '....ff....',
+  '....fe....',
+  '...fbbe...',
+  '..fbbvbe..',
+  '.fbbvvbbe.',
+  '.fbbbbbbe.',
+  '.fGbbbbGe.',
+  '..fGGGGe..',
+  '...eeee...',
+]);
+S.st_echo = C(10, 10, (p) => {
+  p.ring(5, 5, 5, '#4b3b5e', 1); p.ring(5, 5, 5, '#7b5aa6', 1); p.ring(5, 5, 4, '#4b3b5e', 1);
+  p.ring(5, 5, 2.8, '#b49ad6', 1); p.px(4, 4, '#fbf3df'); p.px(5, 5, '#e2d6f2');
+  p.px(1, 2, '#b49ad6'); p.px(2, 1, '#b49ad6');
+});
+S.st_knife = C(10, 10, (p) => {
+  p.line(8, 1, 3, 6, '#eef6f6', 1); p.line(9, 2, 4, 7, '#8e98a3', 1); p.line(8, 2, 4, 6, '#bccfd9', 1);
+  p.px(9, 0, '#eef6f6'); p.px(9, 1, '#bccfd9');
+  p.line(2, 5, 5, 8, '#c9a227', 1); p.px(2, 6, '#8f6f1a');
+  p.line(1, 8, 3, 6, '#6e5039', 1); p.px(2, 8, '#4a3527'); p.px(0, 9, '#c9a227'); p.px(1, 9, '#8f6f1a');
+});
+S.st_blood = M(10, 10, [
+  '....S.....',
+  '....sS....',
+  '...sSS....',
+  '...sSsR...',
+  '..sSSSsR..',
+  '.sSwSSsRR.',
+  '.sSSSSsRR.',
+  '.sSSSsRRR.',
+  '..sssRRR..',
+  '...rrrr...',
+]);
+S.st_crown = M(10, 10, [
+  '..........',
+  '.c..cc..c.',
+  '.Yc.YY.cY.',
+  '.YYcYYcYY.',
+  '.YYYYYYYY.',
+  '.YcYYYYcY.',
+  '.jjjjjjjj.',
+  '.jRjjSjjRj'.slice(0, 10),
+  '.yyyyyyyy.',
+  '..........',
+]);
+S.st_skull = M(10, 10, [
+  '..888888..',
+  '.88888888.',
+  '.88888888.',
+  '.80088008.',
+  '.80088008.',
+  '.88888888.',
+  '..880088..',
+  '..888888..',
+  '..808080..',
+  '..........',
+]);
+S.st_moon = C(10, 10, (p) => {
+  shader(p, 0, 0, 9, 9, (x, y) => {
+    const nx = (x + 0.5 - 5) / 4.8, ny = (y + 0.5 - 5) / 4.8;
+    if (nx * nx + ny * ny > 1) return null;
+    if (Math.hypot(x + 0.5 - 7.4, y + 0.5 - 3.8) < 3.9) return null;
+    return lit(['#79747a', '#a19c9c', '#cfc6b0', '#fbf3df'], sphere(nx, ny) + 0.12, x, y, 0.4);
+  });
+  p.px(8, 7, '#cfc6b0'); p.px(9, 1, '#a19c9c');
+});
+S.st_star = C(10, 10, (p) => {
+  const pts = [];
+  for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + (k * Math.PI) / 5, r = k % 2 ? 2.1 : 5; pts.push([5 + Math.cos(a) * r, 5.4 + Math.sin(a) * r]); }
+  p.poly(pts, '#c9a227');
+  p.poly(pts.map(([x, y]) => [5 + (x - 5) * 0.62, 5.4 + (y - 5.4) * 0.62]), '#f0d27a');
+  p.px(4, 4, '#fff3c4'); p.px(5, 3, '#fff3c4');
+});
+S.st_flame = C(10, 10, (p) => {
+  p.poly([[5, 0], [7, 3], [8.6, 5.6], [8, 8], [5, 9.4], [2, 8], [1.4, 5.6], [3, 3.4], [3.9, 4.8]], '#c4501e');
+  p.poly([[5, 2.5], [7, 5.5], [6.8, 8], [5, 8.8], [3.2, 7.8], [3, 5.5], [4.4, 4.5]], '#e8a33a');
+  p.poly([[5, 5], [6.2, 7], [5, 8.4], [3.8, 7]], '#fff3c4');
+});
+S.st_chain = C(10, 10, (p) => {
+  for (const [cx, cy, v] of [[2.8, 7.2, 0], [5, 5, 1], [7.2, 2.8, 0]]) {
+    if (!v) { p.ring(cx, cy, 2.9, '#545a63', 1); p.ring(cx, cy, 2.9, '#bccfd9', 1); p.ring(cx + 0.1, cy + 0.1, 2.9, '#8e98a3', 1); }
+  }
+  p.line(3, 6, 7, 3, '#eef6f6', 1); p.line(4, 7, 8, 4, '#8e98a3', 1);
+  p.ring(2.8, 7.2, 2.9, '#8e98a3', 1); p.ring(7.2, 2.8, 2.9, '#bccfd9', 1);
+  p.px(0, 8, '#545a63'); p.px(9, 1, '#eef6f6');
+});
+S.st_feather = C(10, 10, (p) => {
+  p.poly([[1, 9], [2, 5], [5, 1], [9, 0], [8, 4], [5, 7], [2, 9]], '#cfc6b0');
+  p.poly([[2.5, 8], [3, 5], [5.5, 2], [8.2, 1], [7.2, 4], [4.5, 6.8]], '#e8dcc0');
+  p.line(0, 9, 8, 1, '#79747a', 1); p.px(4, 4, '#a19c9c'); p.px(6, 5, '#a19c9c');
+});
+S.st_heart = M(10, 10, [
+  '.RRR..RRR.',
+  'RSwSRRSsSR',
+  'RSSSSSSSsR',
+  'RSSSSSSssR',
+  '.RSSSSSsR.',
+  '..RSSSsR..',
+  '...RSsR...',
+  '....RR....',
+  '..........',
+  '..........',
+]);
 
 defineSprites(S);
 export const ICON_IDS = Object.keys(S);

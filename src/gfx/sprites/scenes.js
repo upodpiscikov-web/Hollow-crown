@@ -74,7 +74,7 @@ function surf(p) {
         const fy = 1 - Math.abs(y - yc) / hh;
         if (fy <= 0) continue;
         for (let x = x0; x < x1; x++) {
-          const n = vnoise(x / sc, y / (sc * 0.35), seed) * 0.7 + vnoise(x / (sc * 0.4), y / (sc * 0.2), seed + 5) * 0.3;
+          const n = vnoise(x / sc, y / (sc * 0.35), seed);
           S.dblend(x, y, c, amt * fy * (0.35 + n * 0.9));
         }
       }
@@ -247,46 +247,289 @@ function arch(p, x, y, w, h, col, thick = 2) {
   }
 }
 
+
+// light shaft (god-ray) from (x0,y0) widening toward (x1,y1)
+function shaft(S, x0, y0, x1, y1, w0, w1, col, amt) {
+  const c = C(col), lo = Math.min(y0, y1), hi = Math.max(y0, y1);
+  for (let y = lo; y <= hi; y++) {
+    const t = (y - y0) / (y1 - y0 || 1);
+    const cx = x0 + (x1 - x0) * t, w = (w0 + (w1 - w0) * t) / 2;
+    for (let x = Math.floor(cx - w); x <= Math.ceil(cx + w); x++) {
+      const e = 1 - Math.abs(x - cx) / (w + 0.01);
+      if (e > 0) S.dblend(x, y, c, amt * Math.min(1, e * 1.6) * (1 - t * 0.4), 4);
+    }
+  }
+}
+// pointed-arch opening (doors, windows): fn(x,y,tx,ty) -> colour|null
+function opening(S, cx, yb, hw, hs, ha, fn) {
+  for (let y = Math.floor(yb - hs - ha); y <= yb; y++) {
+    let half = hw;
+    if (y < yb - hs) { const t = (yb - hs - y) / ha; if (t > 1) continue; half = hw * (1 - Math.pow(t, 1.8)); }
+    for (let x = Math.ceil(cx - half); x <= Math.floor(cx + half - 1); x++) {
+      const c = fn(x, y, (x - cx) / hw, (yb - y) / (hs + ha));
+      if (c) S.set(x, y, c);
+    }
+  }
+}
+const grad = (c0, c1) => { const a = C(c0), b = C(c1); return (x, y, tx, ty) => (by(x, y) < ty ? b : a); };
+// smoke plume: rising, drifting, widening puffs
+function plume(S, x0, y0, rise, drift, col, amt, seed) {
+  const r = rng(seed);
+  for (let i = 0; i < 16; i++) {
+    const t = i / 15;
+    S.glow(x0 + drift * t + (r() - 0.5) * 3, y0 - rise * t, 2.5 + t * 9, col, amt * (1 - t * 0.55), (2.5 + t * 9) * 0.8);
+  }
+}
+
 // ------------------------------------------------------------------ backgrounds (256x144)
 const BG = { w: 256, h: 144, outline: false, rim: false };
 
 defineSprites({
+  // ---------------------------------------------------------------- Act 1
   bg_act1: {
     ...BG,
     draw(p) {
       const S = surf(p);
-      // pewter sky
-      S.sky(0, 92, [mix(PAL.night, PAL.ash, 0.25), mix(PAL.dusk, PAL.ash, 0.45), mix(PAL.ash, PAL.dusk, 0.25), PAL.ash, mix(PAL.ash, PAL.fog, 0.35)]);
-      S.glow(186, 38, 34, PAL.fog, 0.35); // sun, a coin behind the haze
-      p.circle(186, 38, 7, mix(PAL.fog, PAL.bone, 0.3));
-      S.fog(26, 9, dk(PAL.ash, 0.2), 0.45, 11, 30); S.fog(46, 6, PAL.fog, 0.25, 12, 24); S.fog(60, 8, dk(PAL.ash, 0.1), 0.35, 13, 28);
-      // far hills with gibbets on the horizon
-      const far = mix(PAL.ash, PAL.stone, 0.25);
-      S.fillBelow((x) => 74 - fbm(x / 40, 5) * 14, far, 100);
-      for (const [x, h] of [[38, 15], [64, 11], [152, 14], [214, 17]]) gibbet(p, x, 74 - fbm(x / 40, 5) * 14 + 1, h, far === 0 ? 0 : mix(PAL.dusk, PAL.ash, 0.35), mix(PAL.dusk, PAL.ash, 0.35));
-      S.fog(76, 7, PAL.fog, 0.4, 14, 22);
-      const mid = mix(PAL.dusk, PAL.ash, 0.45);
-      S.fillBelow((x) => 84 - fbm(x / 26 + 10, 6) * 9, mid, 100);
-      for (const [x, h, s] of [[16, 24, 2], [104, 18, 3], [118, 12, 4], [236, 26, 5]]) deadTree(p, x, 84 - fbm(x / 26 + 10, 6) * 9 + 2, h, mid, s, (s % 2 ? 0.15 : -0.12));
-      S.fog(88, 6, PAL.stone, 0.45, 15, 26);
-      // the fen: dull ground, pools holding the sky
-      const ground = mix(PAL.dusk, PAL.moss, 0.25), groundD = mix(PAL.night, PAL.moss, 0.2);
-      S.sky(90, 144, [mix(ground, PAL.ash, 0.25), ground, mix(ground, groundD, 0.5), groundD]);
+      S.sky(0, 96, [mix(PAL.night, PAL.ash, 0.3), mix(PAL.dusk, PAL.ash, 0.5), mix(PAL.ash, PAL.stone, 0.25), mix(PAL.stone, PAL.fog, 0.45), mix(PAL.fog, PAL.bone, 0.15)]);
+      S.glow(188, 58, 46, PAL.bone, 0.3);
+      p.circle(188, 58, 6, mix(PAL.fog, PAL.bone, 0.5));
+      S.fog(30, 8, PAL.dusk, 0.35, 11, 30); S.fog(66, 7, PAL.bone, 0.22, 12, 24);
+      // far hills with small gibbets
+      const farC = mix(PAL.ash, PAL.stone, 0.3), dark = mix(PAL.night, PAL.ash, 0.25);
+      const t1 = (x) => 82 - fbm(x / 40, 5) * 12;
+      S.fillBelow(t1, farC, 110);
+      for (const [x, h] of [[36, 13], [80, 10], [140, 12], [226, 14]]) gibbet(p, x, t1(x) + 1, h, dark, dark);
+      S.fog(86, 8, PAL.fog, 0.5, 14, 22);
+      // mid ridge, darker, with the big gibbets and dead trees
+      const midC = mix(PAL.night, PAL.ash, 0.4), t2 = (x) => 94 - fbm(x / 26 + 10, 6) * 9;
+      S.fillBelow(t2, midC, 112);
+      gibbet(p, 60, t2(60) + 2, 30, dark, mix(PAL.ink, PAL.dusk, 0.5), 1);
+      gibbet(p, 198, t2(198) + 2, 36, dark, mix(PAL.ink, PAL.dusk, 0.5), -1);
+      for (const [x, h, sd] of [[14, 26, 2], [118, 17, 3], [132, 11, 4], [244, 24, 5]]) deadTree(p, x, t2(x) + 2, h, dark, sd, sd % 2 ? 0.15 : -0.12);
+      crow(p, 92, 62, dark); crow(p, 98, 58, dark); crow(p, 168, 50, dark); crow(p, 174, 55, dark);
+      S.fog(100, 6, PAL.fog, 0.4, 15, 26);
+      // the fen: dull umber ground, pools holding the sky
+      const ground = mix(PAL.dusk, PAL.moss, 0.3), groundD = mix(PAL.night, PAL.moss, 0.2);
+      S.sky(102, 144, [mix(ground, PAL.ash, 0.2), ground, mix(ground, groundD, 0.5), groundD]);
       const r = rng(77);
       for (let i = 0; i < 9; i++) {
-        const py = 92 + r() * 14, pw = 14 + r() * 30, px0 = r() * 256;
-        p.ellipse(px0, py, pw, 1.2 + r() * 1.5, mix(PAL.ash, PAL.fog, 0.15 + r() * 0.2));
-        p.ellipse(px0 - 2, py + 0.6, pw * 0.7, 0.8, mix(PAL.ash, PAL.dusk, 0.3));
+        const py = 104 + r() * 10, pw = 14 + r() * 28, px0 = r() * 256;
+        p.ellipse(px0, py, pw, 1 + r() * 1.4, mix(PAL.ash, PAL.fog, 0.2 + r() * 0.25));
+        p.ellipse(px0 - 2, py + 0.7, pw * 0.7, 0.7, mix(PAL.ash, PAL.dusk, 0.35));
       }
-      for (let i = 0; i < 14; i++) reeds(p, Math.floor(r() * 250), 0, 0, PAL.night, 0); // no-op guard
-      for (const [x0, x1, y] of [[0, 30, 97], [70, 92, 95], [140, 170, 99], [200, 236, 96]]) reeds(p, x0, x1, y, mix(PAL.night, PAL.moss, 0.3), x0 + 3, 5);
-      S.texture(0, 100, 256, 144, mix(ground, PAL.ash, 0.2), 0.4, 4, 21);
-      S.texture(0, 104, 256, 144, groundD, 0.5, 6, 22);
-      S.fog(100, 8, PAL.fog, 0.22, 16, 40);
-      // falling ash (sparser over the calm lower third)
-      S.ash(260, 101, [PAL.fog, PAL.stone, PAL.bone], 0, 96);
-      S.ash(50, 102, [PAL.stone, PAL.ash], 96, 144);
+      for (const [x0, x1, y] of [[0, 34, 106], [74, 96, 104], [146, 172, 108], [204, 240, 105]]) reeds(p, x0, x1, y, mix(PAL.night, PAL.moss, 0.3), x0 + 3, 5);
+      S.texture(0, 108, 256, 144, mix(ground, PAL.ash, 0.2), 0.35, 4, 21);
+      S.fog(110, 6, PAL.fog, 0.2, 16, 40);
+      S.ash(120, 101, [PAL.fog, PAL.stone, PAL.bone], 0, 100);
+      S.ash(26, 102, [PAL.stone, PAL.ash], 100, 144);
+      S.vignette(0.8);
+    },
+  },
+
+  // ---------------------------------------------------------------- Act 2
+  bg_act2: {
+    ...BG,
+    draw(p) {
+      const S = surf(p);
+      S.sky(0, 100, [PAL.void, mix(PAL.deep, PAL.ink, 0.4), mix(PAL.water, PAL.deep, 0.45), mix(PAL.water, PAL.ghost, 0.2)]);
+      S.glow(196, 30, 44, PAL.ghost, 0.22);
+      p.circle(196, 30, 5, mix(PAL.ghost, PAL.water, 0.35));
+      S.fog(32, 8, PAL.ghost, 0.16, 31, 34);
+      // far hazy treeline
+      const farC = mix(PAL.water, PAL.deep, 0.4), nearC = mix(PAL.deep, PAL.ink, 0.55), tl = (x) => 90 - fbm(x / 22, 41) * 9;
+      S.fillBelow(tl, farC, 100);
+      for (let x = 2; x < 256; x += 5 + ((x * 7) % 4)) pine(p, x, tl(x) + 3, 12 + hash2(x, 1, 5) * 12, 4.5, farC);
+      S.fog(88, 7, PAL.ghost, 0.28, 32, 24);
+      // the drowned abbey, half-sunk in the mere
+      const yW = 100, ab = mix(PAL.ink, PAL.deep, 0.5), win = mix(PAL.spirit, PAL.deep, 0.4);
+      p.rect(86, yW - 24, 62, 24, ab);                                  // nave
+      p.poly([[84, yW - 24], [117, yW - 40], [150, yW - 24]], ab);        // roof, holed
+      p.erase(104, yW - 33, 9, 6); p.erase(118, yW - 30, 5, 5);
+      p.rect(150, yW - 48, 13, 48, ab);                                  // tower
+      p.poly([[149, yW - 48], [152, yW - 55], [155, yW - 50], [158, yW - 58], [161, yW - 51], [164, yW - 48]], ab); // broken top
+      p.rect(70, yW - 15, 17, 15, ab); p.poly([[69, yW - 15], [78, yW - 24], [88, yW - 15]], ab); // transept
+      for (const x of [92, 102, 112, 124, 134]) opening(S, x, yW - 5, 2, 6, 4, grad(PAL.deep, win));
+      opening(S, 156, yW - 28, 2, 4, 3, grad(PAL.deep, win)); opening(S, 156, yW - 10, 1.5, 3, 2, grad(PAL.deep, win));
+      opening(S, 78, yW - 3, 2, 4, 3, grad(PAL.deep, win));
+      S.glow(118, yW - 14, 26, PAL.spirit, 0.12);
+      S.fog(yW - 3, 5, PAL.ghost, 0.5, 33, 20);
+      // marshy banks either side
+      S.fillBelow((x) => yW + 1 - (x < 70 ? (70 - x) * 0.08 : x > 190 ? (x - 190) * 0.1 : -3), nearC, yW + 3, 0, 70);
+      S.fillBelow((x) => yW - 1 - (x - 190) * 0.1, nearC, yW + 3, 190, 256);
+      reeds(p, 0, 70, yW, nearC, 3, 7); reeds(p, 186, 256, yW, nearC, 4, 8);
+      // water: reflect everything above, ripple, mist
+      S.reflect(yW + 3, 144, PAL.deep, 0.5, 5);
+      const r = rng(55);
+      for (let i = 0; i < 40; i++) { const y = 104 + r() * 38, x = r() * 250, w = 3 + r() * 10; for (let k = 0; k < w; k++) S.blend(x + k, y, PAL.ghost.length ? C(PAL.ghost) : [0, 0, 0], 0.16); }
+      S.fog(108, 4, PAL.ghost, 0.3, 34, 28);
+      // framing weeping trees
+      const tree = mix(PAL.void, PAL.deep, 0.35);
+      weepTree(p, 14, 144, 104, tree, 7, 1.05);
+      weepTree(p, 246, 144, 96, tree, 8, 0.95);
+      S.fog(140, 4, PAL.ghost, 0.12, 35, 30);
+      S.ash(40, 61, [PAL.ghost, PAL.frost], 0, 100); // pollen / spores
+      S.vignette(0.9, PAL.void);
+    },
+  },
+
+  // ---------------------------------------------------------------- Act 3
+  bg_act3: {
+    ...BG,
+    draw(p) {
+      const S = surf(p);
+      S.sky(0, 100, [mix(PAL.ink, PAL.wine, 0.35), mix(PAL.dusk, PAL.wine, 0.4), mix(PAL.bruise, PAL.ember, 0.3), mix(PAL.ember, PAL.ash, 0.45), mix(PAL.flame, PAL.ash, 0.55)]);
+      S.glow(150, 92, 70, PAL.flame, 0.28, 46);
+      S.fog(40, 10, PAL.wine, 0.3, 61, 36);
+      // smoke columns drifting right
+      for (const [x, y, rise, dr, sd] of [[60, 98, 74, 30, 1], [110, 100, 82, 38, 2], [196, 98, 70, 28, 3], [236, 100, 60, 24, 4]]) plume(S, x, y, rise, dr, mix(PAL.ink, PAL.ash, 0.4), 0.55, sd);
+      // far skyline, hazy
+      const far = mix(PAL.dusk, PAL.ember, 0.22), mid = mix(PAL.night, PAL.wine, 0.45), near = mix(PAL.ink, PAL.void, 0.4);
+      let r = rng(9);
+      for (let x = -4; x < 260;) { const w = 4 + ((r() * 6) | 0), h = 14 + r() * 22; spire(p, x, 100, w, h, far, { ph: r() < 0.6 ? 8 + r() * 12 : 3, roof: far }); x += w + ((r() * 3) | 0); }
+      S.fog(98, 6, PAL.flame, 0.22, 62, 26);
+      // mid skyline with the great cathedral
+      r = rng(21);
+      for (let x = -2; x < 258;) {
+        const w = 5 + ((r() * 7) | 0), h = 16 + r() * 26;
+        if (x > 108 && x < 190) { x = 190; continue; }
+        spire(p, x, 106, w, h, mid, { ph: r() < 0.55 ? 10 + r() * 16 : 3, roof: mid, gild: r() < 0.5 ? PAL.gold : null, win: r() < 0.5 ? mix(PAL.flame, PAL.wine, 0.3) : null, winGap: 7 });
+        x += w + ((r() * 2) | 0);
+      }
+      // cathedral / palace, gilded and decaying
+      const cat = mid;
+      p.rect(112, 58, 74, 48, cat);
+      dome(p, 149, 52, 17, cat, PAL.gold);
+      spire(p, 108, 106, 8, 62, cat, { ph: 22, roof: cat, gild: PAL.gold });
+      spire(p, 182, 106, 8, 70, cat, { ph: 24, roof: cat, gild: PAL.gold });
+      spire(p, 128, 106, 6, 54, cat, { ph: 18, roof: cat, gild: PAL.gold });
+      spire(p, 166, 106, 6, 60, cat, { ph: 18, roof: cat, gild: PAL.gold });
+      p.erase(182, 36, 3, 4); p.erase(130, 52, 2, 3); // broken stone
+      for (const x of [118, 126, 140, 152, 164, 174]) opening(S, x, 90, 2, 6, 4, grad(mix(PAL.night, PAL.wine, 0.4), mix(PAL.flame, PAL.ember, 0.4)));
+      opening(S, 149, 106, 5, 8, 8, grad(mix(PAL.ink, PAL.wine, 0.3), mix(PAL.flame, PAL.ember, 0.5)));
+      for (const [x, y] of [[149, 30], [111, 40], [185, 32], [131, 49], [169, 44]]) p.px(x, y, PAL.candle);
+      S.fog(104, 5, PAL.flame, 0.2, 63, 24);
+      // near wall and gate-road
+      S.sky(104, 144, [mix(PAL.ink, PAL.wine, 0.25), PAL.void]);
+      for (let x = 0; x < 256; x += 8) p.rect(x, 100, 5, 5, near);
+      p.rect(0, 104, 256, 6, near);
+      S.texture(0, 110, 256, 144, mix(PAL.dusk, PAL.wine, 0.4), 0.28, 3, 66);
+      p.rect(0, 109, 256, 1, mix(PAL.dusk, PAL.wine, 0.45));
+      S.ash(130, 67, [PAL.fog, PAL.stone, PAL.ember], 0, 110);
+      S.ash(40, 68, [PAL.stone, PAL.ember], 110, 144);
+      S.vignette(0.85);
+    },
+  },
+
+  // ---------------------------------------------------------------- Act 4
+  bg_act4: {
+    ...BG,
+    draw(p) {
+      const S = surf(p), d = p.d, vx = 128, vy = 84;
+      const stone = C(mix(PAL.dusk, PAL.stone, 0.18)), void_ = C(PAL.void), bone = C(mix(PAL.bone, PAL.ghost, 0.3)), glowc = C(mix(PAL.ghost, PAL.bone, 0.45));
+      const mixc = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t, 255];
+      for (let y = 0; y < 144; y++) for (let x = 0; x < 256; x++) {
+        const dx = x - vx, dy = y - vy, ax = Math.abs(dx) / 128;
+        const ay = dy < 0 ? -dy / 90 * (1 + ax * 0.15) : dy / 56;
+        const m = Math.pow(Math.pow(ax, 2.7) + Math.pow(ay, 2.7), 1 / 2.7);
+        const b = m >= 1 ? 0 : Math.log(Math.max(m, 0.003)) / Math.log(0.66);
+        const k = Math.floor(b), fr = b - k;
+        const depth = Math.min(1, Math.max(0, b / 10));       // 0 near .. 1 far
+        let c;
+        const lum = 0.1 + depth * depth * 0.62;
+        const rib = fr < 0.3;
+        if (m < 0.012) c = glowc;
+        else {
+          let base = rib ? stone : mixc(stone, void_, 0.5);
+          // wall bands shaded across the band; rib lit on its top edge
+          base = mixc(void_, base, Math.min(1, lum * 1.5));
+          if (!rib && dy < 0) {
+            // ossuary skulls packed into the walls (not in the calm lower third)
+            const cs = Math.max(2, Math.round(2 + m * 4));
+            const cx = Math.floor(x / cs), cy = Math.floor(y / cs);
+            if (y < 112 && hash2(cx, cy, 3) < 0.4) {
+              const lx = x - cx * cs, ly = y - cy * cs;
+              const eye = cs >= 3 && ly === 1 && (lx === 1 || lx === cs - 2);
+              const jaw = cs >= 4 && ly === cs - 1 && lx % 2 === 0;
+              if (!jaw) base = mixc(base, eye ? void_ : bone, eye ? 0.9 : 0.55 * Math.min(1, lum * 2.2));
+            } else if (hash2(x, y, 9) < 0.08) base = mixc(base, bone, 0.18);
+          }
+          if (dy > 0) base = mixc(base, void_, 0.18 + (y - vy) / 120 * 0.3); // floor
+          const g = Math.max(0, 1 - m * 1.4);                   // glow bleeding from the far end
+          c = mixc(base, glowc, g * g * 0.8);
+        }
+        const i = (y * 256 + x) * 4; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
+      }
+      // pale light pooling on the floor
+      shaft(S, vx, vy + 4, vx, 144, 10, 70, PAL.ghost, 0.2);
+      S.glow(vx, vy + 2, 38, PAL.bone, 0.3, 24);
+      // roots breaking through the vaults
+      const rr = rng(88);
+      for (let i = 0; i < 16; i++) {
+        const x0 = rr() * 256, len = 14 + rr() * 38;
+        p.path([[x0, 0], [x0 + (rr() - 0.5) * 8, len * 0.5], [x0 + (rr() - 0.5) * 12, len]], mix(PAL.bark, PAL.void, 0.35), 1 + ((rr() * 2) | 0));
+      }
+      for (let i = 0; i < 8; i++) { const x0 = rr() * 256, y0 = 10 + rr() * 50; p.px(x0, y0, PAL.bile); }
+      S.fog(vy + 12, 7, PAL.ghost, 0.25, 71, 30);
+      S.ash(40, 72, [PAL.bone, PAL.ghost], 0, 120);
       S.vignette(0.9);
+    },
+  },
+
+  // ---------------------------------------------------------------- Hub
+  bg_hub: {
+    ...BG,
+    draw(p) {
+      const S = surf(p);
+      S.sky(0, 100, [mix(PAL.night, PAL.bruise, 0.45), mix(PAL.bruise, PAL.ash, 0.3), mix(PAL.wine, PAL.ash, 0.35), mix(PAL.ember, PAL.ash, 0.5), mix(PAL.flame, PAL.fog, 0.35)]);
+      S.fog(40, 7, PAL.bruise, 0.3, 81, 34); S.fog(70, 5, PAL.rose, 0.16, 82, 30);
+      S.glow(70, 96, 70, PAL.flame, 0.22, 30);
+      // far hills + dead woods
+      const farC = mix(PAL.bruise, PAL.ash, 0.4), t1 = (x) => 88 - fbm(x / 36, 85) * 12;
+      S.fillBelow(t1, farC, 108);
+      for (let x = 3; x < 256; x += 7 + ((x * 3) % 5)) if (hash2(x, 2, 7) < 0.6) deadTree(p, x, t1(x) + 1, 8 + hash2(x, 3, 7) * 9, mix(PAL.night, PAL.bruise, 0.45), x, 0);
+      S.fog(94, 6, PAL.rose, 0.2, 83, 26);
+      // graveyard slope
+      const g0 = mix(PAL.dusk, PAL.moss, 0.25), g1 = mix(PAL.night, PAL.moss, 0.2), t2 = (x) => 98 - fbm(x / 50 + 3, 86) * 5;
+      S.fillBelow(t2, (x, y, dp) => (by(x, y) < Math.min(1, dp / 28) ? g1 : g0), 144);
+      // Hob's hut, lantern-lit (left)
+      const hut = mix(PAL.ink, PAL.bark, 0.45), roof = mix(PAL.night, PAL.bark, 0.3);
+      p.rect(28, 98, 38, 20, hut); p.poly([[24, 98], [47, 80], [70, 98]], roof);
+      p.rect(58, 80, 5, 12, hut);
+      p.rect(36, 104, 7, 6, PAL.candle); p.line(39, 104, 39, 109, hut); p.line(36, 107, 42, 107, hut);
+      p.rect(50, 106, 8, 12, mix(PAL.void, PAL.bark, 0.3));
+      S.glow(39, 107, 18, PAL.candle, 0.42, 14);
+      // lantern on a post by the door
+      p.rect(70, 100, 1, 16, hut); p.rect(68, 98, 5, 1, hut); p.rect(69, 99, 3, 3, PAL.candle); S.glow(70, 100, 14, PAL.flame, 0.45);
+      plume(S, 61, 80, 30, 8, mix(PAL.ash, PAL.dusk, 0.3), 0.4, 6);
+      // the Waystone: tall standing stone, runes faintly lit
+      const stoneC = mix(PAL.night, PAL.ash, 0.4);
+      p.poly([[170, 112], [172, 54], [176, 40], [182, 36], [188, 42], [191, 60], [193, 112]], stoneC, { shade: 0.3 });
+      p.poly([[181, 36], [188, 42], [191, 60], [193, 112], [186, 112], [187, 60]], mix(stoneC, PAL.void, 0.4));
+      for (const [x, y] of [[178, 58], [182, 66], [180, 74], [184, 82], [179, 90], [183, 98]]) { p.px(x, y, mix(PAL.spirit, PAL.ghost, 0.2)); p.px(x + 1, y + 1, PAL.spirit); }
+      S.glow(181, 74, 20, PAL.spirit, 0.16, 36);
+      // graves: rows receding (smaller further), fresh mounds in front
+      const rr = rng(33);
+      for (let row = 0; row < 3; row++) {
+        const y = 106 + row * 9, sc = 0.7 + row * 0.3;
+        for (let x = 84 + ((row * 17) % 9); x < 250; x += 16 + ((rr() * 8) | 0)) {
+          if (x > 164 && x < 198) continue;
+          const c = mix(PAL.night, PAL.ash, 0.3 + row * 0.04);
+          if (rr() < 0.5) headstone(p, x, y, 4 * sc + 1, 7 * sc + 1, c); else graveCross(p, x, y, 7 * sc + 2, c);
+          p.ellipse(x + 2, y + 1, 5 * sc, 1.4, mix(PAL.bark, PAL.night, 0.45));
+        }
+      }
+      for (const [x, y] of [[100, 125], [116, 129], [214, 127]]) {
+        p.ellipse(x, y, 9, 2.4, mix(PAL.bark, PAL.dusk, 0.35), { shade: 0.2 });
+        graveCross(p, x, y - 1, 9, mix(PAL.wood, PAL.ash, 0.3));
+      }
+      p.line(230, 131, 231, 119, PAL.wood, 1); p.rect(229, 118, 4, 3, PAL.iron); // spade in the soil
+      p.ellipse(228, 133, 8, 2, mix(PAL.bark, PAL.dusk, 0.4));
+      // worn path
+      p.poly([[52, 118], [62, 118], [96, 144], [40, 144]], mix(PAL.dusk, PAL.ash, 0.15));
+      S.texture(0, 108, 256, 144, mix(g0, PAL.ash, 0.2), 0.3, 4, 87);
+      S.fog(112, 5, PAL.bruise, 0.28, 84, 32);
+      S.ash(40, 88, [PAL.fog, PAL.stone], 0, 120);
+      S.vignette(0.8);
     },
   },
 });

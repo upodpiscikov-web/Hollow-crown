@@ -228,14 +228,19 @@ defineSprites({
       p.px(37, 9, '#fff3c8').px(37, 10, PAL.flame);
       p.rect(35, 13, 5, 1, PAL.iron);
       p.glow(37, 10, PAL.candle, 4);
-      // translucent: the cassock dissolves into nothing toward the hem (ordered dither, ghost-tinted)
-      const B = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-      const has = (x, y) => p.d[(y * p.w + x) * 4 + 3] > 0;
-      for (let y = 36; y < 56; y++) for (let x = 8; x < 35; x++) {
-        if (!has(x, y) || x === 30 || x === 31) continue; // keep the pole solid
-        const k = (y - 36) / 19, t = (B[(y & 3) * 4 + (x & 3)] + 0.5) / 16;
-        if (t < k * k * 0.95) p.erase(x, y);
-        else if (t < k * 1.25) p.px(x, y, mix(PAL.ghost, PAL.ash, 0.35 + 0.3 * (1 - k)));
+      // not quite here: the cassock fades to ghost-blue and the hem frays into wisps
+      const D = p.d, G = [169, 198, 194];
+      for (let y = 30; y < 56; y++) for (let x = 8; x < 35; x++) {
+        const i = (y * p.w + x) * 4;
+        if (D[i + 3] === 0 || x === 30 || x === 31) continue; // keep the pole solid
+        const f = ((y - 30) / 25) * 0.55;
+        D[i] += (G[0] - D[i]) * f; D[i + 1] += (G[1] - D[i + 1]) * f; D[i + 2] += (G[2] - D[i + 2]) * f;
+      }
+      for (let x = 8; x < 35; x++) {
+        if (x === 30 || x === 31) continue;
+        const cut = 49 + Math.floor(((x * 37 + (x >> 1) * 11) % 7) * 0.9) - (((x >> 1) & 1) ? 1 : 0);
+        p.erase(x, cut, 1, 56 - cut);
+        if ((x * 5) % 4 === 0) p.px(x, cut + 1 + (x % 3), mix(PAL.ghost, PAL.ash, 0.4));
       }
     },
   },
