@@ -706,7 +706,7 @@ defineSprites({
       for (const x of [8, 10, 12, 14]) p.tri(x, 19, x + 1, 22, x + 2, 19, PAL.bone);
       p.ellipse(9, 13, 2.5, 2.5, PAL.void); p.ellipse(15, 13, 2.5, 2.5, PAL.void);
       eyes(p, [[9, 13], [15, 13]], PAL.venom, 2);
-      p.tri(3, 22, 8, 19, 6, 26, PAL.bone);
+      p.tri(4, 23, 8, 21, 6, 26, PAL.bone);
     },
   },
   en_glamour_kin: {
@@ -970,10 +970,10 @@ defineSprites({
       for (const x of [15, 18, 21, 24]) p.tri(x, 37, x + 1.5, 40, x + 3, 37, PAL.bone);
       for (const x of [17, 20, 23]) p.tri(x, 43, x + 1.5, 40, x + 3, 43, PAL.bone);
       // long bony arms: one reaching up-left, one trailing in the water
-      p.path([[34, 44], [22, 46], [10, 38]], PAL.pale, 4);
-      p.path([[10, 38], [4, 28]], PAL.pale, 2);
+      p.path([[34, 44], [22, 46], [10, 38]], PAL.sick, 3);
+      p.path([[10, 38], [4, 28]], PAL.sick, 2);
       for (const [dx, dy] of [[-5, -6], [-7, -2], [-6, 3]]) p.path([[4, 28 + (dy > 0 ? 6 : 0)], [4 + dx, 28 + dy + (dy > 0 ? 6 : 0)]], PAL.bone, 1);
-      p.path([[44, 52], [30, 58], [18, 60]], PAL.pale, 4);
+      p.path([[44, 52], [30, 58], [18, 60]], PAL.sick, 3);
       for (const [dx, dy] of [[-6, -3], [-7, 0], [-5, 3]]) p.path([[18, 60], [18 + dx, 60 + dy]], PAL.bone, 1);
       // ripples
       p.ellipse(40, 66, 34, 2, PAL.water);

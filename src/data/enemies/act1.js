@@ -470,7 +470,7 @@ defineEnemies([
         fx(g, e) {
           e.data.frenzy = true;
           e.data.frenzyNow = false;
-          g.apply(e, 'frenzy', 2, e);
+          g.apply(e, 'frenzy', 1, e);
           g.gainBlock(e, 12, { raw: true });
           summonHounds(g, e, 2);
         },
