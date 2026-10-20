@@ -96,8 +96,11 @@
 .end-turn.ready::after { animation: glowop 1s ease-in-out infinite alternate; }
 .end-turn.disabled { background: linear-gradient(180deg, #38323c, #221e26); border-color: #5a5f66; color: #9a949e; opacity: .85; filter: none; }
 @keyframes glowop { from { opacity: .15; } to { opacity: 1; } }
-.c-hint { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 15; display: none; align-items: center; gap: 8px; padding: 4px 14px; background: rgba(10,8,12,.85); border: 1px solid var(--gold); border-radius: 14px; font-size: 13px; color: var(--candle); font-style: italic; pointer-events: none; white-space: nowrap; }
+.c-hint { position: absolute; top: calc(var(--tb-h) + 6px); left: 50%; transform: translateX(-50%); z-index: 15; display: none; align-items: center; gap: 8px; padding: 4px 14px; background: rgba(10,8,12,.85); border: 1px solid var(--gold); border-radius: 14px; font-size: 13px; color: var(--candle); font-style: italic; pointer-events: none; white-space: nowrap; }
 .c-hint.on { display: flex; } .c-hint .btn { pointer-events: auto; min-height: 30px; }
 .hand-zone { position: absolute; inset: 0; z-index: 14; pointer-events: none; }
 .hand-tips { position: absolute; width: 170px; z-index: 30; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
 .death-veil { position: absolute; inset: 0; background: #000; opacity: 0; z-index: 50; pointer-events: none; }
+
+.intent .glyph { font-size: 15px; color: var(--bone); width: 18px; } .intent .it-sub.glyph { font-size: 11px; width: 12px; }
+.it-atk .glyph, .it-atkdef .glyph:first-child, .it-atkbuff .glyph:first-child, .it-atkdebuff .glyph:first-child { color: #ff7a66; }

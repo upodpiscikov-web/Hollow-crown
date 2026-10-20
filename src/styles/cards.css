@@ -19,6 +19,7 @@
 .c-name { position: absolute; left: .75em; right: .75em; top: .6em; height: 1.65em; display: flex; align-items: center; justify-content: center; padding: 0 1.4em;
   background: linear-gradient(180deg, #2c2532, #1b1620); border: .12em solid var(--rc, #6b6470); border-radius: .25em; font-family: var(--f-title); font-size: 1em; color: var(--parch); letter-spacing: .02em; line-height: 1; text-align: center; }
 .c-name span { white-space: nowrap; overflow: hidden; text-overflow: clip; max-width: 100%; display: block; }
+.c-name.sm { font-size: .84em; } .c-name.xs { font-size: .7em; }
 .card.up .c-name { color: #9be07a; }
 .c-cost { position: absolute; left: -.55em; top: -.55em; width: 2.5em; height: 2.5em; border-radius: 50%; z-index: 2; display: flex; align-items: center; justify-content: center;
   background: radial-gradient(circle at 35% 30%, #5f8fc4 0%, #27456b 60%, #162a45 100%); border: .16em solid #0b0a0d; box-shadow: 0 0 0 .13em #c9a227, 0 .15em .4em rgba(0,0,0,.6); }

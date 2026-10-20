@@ -21,6 +21,7 @@ const INTENT_ICON = {
   def: ['in_def'], buff: ['in_buff'], debuff: ['in_debuff'], defbuff: ['in_def', 'in_buff'], strongdebuff: ['in_strongdebuff'],
   summon: ['in_summon'], heal: ['in_heal'], sleep: ['in_sleep'], flee: ['in_flee'], unknown: ['in_unknown'], special: ['in_special'],
 };
+const INTENT_GLYPH = { in_atk: '\u2694', in_atk_heavy: '\u2694', in_def: '\u25C8', in_buff: '\u25B2', in_debuff: '\u25BC', in_strongdebuff: '\u2620', in_unknown: '?', in_sleep: 'z', in_summon: '\u2726', in_flee: '\u00BB', in_heal: '+', in_special: '\u2736' };
 const INTENT_WORD = {
   atk: 'attack', atkdef: 'attack and defend', atkbuff: 'attack and grow stronger', atkdebuff: 'attack and hinder you',
   def: 'defend', buff: 'grow stronger', debuff: 'hinder you', defbuff: 'defend and grow stronger', strongdebuff: 'cast a terrible curse',
@@ -346,7 +347,7 @@ export const combatScreen = {
     icons.forEach((id, i) => {
       let sid = id;
       if (i === 0 && id === 'in_atk' && heavy && hasSprite('in_atk_heavy')) sid = 'in_atk_heavy';
-      box.appendChild(icon(sid, i === 0 ? 1.75 : 1.25, i ? 'it-sub' : 'it-main', '?'));
+      box.appendChild(icon(sid, i === 0 ? 1.75 : 1.25, i ? 'it-sub' : 'it-main', INTENT_GLYPH[sid] || '?'));
     });
     if (it.dmg != null) box.appendChild(h('span.it-dmg', `${it.dmg}${it.times > 1 ? '×' + it.times : ''}`));
     rec.top.appendChild(box);
@@ -446,7 +447,7 @@ export const combatScreen = {
   // ------------------------------------------------------------------ hand
   handGeom() {
     const x0 = 100, x1 = S.W - 152;
-    return { x0, x1, y: S.H - CH + 8 };
+    return { x0, x1, y: S.H - CH + 3 };
   },
 
   layoutHand() {
@@ -464,7 +465,7 @@ export const combatScreen = {
     cards.forEach((c, i) => {
       const off = i - mid;
       let x = start + i * spacing;
-      let yy = y + off * off * (n > 6 ? 0.9 : 1.5);
+      let yy = y + off * off * (n > 6 ? 0.8 : 1.2);
       let rot = off * (n > 7 ? 2.2 : n > 4 ? 3 : 4);
       let sc = 1;
       if (selIdx >= 0 && i !== selIdx) x += i < selIdx ? -22 : 22;

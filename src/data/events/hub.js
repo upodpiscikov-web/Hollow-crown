@@ -339,7 +339,7 @@ defineHubLines([
     ],
   })),
   ...HEROES.map((h) => ({
-    id: `hob_end_true_${h}`, pri: 99, once: true, req: (m, l) => wonWith(l, 'true', h),
+    id: `hob_end_true_${h}`, pri: 101, once: true, req: (m, l) => wonWith(l, 'true', h),
     lines: [
       ['narrator', 'Spring. Real spring: wet, green, ridiculous. The Waystone has moss on it. The oldest grave in the yard stands open, and someone has lain down in it.'],
       ['hob', "Don't mind me. I'm only resting my eyes. Four hundred years, give or take, I've been meaning to."],

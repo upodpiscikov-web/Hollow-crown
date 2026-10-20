@@ -29,7 +29,7 @@ b, strong { font-weight: 700; }
 p { margin: 0; }
 
 #backdrop { position: fixed; inset: 0; background: var(--ink); }
-#stage { position: absolute; transform-origin: 0 0; overflow: hidden; background: var(--ink); contain: layout paint; }
+#stage { position: absolute; transform-origin: 0 0; overflow: hidden; overflow: clip; background: var(--ink); contain: layout paint; }
 #screen, #fx, #overlay, #toasts { position: absolute; inset: 0; }
 #fx { pointer-events: none; z-index: 40; }
 #overlay { pointer-events: none; z-index: 60; }
@@ -37,7 +37,7 @@ p { margin: 0; }
 #toasts { pointer-events: none; z-index: 90; inset: 0 0 auto 0; top: 44px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 #particles { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 70; image-rendering: pixelated; }
 .screen-host { position: absolute; inset: 0; }
-.screen { position: absolute; inset: 0; overflow: hidden; }
+.screen { position: absolute; inset: 0; overflow: hidden; overflow: clip; }
 .bleed { position: absolute; inset: 0; }
 .bg { background-size: cover; background-position: center; image-rendering: pixelated; }
 .px { image-rendering: pixelated; image-rendering: crisp-edges; image-rendering: pixelated; display: block; }

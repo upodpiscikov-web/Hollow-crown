@@ -41,7 +41,7 @@ export function buildMap(g, opts = {}) {
   const maxF = Math.max(...nodes.map((n) => n.f));
   const lanes = 7;
   const H = opts.height || (S.H - 40 - 28);
-  const laneH = fixed ? 0 : Math.min(48, (H - 20) / lanes);
+  const laneH = fixed ? 0 : Math.min(50, (H - 8) / lanes);
   const colW = fixed ? 120 : 64;
   const padL = 70;
   const bossW = 170;
@@ -51,8 +51,8 @@ export function buildMap(g, opts = {}) {
   for (const n of nodes) {
     const k = n.f + '_' + n.l;
     if (n.type === 'boss') { pos[k] = { x: padL + n.f * colW + 50, y: fixed ? H / 2 : top + 3 * laneH }; continue; }
-    const jx = fixed ? 0 : (hash(n.f, n.l) - 0.5) * 18;
-    const jy = fixed ? 0 : (hash(n.l + 11, n.f + 3) - 0.5) * 12;
+    const jx = fixed ? 0 : (hash(n.f, n.l) - 0.5) * 14;
+    const jy = fixed ? 0 : (hash(n.l + 11, n.f + 3) - 0.5) * 4;
     pos[k] = { x: padL + n.f * colW + jx, y: (fixed ? H / 2 : top + n.l * laneH) + jy };
   }
   const reach = new Set(opts.interactive ? g.reachable() : []);

@@ -2,7 +2,7 @@
 // via .card-size helpers) to scale every part of it uniformly.
 import { CARDS, HEROES } from '../engine/registry.js';
 import { h, safe, cap } from './core.js';
-import { spr, hasSprite } from './gfx.js';
+import { spr, sprURL, hasSprite } from './gfx.js';
 import { cardText, glossaryFor } from './text.js';
 
 const TYPE_LABEL = { attack: 'Attack', skill: 'Skill', power: 'Power', curse: 'Curse', status: 'Status' };
@@ -34,11 +34,12 @@ export function cardEl(card, opts = {}) {
   // Art
   const art = h('div.c-art');
   const artId = 'art_' + (def.art || 'missing');
-  if (hasSprite(artId)) art.appendChild(spr(artId, 1, 'c-artimg'));
+  if (hasSprite(artId)) art.appendChild(h('img.px.c-artimg', { src: sprURL(artId), alt: '', draggable: 'false' }));
   else art.appendChild(h('div.c-artph', h('span', cap(def.art || '?').slice(0, 1))));
   el.appendChild(art);
   // Name banner
-  el.appendChild(h('div.c-name', h('span', def.name + (card.up ? '+' : ''))));
+  const nm = def.name + (card.up ? '+' : '');
+  el.appendChild(h('div.c-name' + (nm.length > 17 ? '.xs' : nm.length > 13 ? '.sm' : ''), h('span', nm)));
   // Cost gem
   const cost = costInfo(g, card, def, opts.live);
   if (cost) el.appendChild(h('div.c-cost' + (cost.cls ? '.' + cost.cls : ''), h('span', String(cost.text))));
