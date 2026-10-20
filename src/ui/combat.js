@@ -213,7 +213,7 @@ export const combatScreen = {
     const g = this.g;
     const rec = this.makeEntity(true);
     const H = HEROES[g.run.hero];
-    this.setSprite(rec, (H && H.sprite) || 'hero_' + g.run.hero, 2);
+    this.setSprite(rec, (H && H.sprite) || 'hero_' + g.run.hero, 2.5);
     rec.oaths = h('div.oaths');
     rec.root.appendChild(rec.oaths);
     rec.body.addEventListener('click', (ev) => {
@@ -291,7 +291,7 @@ export const combatScreen = {
     for (const [uid, rec] of this.enemyRecs) if (!keep.has(uid)) { rec.root.remove(); this.enemyRecs.delete(uid); }
     // Fit sprites into the zone.
     const zoneW = S.W * 0.5;
-    const maxH = Math.max(120, S.H - GROUND - 34 - 34);
+    const maxH = Math.max(110, S.H - 165 - 72);
     let total = 0;
     const scales = list.map((e) => {
       const d = ENEMIES[e.id] || {};

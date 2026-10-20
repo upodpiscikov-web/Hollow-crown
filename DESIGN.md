@@ -181,7 +181,7 @@ After defeating the Act 3 boss, the heir enters the **Throne Room** (always coun
 | soul | Soul | buff | spirit passive/release values +N |
 | vigor | Vigor | buff | next attack deals +N damage, then removed |
 | shackled | Shackled | debuff | lose N Might until end of turn (temporary) |
-| fragile_mind | Dread | debuff | draw N fewer cards next turn |
+| dread | Dread | debuff | draw N fewer cards next turn |
 | burning | Ash-Burn | debuff | at end of turn take N damage |
 
 Names to use in card text: **Might, Guard, Exposed, Weakened, Frail, Rot, Ward, Thorns, Plating,

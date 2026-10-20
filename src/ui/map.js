@@ -40,7 +40,7 @@ export function buildMap(g, opts = {}) {
   const fixed = !!map.fixed;
   const maxF = Math.max(...nodes.map((n) => n.f));
   const lanes = 7;
-  const H = opts.height || (S.H - 34 - 30);
+  const H = opts.height || (S.H - 40 - 28);
   const laneH = fixed ? 0 : Math.min(48, (H - 20) / lanes);
   const colW = fixed ? 120 : 64;
   const padL = 70;

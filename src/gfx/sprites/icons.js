@@ -57,6 +57,10 @@ const DARKER = {
   P: 'p', B: 'A', A: 'a', N: 'n', '*': '+', '+': '#', '#': '-', '-': '=',
 };
 
+// NOTE: the engine's sprite proxy does not pad `circle()` for the outline border
+// (it pads ellipse/rect/px/... only), so circles are always drawn via ellipse().
+const circ = (p, x, y, r, c, o) => p.ellipse(x, y, r, r, c, o);
+
 // Draw an ASCII pixel map. `pal` maps chars → colours (merged over BASE).
 function pix(p, rows, pal, ox = 0, oy = 0) {
   for (let y = 0; y < rows.length; y++) {
@@ -252,7 +256,7 @@ S.art_sword = art('steel', (p) => {
   p.px(24, 3, '#eef6f6'); p.px(25, 3, '#bccfd9'); p.px(25, 2, '#eef6f6');
   diagDR(p, 6, 14, 6, ['#f0d27a', '#c9a227', '#8f6f1a']);      // crossguard
   diagUR(p, 6, 21, 4, ['#977049', '#6e5039']);                 // grip
-  p.circle(5.5, 22, 1.6, '#c9a227'); p.px(5, 21, '#fff3c4');   // pommel
+  circ(p, 5.5, 22, 1.6, '#c9a227'); p.px(5, 21, '#fff3c4');   // pommel
 });
 // ---- shield
 S.art_shield = art('steel', (p) => {
@@ -354,7 +358,7 @@ S.art_greatsword = art('ember', (p) => {
   p.px(7, 6, '#c9a227'); p.px(25, 6, '#8f6f1a');
   p.rect(15, 3, 3, 4, '#6e5039');                              // grip
   for (let y = 3; y < 7; y += 2) p.rect(15, y, 3, 1, '#977049');
-  p.circle(16.5, 1.8, 1.7, '#c9a227'); p.px(16, 1, '#fff3c4');
+  circ(p, 16.5, 1.8, 1.7, '#c9a227'); p.px(16, 1, '#fff3c4');
 }, { gy: 12, fx: (p) => { bloom(p, 21, 18, 3, '#e8a33a', 50); p.px(22, 16, '#f0d27a'); p.px(11, 14, '#e8a33a'); } });
 S.art_axe = art('ember', (p) => {
   diagUR(p, 5, 22, 17, ['#977049', '#6e5039', '#4a3527']);    // haft
@@ -371,7 +375,7 @@ S.art_axe = art('ember', (p) => {
   diagUR(p, 20, 5, 3, ['#977049', '#6e5039']);
 });
 S.art_dagger = art('blood', (p) => {
-  p.circle(16, 2.5, 1.6, '#c9a227'); p.px(15, 2, '#fff3c4');
+  circ(p, 16, 2.5, 1.6, '#c9a227'); p.px(15, 2, '#fff3c4');
   p.rect(15, 4, 3, 3, '#4b3b5e'); p.rect(15, 5, 3, 1, '#7b5aa6');
   p.rect(11, 7, 11, 2, '#c9a227'); p.rect(11, 7, 11, 1, '#f0d27a'); p.px(10, 6, '#c9a227'); p.px(22, 6, '#8f6f1a');
   p.poly([[14, 9], [19, 9], [18.6, 15], [16.5, 19.5], [14.4, 15]], '#bccfd9');
@@ -395,7 +399,7 @@ S.art_mace = art('steel', (p) => {
     const a = (k / 8) * Math.PI * 2 + 0.39;
     p.tri(21 + Math.cos(a) * 3, 6 + Math.sin(a) * 3, 21 + Math.cos(a) * 7.2, 6 + Math.sin(a) * 7.2, 21 + Math.cos(a + 0.5) * 3, 6 + Math.sin(a + 0.5) * 3, '#8e98a3');
   }
-  p.circle(21, 6, 4.2, '#8e98a3', { shade: 0.4 });
+  circ(p, 21, 6, 4.2, '#8e98a3', { shade: 0.4 });
   p.px(19, 4, '#eef6f6'); p.px(20, 4, '#bccfd9');
 });
 S.art_bow = art('night', (p) => {
@@ -451,7 +455,7 @@ S.art_tower_shield = art('steel', (p) => {
     '.ieeeeee',
     '..iiiiii',
   ], false, 3), { Z: '#8a1c1c', k: '#b8302a', z: '#5e1212', X: '#3a0b10' }, 8, 3);
-  p.circle(16, 12, 2.5, '#c9a227'); p.px(15, 11, '#fff3c4');
+  circ(p, 16, 12, 2.5, '#c9a227'); p.px(15, 11, '#fff3c4');
 });
 S.art_oath = art('gold', (p) => {
   p.ring(16, 10, 8, '#c9a227', 2);
@@ -460,7 +464,7 @@ S.art_oath = art('gold', (p) => {
   p.px(16, 21, '#8e98a3'); p.px(16, 22, '#545a63');
   p.rect(10, 6, 13, 2, '#c9a227'); p.rect(10, 6, 13, 1, '#f0d27a');
   p.rect(15, 2, 3, 4, '#6e5039');
-  p.circle(16.5, 1.5, 1.5, '#c9a227');
+  circ(p, 16.5, 1.5, 1.5, '#c9a227');
   p.poly([[12, 9], [21, 7], [22, 10], [13, 12]], '#8a1c1c');
   p.line(13, 9, 21, 8, '#b8302a');
   p.poly([[12, 11], [14, 12], [11, 17], [10, 15]], '#8a1c1c');
@@ -468,7 +472,7 @@ S.art_oath = art('gold', (p) => {
 }, { gy: 10, fx: (p) => bloom(p, 16, 10, 5, '#fff3c4', 40) });
 S.art_banner = art('ember', (p) => {
   p.rect(8, 2, 2, 22, '#6e5039'); p.rect(8, 2, 1, 22, '#977049');
-  p.circle(9, 1.5, 1.5, '#c9a227');
+  circ(p, 9, 1.5, 1.5, '#c9a227');
   p.rect(7, 4, 18, 2, '#4a3527'); p.rect(7, 4, 18, 1, '#6e5039');
   p.poly([[10, 6], [24, 6], [24, 18], [22, 16], [21, 19], [18, 15], [16, 20], [13, 16], [11, 18], [10, 16]], '#8a1c1c', { shade: 0.25 });
   p.rect(23, 6, 1, 11, '#5e1212');
@@ -489,7 +493,7 @@ S.art_crown = art('gold', (p) => {
   p.rect(6, 13, 20, 1, '#c9a227'); p.rect(6, 17, 20, 1, '#8f6f1a');
   p.line(7, 6, 7, 11, '#eef6f6'); p.line(16, 4, 14, 11, '#bccfd9'); p.line(12, 8, 11, 11, '#bccfd9');
   p.px(7, 5, '#f0d27a'); p.px(16, 2, '#f0d27a'); p.px(24, 5, '#c9a227'); p.px(12, 7, '#f0d27a'); p.px(20, 7, '#c9a227');
-  p.circle(16, 15, 2.6, '#c9a227'); p.circle(16, 15, 1.6, '#0b0a0d');
+  circ(p, 16, 15, 2.6, '#c9a227'); circ(p, 16, 15, 1.6, '#0b0a0d');
   p.px(15, 13, '#fff3c4');
 }, { gy: 12 });
 S.art_scythe = art('spirit', (p) => {
@@ -545,7 +549,7 @@ S.art_cauldron = art('rot', (p) => {
   p.ellipse(16, 8.2, 10.5, 1.2, '#8e98a3');
   p.ellipse(16, 8.8, 8.8, 1.6, '#5c7a2a');
   p.ellipse(15, 8.6, 6, 1, '#8fae3a');
-  p.circle(13, 7.5, 1.4, '#c4dc68'); p.circle(19, 7, 1.1, '#8fae3a'); p.px(12, 7, '#f0f8c0');
+  circ(p, 13, 7.5, 1.4, '#c4dc68'); circ(p, 19, 7, 1.1, '#8fae3a'); p.px(12, 7, '#f0f8c0');
   p.rect(5, 12, 2, 3, '#545a63'); p.rect(25, 12, 2, 3, '#33373e');
 }, { gy: 9, fx: (p) => {
   bloom(p, 16, 22, 5, '#e8a33a', 70);
@@ -563,7 +567,7 @@ S.art_herb = art('rot', (p) => {
   leaf(15, 12, -1, 6, '#8fae3a', '#c4dc68'); leaf(15, 9, 1, 6, '#5c7a2a', '#8fae3a');
   leaf(15, 6, -1, 4, '#8fae3a', '#c4dc68'); leaf(15, 5, 1, 4, '#8fae3a', '#5c7a2a');
   p.rect(14, 19, 4, 2, '#977049'); p.px(14, 19, '#c29a68');
-  p.circle(19, 4, 1, '#cfc6b0'); p.circle(12, 8, 1, '#e8dcc0');
+  circ(p, 19, 4, 1, '#cfc6b0'); circ(p, 12, 8, 1, '#e8dcc0');
 });
 S.art_mushroom = art('rot', (p) => {
   const shroom = (cx, top, rw, rh, stemH, sw) => {
@@ -612,7 +616,7 @@ S.art_spark = art('gold', (p) => {
   bolt([[16, 11], [19, 15], [18, 19], [23, 22]]);
   bolt([[16, 11], [24, 13], [29, 13]]);
   bolt([[16, 11], [8, 9], [3, 7]]);
-  p.circle(16, 11, 3, '#f0d27a'); p.circle(16, 11, 1.6, '#fbf3df');
+  circ(p, 16, 11, 3, '#f0d27a'); circ(p, 16, 11, 1.6, '#fbf3df');
 }, { shadow: false, fx: (p) => { bloom(p, 16, 11, 8, '#fff3c4', 60); p.px(6, 4, '#f0d27a'); p.px(26, 19, '#f0d27a'); p.px(28, 7, '#e8a33a'); } });
 S.art_drop = art('water', (p) => {
   shader(p, 8, 1, 24, 22, (x, y) => {
@@ -839,7 +843,7 @@ S.art_moon = art('night', (p) => {
     if (Math.hypot(x + 0.5 - 20, y + 0.5 - 9) < 8.3) return null;
     return lit(['#79747a', '#a19c9c', '#cfc6b0', '#e8dcc0', '#fbf3df'], sphere(nx, ny) + 0.1, x, y);
   });
-  p.circle(10, 15, 1.2, '#a19c9c'); p.circle(13, 19, 0.9, '#a19c9c'); p.px(8, 10, '#a19c9c');
+  circ(p, 10, 15, 1.2, '#a19c9c'); circ(p, 13, 19, 0.9, '#a19c9c'); p.px(8, 10, '#a19c9c');
 }, { gx: 14, fx: (p) => { p.px(25, 18, '#e8dcc0'); p.px(27, 4, '#cfc6b0'); p.px(23, 21, '#a19c9c'); } });
 S.art_sun = art('gold', (p) => {
   for (let k = 0; k < 12; k++) {
@@ -868,7 +872,7 @@ S.art_bell = art('gold', (p) => {
     return lit(['#5e4612', '#8f6f1a', '#c9a227', '#f0d27a', '#fff3c4'], 0.62 - dx / hw * 0.55 - (t < 0.15 ? 0 : 0.05), x, y);
   });
   p.rect(9, 15, 14, 1, '#8f6f1a');
-  p.circle(16, 21, 1.6, '#5e4612');
+  circ(p, 16, 21, 1.6, '#5e4612');
 }, { fx: (p) => { p.path([[4, 9], [3, 12], [4, 15]], '#c9a227', 1); p.path([[28, 9], [29, 12], [28, 15]], '#c9a227', 1); } });
 S.art_book = art('night', (p) => {
   p.rect(10, 4, 14, 17, '#cfc6b0'); for (let y = 5; y < 21; y += 2) p.rect(22, y, 2, 1, '#a19c9c');
@@ -934,7 +938,7 @@ S.art_web = art('night', (p) => {
   }
   p.line(21, 0, 21, 14, '#a19c9c');
   ball(p, 21, 16, 2.2, ['#16131a', '#363040', '#57535c']);
-  p.circle(21, 13.5, 1.2, '#363040');
+  circ(p, 21, 13.5, 1.2, '#363040');
   p.path([[19, 15], [17, 13], [17, 12]], '#16131a', 1); p.path([[23, 15], [25, 13], [25, 12]], '#16131a', 1);
   p.path([[19, 17], [17, 19], [17, 20]], '#16131a', 1); p.path([[23, 17], [25, 19], [25, 20]], '#16131a', 1);
   p.px(20, 16, '#b8302a'); p.px(22, 16, '#b8302a');
@@ -993,7 +997,7 @@ S.art_coin = art('gold', (p) => {
 }, { gy: 13 });
 S.art_key = art('gold', (p) => {
   p.ring(9, 8, 5, '#c9a227', 3); p.ring(9, 8, 5, '#f0d27a', 1);
-  p.circle(9, 8, 1.2, '#8f6f1a');
+  circ(p, 9, 8, 1.2, '#8f6f1a');
   diagDR(p, 12, 11, 13, ['#f0d27a', '#c9a227', '#8f6f1a']);
   p.rect(19, 18, 2, 4, '#c9a227'); p.rect(22, 20, 2, 3, '#8f6f1a'); p.rect(19, 21, 5, 1, '#8f6f1a');
   p.px(13, 12, '#fff3c4'); p.px(5, 5, '#fff3c4');
@@ -1066,7 +1070,7 @@ S.art_moth = art('night', (p) => {
     return lit(up ? ['#6e5039', '#977049', '#c29a68', '#e8dcc0'] : ['#4a3527', '#6e5039', '#977049'], 0.55 + side - dy * 0.03, x, y);
   });
   p.rect(15, 4, 2, 15, '#363040'); p.rect(15, 4, 1, 15, '#57535c');
-  p.circle(16, 4.5, 1.6, '#57535c');
+  circ(p, 16, 4.5, 1.6, '#57535c');
   p.path([[15, 3], [13, 0]], '#79747a', 1); p.path([[17, 3], [19, 0]], '#79747a', 1);
 }, { gy: 10, fx: (p) => { p.px(5, 20, '#cfc6b0'); p.px(27, 3, '#a19c9c'); } });
 S.art_owl = art('night', (p) => {
@@ -1106,7 +1110,7 @@ S.art_sigil = art('blood', (p) => {
   const pts = []; for (let k = 0; k < 5; k++) { const a = -Math.PI / 2 + (k * 4 * Math.PI) / 5; pts.push([16 + Math.cos(a) * 8, 11.5 + Math.sin(a) * 8]); }
   p.path([...pts, pts[0]], '#e0644c', 1);
   for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2; p.px(Math.round(16 + Math.cos(a) * 9.3 - 0.5), Math.round(11.5 + Math.sin(a) * 9.3 - 0.5), '#fbf3df'); }
-  p.circle(16, 11.5, 1.5, '#fbf3df');
+  circ(p, 16, 11.5, 1.5, '#fbf3df');
 }, { shadow: false, rim: 0, fx: (p) => bloom(p, 16, 11.5, 10, '#e0644c', 35) });
 S.art_prayer = art('gold', (p) => {
   pix(p, sym([
@@ -1153,10 +1157,10 @@ S.art_cloak = art('violet', (p) => {
     '4556555.',
     '.4.55.5.',
   ], false, 3), { 4: '#2b2135', 5: '#4b3b5e', 6: '#6a5480', h: '#cff5ec' }, 8, 3);
-  p.circle(16, 12.5, 1.2, '#c9a227');
+  circ(p, 16, 12.5, 1.2, '#c9a227');
 }, { gy: 10 });
 S.art_mirror = art('violet', (p) => {
-  p.rect(15, 16, 3, 7, '#8f6f1a'); p.rect(15, 16, 1, 7, '#c9a227'); p.circle(16.5, 22.5, 1.6, '#c9a227');
+  p.rect(15, 16, 3, 7, '#8f6f1a'); p.rect(15, 16, 1, 7, '#c9a227'); circ(p, 16.5, 22.5, 1.6, '#c9a227');
   shader(p, 7, 0, 26, 18, (x, y) => {
     const nx = (x + 0.5 - 16.5) / 8, ny = (y + 0.5 - 8.5) / 8.5;
     const d = nx * nx + ny * ny;
@@ -1632,6 +1636,21 @@ function cyl(p, x, y, w, h, cols, vert = true) {
     p.px(x + i, y + j, lit(cols, t, x + i, y + j, 0.25));
   }
 }
+// Tapered tube along sampled points [[x,y,halfWidth],...], lit from the top-left.
+function tube(p, pts, cols, o = {}) {
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  for (const [x, y, w] of pts) { x0 = Math.min(x0, x - w); y0 = Math.min(y0, y - w); x1 = Math.max(x1, x + w); y1 = Math.max(y1, y + w); }
+  for (let y = Math.floor(y0); y <= Math.ceil(y1); y++) for (let x = Math.floor(x0); x <= Math.ceil(x1); x++) {
+    const px = x + 0.5, py = y + 0.5;
+    let bi = -1, bd = 1e9;
+    for (let i = 0; i < pts.length; i++) { const d = Math.hypot(px - pts[i][0], py - pts[i][1]); if (d < bd) { bd = d; bi = i; } }
+    const [sx, sy, w] = pts[bi];
+    if (bd > w) continue;
+    const nx = (px - sx) / w, ny = (py - sy) / w;
+    const t = 0.5 - 0.5 * (nx * 0.6 + ny * 0.8) * (o.k ?? 0.9) + (o.bias || 0);
+    p.px(x, y, lit(cols, t, x, y, o.d ?? 0.3));
+  }
+}
 const RL = (def, fn) => ({
   w: 16, h: 16,
   draw(p, o) {
@@ -1641,14 +1660,18 @@ const RL = (def, fn) => ({
 });
 const BR = ['#4a3527', '#6e5039', '#977049', '#c29a68']; // wood / leather
 S.rl_amulet = RL('#c9a227', (p, T) => {
-  p.line(2, 0, 7, 9, '#8e98a3'); p.line(13, 0, 8, 9, '#545a63'); p.line(3, 0, 7, 8, '#bccfd9');
+  for (let i = 0; i <= 9; i++) {
+    const a = i % 2 ? '#8e98a3' : '#eef6f6', b = i % 2 ? '#545a63' : '#8e98a3';
+    p.px(Math.round(2 + (5 * i) / 9), i, a); p.px(Math.round(3 + (5 * i) / 9), i, '#545a63');
+    p.px(Math.round(13 - (5 * i) / 9), i, b); p.px(Math.round(12 - (5 * i) / 9), i, '#33373e');
+  }
   fillLit(p, [[8, 6], [13.5, 10.5], [8, 16], [2.5, 10.5]], T);
   p.line(8, 7, 3, 11, T[4]); p.line(8, 7, 13, 11, T[2]);
   ball(p, 8, 11, 2.6, ['#3a0b10', '#8a1c1c', '#b8302a', '#e0644c']);
   p.px(7, 10, '#fbf3df');
 });
 S.rl_coin = RL('#c9a227', (p, T) => {
-  p.circle(8, 8, 7.2, T[1]); p.circle(8, 8, 6.4, T[2]);
+  circ(p, 8, 8, 7.2, T[1]); circ(p, 8, 8, 6.4, T[2]);
   fillLit(p, [[3, 8], [4, 4], [8, 1.6], [12, 4], [13, 8], [12, 12], [8, 14.4], [4, 12]], [T[2], T[3], T[4]], { bias: -0.05 });
   p.ring(8, 8, 7.2, T[0], 1); p.ring(8, 8, 4.8, T[1], 1);
   p.rect(7, 5, 2, 6, T[1]); p.rect(5, 7, 6, 2, T[1]); p.px(7, 6, T[4]); p.px(6, 7, T[4]);
@@ -1743,7 +1766,7 @@ S.rl_eye = RL('#7b5aa6', (p, T) => {
   ball(p, 8, 8, 6.6, ['#79747a', '#a19c9c', '#cfc6b0', '#e8dcc0', '#fbf3df']);
   p.path([[2, 9], [4, 8], [5, 9]], '#b8302a', 1); p.path([[14, 7], [12, 8], [11, 7]], '#b8302a', 1); p.path([[8, 14], [9, 12]], '#b8302a', 1); p.path([[7, 2], [8, 3]], '#b8302a', 1);
   ball(p, 8, 8, 3.7, T);
-  p.circle(8, 8, 1.7, '#0b0a0d');
+  circ(p, 8, 8, 1.7, '#0b0a0d');
   p.px(6, 6, '#ffffff'); p.px(7, 6, '#ffffff'); p.px(6, 7, T[4]);
 });
 S.rl_hand = RL('#c9a48a', (p, T) => {
@@ -1757,16 +1780,14 @@ S.rl_hand = RL('#c9a48a', (p, T) => {
 });
 S.rl_horn = RL('#d8cfb8', (p, T) => {
   const pts = [];
-  for (let t = 0; t <= 1.001; t += 0.04) {
-    const x = (1 - t) * (1 - t) * 3 + 2 * t * (1 - t) * 1 + t * t * 14, y = (1 - t) * (1 - t) * 14 + 2 * t * (1 - t) * 3 + t * t * 2;
-    pts.push([x, y, 3.2 * (1 - t) + 0.6]);
+  for (let t = 0; t <= 1; t += 0.025) {
+    const x = (1 - t) * (1 - t) * 3.5 + 2 * t * (1 - t) * 0.5 + t * t * 14.5, y = (1 - t) * (1 - t) * 13.5 + 2 * t * (1 - t) * 1.5 + t * t * 1.5;
+    pts.push([x, y, 3.6 * Math.pow(Math.max(0, 1 - t), 0.85) + 0.7]);
   }
-  for (const [x, y, w] of pts) p.circle(x, y, w, T[1]);
-  for (const [x, y, w] of pts) p.circle(x - 0.5, y - 0.5, w * 0.8, T[2]);
-  for (const [x, y, w] of pts) p.circle(x - 1, y - 1, w * 0.45, T[3]);
-  for (const k of [6, 11]) { const [x, y, w] = pts[k]; p.circle(x, y, w, T[0], { shade: 0 }); p.circle(x - 0.5, y - 0.5, w * 0.7, T[1]); }
-  const [bx, by] = pts[0]; p.ellipse(bx, by + 1, 3.4, 1.4, '#2c1e16'); p.ellipse(bx - 0.4, by + 0.7, 2.8, 0.8, '#6e5039');
-  const [tx, ty] = pts[pts.length - 2]; p.px(Math.round(tx), Math.round(ty), T[4]);
+  tube(p, pts, T, { d: 0.12 });
+  for (const k of [10, 18, 26]) { const [x, y, w] = pts[k]; p.line(Math.round(x - w * 0.7), Math.round(y + w * 0.7), Math.round(x + w * 0.7), Math.round(y - w * 0.7), T[1]); }
+  const [bx, by, bw] = pts[0]; p.ellipse(bx, by + 0.3, bw + 0.2, 1.7, '#2c1e16'); p.ellipse(bx - 0.4, by, bw - 0.6, 1, '#6e5039');
+  const [tx, ty] = pts[pts.length - 6]; p.px(Math.round(tx - 1), Math.round(ty - 1), T[4]);
 });
 S.rl_bone = RL('#d8cfb8', (p, T) => {
   p.line(3, 12, 12, 3, T[1], 3); p.line(3, 11, 12, 2, T[2], 2); p.line(2, 11, 11, 2, T[4], 1);
@@ -1784,12 +1805,265 @@ S.rl_rosary = RL('#8a1c1c', (p, T) => {
   p.rect(7, 13, 2, 3, '#c9a227'); p.rect(6, 14, 4, 1, '#c9a227'); p.px(7, 13, '#f0d27a'); p.px(6, 14, '#f0d27a');
 });
 S.rl_sigil = RL('#e0644c', (p, T) => {
-  p.circle(8, 8, 7.3, '#363040'); p.circle(8, 8, 6.6, '#241f2b');
-  fillLit(p, [[2, 6], [4, 3], [8, 1.4], [12, 3], [14, 6], [14, 10], [12, 13], [8, 14.6], [4, 13], [2, 10]], ['#241f2b', '#363040', '#57535c'], { bias: -0.2 });
-  p.ring(8, 8, 6.4, T[1], 1); p.ring(8, 8, 5.4, T[2], 1);
-  const pts = []; for (let k = 0; k < 5; k++) { const a = -Math.PI / 2 + (k * 4 * Math.PI) / 5; pts.push([8 + Math.cos(a) * 5, 8 + Math.sin(a) * 5]); }
-  p.path([...pts, pts[0]].map(([x, y]) => [Math.round(x - 0.5), Math.round(y - 0.5)]), T[3], 1);
-  p.px(7, 7, T[4]); p.px(8, 7, T[4]); p.px(7, 8, T[4]); p.px(8, 8, T[4]);
+  circ(p, 8, 8, 7.3, '#363040'); circ(p, 8, 8, 6.6, '#241f2b');
+  fillLit(p, [[2, 6], [4, 3], [8, 1.4], [12, 3], [14, 6], [14, 10], [12, 13], [8, 14.6], [4, 13], [2, 10]], ['#16131a', '#241f2b', '#363040'], { bias: -0.1 });
+  p.ring(8, 8, 6.4, T[2], 1); p.ring(8, 8, 4.4, T[1], 1);
+  p.line(8, 4, 8, 12, T[3]); p.line(8, 8, 5, 5, T[3]); p.line(8, 8, 11, 5, T[3]); p.line(8, 4, 8, 12, T[3]);
+  p.px(7, 4, T[4]); p.px(8, 3, T[2]); p.px(8, 12, T[1]);
+});
+// ---- relics, part 2
+S.rl_mask = RL('#d8cfb8', (p, T) => {
+  fillLit(p, [[2, 3], [8, 1.2], [14, 3], [14.6, 8], [12, 12.4], [8, 15.4], [4, 12.4], [1.4, 8]], T, { bias: 0.05 });
+  p.poly([[3.2, 6.2], [7, 7.2], [6.6, 9], [3.8, 8.4]], '#0b0a0d'); p.poly([[12.8, 6.2], [9, 7.2], [9.4, 9], [12.2, 8.4]], '#0b0a0d');
+  p.line(3, 5, 7, 6, T[0]); p.line(13, 5, 9, 6, T[0]);
+  p.line(8, 8, 8, 12, T[1]); p.px(7, 12, T[1]); p.px(9, 12, T[1]);
+  p.line(5, 11, 7, 13, T[1]); p.line(11, 11, 9, 13, T[1]);
+  p.px(8, 3, '#8a1c1c'); p.px(8, 4, '#b8302a'); p.px(3, 3, T[4]); p.px(4, 2, T[4]);
+  p.px(1, 7, '#0b0a0d'); p.px(14, 7, '#0b0a0d');
+});
+S.rl_crown = RL('#c9a227', (p, T) => {
+  fillLit(p, [[2, 9], [3, 3], [6, 7], [8, 1], [10, 7], [13, 3], [14, 9]], T, { bias: 0.05 });
+  cyl(p, 2, 9, 12, 5, T, false);
+  p.rect(2, 9, 12, 1, T[4]); p.rect(2, 13, 12, 1, T[0]);
+  for (const [x, y] of [[3, 3], [8, 1], [13, 3]]) { p.px(x, y, T[4]); }
+  p.rect(7, 10, 2, 2, '#0b0a0d'); p.rect(6, 11, 4, 1, T[1]); circ(p, 8, 11, 1.4, '#7a1a1a'); p.px(7, 10, '#e0644c');
+  for (const x of [4, 11]) p.px(x, 11, T[0]);
+});
+S.rl_lantern = RL('#8e98a3', (p, T) => {
+  p.ring(8, 2.2, 2.2, T[1], 1);
+  fillLit(p, [[5.5, 4.5], [10.5, 4.5], [12, 6], [4, 6]], T);
+  p.rect(4, 5, 8, 8, '#e8a33a'); p.rect(5, 6, 6, 6, '#f0d27a'); p.rect(6, 7, 4, 4, '#fff3c4');
+  p.poly([[8, 6], [9.5, 9], [8, 11.5], [6.5, 9]], '#e8a33a'); p.poly([[8, 8], [9, 10], [8, 11], [7, 10]], '#fffbe0');
+  cyl(p, 4, 5, 1, 8, T); cyl(p, 11, 5, 1, 8, T); p.rect(7, 5, 2, 8, T[1]); p.px(7, 5, T[3]);
+  fillLit(p, [[3, 13], [13, 13], [12, 15.5], [4, 15.5]], T);
+  p.rect(3, 13, 10, 1, T[4]);
+});
+S.rl_mirror = RL('#c9a227', (p, T) => {
+  cyl(p, 7, 11, 2, 5, T);
+  ball(p, 8, 6.6, 6, T, 6.4);
+  shader(p, 2, 0, 14, 13, (x, y) => {
+    const nx = (x + 0.5 - 8) / 4.4, ny = (y + 0.5 - 6.6) / 4.9;
+    if (nx * nx + ny * ny > 1) return null;
+    if (Math.abs((x - y) - 1) < 1 || Math.abs((x - y) - 4) < 0.6) return '#e6f4f8';
+    return lit(['#2a4556', '#4c7890', '#7fb0c8', '#bfe0ec'], 0.7 - nx * 0.25 - ny * 0.4, x, y);
+  });
+  p.px(2, 6, T[4]); p.px(3, 3, T[4]); p.px(5, 1, T[4]); p.px(7, 15, T[0]);
+});
+S.rl_hourglass = RL('#977049', (p, T) => {
+  p.poly([[4.5, 3], [11.5, 3], [8.6, 7.6], [8.6, 8.4], [11.5, 13], [4.5, 13], [7.4, 8.4], [7.4, 7.6]], '#4c7890');
+  p.poly([[5.2, 3.2], [8, 3.2], [7.6, 7.6], [5.6, 4.8]], '#7fb0c8');
+  p.poly([[6, 5.2], [10, 5.2], [8.2, 7.8]], '#f0d27a'); p.poly([[5.5, 13], [10.5, 13], [9.4, 10.8], [6.6, 10.8]], '#f0d27a'); p.line(8, 8, 8, 10, '#fff3c4');
+  p.px(6, 12, '#c9a227'); p.px(9, 12, '#c9a227');
+  cyl(p, 2, 1, 12, 2, T, false); cyl(p, 2, 13, 12, 2, T, false);
+  p.rect(2, 1, 12, 1, T[4]); p.rect(2, 14, 12, 1, T[0]);
+  cyl(p, 3, 3, 1, 10, T); cyl(p, 12, 3, 1, 10, T);
+});
+S.rl_scroll = RL('#d8c9a0', (p, T) => {
+  cyl(p, 3, 3, 10, 10, T, false);
+  p.rect(5, 6, 6, 1, T[0]); p.rect(5, 8, 5, 1, T[0]); p.rect(5, 10, 6, 1, T[1]);
+  ball(p, 8, 3, 1.7, T, 1.7); p.rect(2, 2, 12, 2, T[3]); p.rect(2, 3, 12, 1, T[2]); p.rect(2, 2, 12, 1, T[4]);
+  p.rect(2, 12, 12, 2, T[2]); p.rect(2, 13, 12, 1, T[1]); p.rect(2, 12, 12, 1, T[3]);
+  p.px(1, 2, T[1]); p.px(1, 3, T[1]); p.px(14, 2, T[1]); p.px(14, 3, T[1]); p.px(1, 12, T[0]); p.px(14, 12, T[0]); p.px(1, 13, T[0]); p.px(14, 13, T[0]);
+  p.poly([[10, 10], [12, 10], [12.6, 15.4], [11, 14], [9.4, 15.4]], '#8a1c1c');
+  ball(p, 11, 11, 2.2, ['#3a0b10', '#5e1212', '#8a1c1c', '#b8302a', '#e0644c']);
+});
+S.rl_seed = RL('#b0793a', (p, T) => {
+  ball(p, 8, 10, 4.9, T, 5.2);
+  p.line(8, 14, 8, 15, T[0]);
+  p.ellipse(8, 5.6, 5.8, 3.2, T[1]); p.ellipse(7.5, 5.2, 5.2, 2.7, T[2]);
+  for (let x = 3; x < 13; x += 2) for (let y = 3; y < 8; y += 2) p.px(x + (y % 4 ? 1 : 0), y, T[0]);
+  p.rect(7, 1, 2, 3, T[0]); p.px(7, 1, T[3]); p.px(5, 4, T[4]); p.px(6, 3, T[3]); p.px(5, 9, T[4]); p.px(5, 10, T[4]);
+  p.px(10, 1, '#5c7a2a'); p.px(11, 0, '#8fae3a');
+});
+S.rl_flower = RL('#b5536b', (p, T) => {
+  cyl(p, 7, 8, 2, 8, ['#253318', '#3d5226', '#5c7a2a']);
+  fillLit(p, [[9, 13], [15, 10], [14, 14], [10, 15]], ['#253318', '#3d5226', '#5c7a2a', '#8fae3a']);
+  fillLit(p, [[7, 12], [1.5, 10.5], [2.5, 14], [6.5, 14.5]], ['#253318', '#3d5226', '#5c7a2a', '#8fae3a']);
+  for (let k = 0; k < 5; k++) { const a = -Math.PI / 2 + (k * Math.PI * 2) / 5; ball(p, 8 + Math.cos(a) * 3.6, 5.5 + Math.sin(a) * 3.6, 2.7, T); }
+  ball(p, 8, 5.5, 2, ['#8f6f1a', '#c9a227', '#f0d27a', '#fff3c4']);
+});
+S.rl_rope = RL('#b8905a', (p, T) => {
+  p.ring(8, 8, 7.2, T[1], 3); p.ring(8, 8, 7.2, T[2], 2); p.ring(8, 8, 7.2, T[3], 1);
+  p.ring(8, 8, 4.4, T[1], 3); p.ring(8, 8, 4.4, T[2], 2); p.ring(8, 8, 4.4, T[3], 1);
+  for (let k = 0; k < 20; k++) { const a = (k / 20) * Math.PI * 2; const r = k % 2 ? 6.4 : 3.6; p.px(Math.floor(8 + Math.cos(a) * (r + 0.7)), Math.floor(8 + Math.sin(a) * (r + 0.7)), k % 4 ? T[0] : T[4]); }
+  p.path([[13, 11], [14, 14], [12, 15]], T[2], 2); p.px(12, 15, T[0]);
+});
+S.rl_nail = RL('#8e98a3', (p, T) => {
+  ball(p, 8, 2.4, 4.3, T, 1.9);
+  p.rect(4, 2, 8, 1, T[4]);
+  cyl(p, 7, 3, 2, 10, T);
+  fillLit(p, [[7, 12.5], [9, 12.5], [8.2, 15.8], [7.8, 15.8]], T);
+  p.px(8, 6, '#7a3a1a'); p.px(8, 7, '#a0522d'); p.px(7, 10, '#7a3a1a'); p.px(8, 9, T[0]);
+  p.px(6, 2, T[0]); p.px(10, 2, T[0]);
+});
+S.rl_egg = RL('#d8cfb8', (p, T) => {
+  shader(p, 1, 0, 15, 16, (x, y) => {
+    const nx = (x + 0.5 - 8) / 5.6, ny = (y + 0.5 - 8.6) / 7;
+    if (nx * nx * (1 - 0.24 * ny) + ny * ny > 1) return null;
+    const v = hashStr(x + ',' + y) % 13;
+    if (v === 0) return T[0]; if (v === 1) return T[1];
+    return lit(T, sphere(nx, ny) * 0.95 + 0.05, x, y, 0.25);
+  });
+  p.px(5, 4, T[4]); p.px(6, 3, T[4]); p.px(5, 5, T[4]);
+});
+S.rl_heart = RL('#b8302a', (p, T) => {
+  shader(p, 0, 0, 15, 15, (x, y) => {
+    const X = (x + 0.5 - 8) / 6.6, Y = -(y + 0.5 - 7.6) / 6.6 + 0.12;
+    if (Math.pow(X * X + Y * Y - 0.62, 3) - X * X * Y * Y * Y > 0) return null;
+    return lit(T, sphere(X * 0.9, -Y * 0.9 - 0.05), x, y, 0.3);
+  });
+  p.path([[4, 4], [3, 6]], T[4], 1); p.px(5, 3, T[4]); p.px(4, 3, T[4]);
+  p.path([[9, 5], [8, 8], [10, 10]], T[0], 1);
+});
+S.rl_moon = RL('#e8dcc0', (p, T) => {
+  shader(p, 0, 0, 15, 15, (x, y) => {
+    const nx = (x + 0.5 - 8) / 7, ny = (y + 0.5 - 8) / 7;
+    if (nx * nx + ny * ny > 1) return null;
+    if (Math.hypot(x + 0.5 - 11.2, y + 0.5 - 6) < 5.8) return null;
+    return lit(T, sphere(nx, ny) + 0.1, x, y, 0.3);
+  });
+  p.px(3, 9, T[0]); p.px(4, 10, T[0]); p.px(5, 12, T[1]); p.px(3, 6, T[1]); p.px(12, 12, T[4]); p.px(14, 3, T[3]); p.px(13, 1, T[2]);
+});
+S.rl_sun = RL('#e8a33a', (p, T) => {
+  for (let k = 0; k < 12; k++) {
+    const a = (k / 12) * Math.PI * 2, w = 0.2, r0 = 4.8, r1 = k % 2 ? 6.8 : 8;
+    p.tri(8 + Math.cos(a - w) * r0, 8 + Math.sin(a - w) * r0, 8 + Math.cos(a) * r1, 8 + Math.sin(a) * r1, 8 + Math.cos(a + w) * r0, 8 + Math.sin(a + w) * r0, k % 2 ? T[1] : T[3]);
+  }
+  ball(p, 8, 8, 4.8, [T[1], T[2], T[3], T[4], '#ffffff']);
+  p.px(7, 8, T[1]); p.px(9, 8, T[1]); p.px(8, 10, T[1]); p.px(7, 10, T[1]); p.px(9, 10, T[1]);
+});
+S.rl_chain = RL('#8e98a3', (p, T) => {
+  const L = [[3, 13, 0], [6.3, 9.7, 1], [9.7, 6.3, 0], [13, 3, 1]];
+  for (const [x, y, v] of L) {
+    if (!v) { p.ring(x, y, 3, T[1], 2); p.ring(x, y, 3, T[3], 1); p.ring(x - 0.3, y - 0.3, 3, T[4], 1); }
+  }
+  for (const [x, y, v] of L) if (v) { p.line(Math.round(x - 2), Math.round(y + 1.5), Math.round(x + 2), Math.round(y - 2.5), T[1], 3); p.line(Math.round(x - 2), Math.round(y + 1.5), Math.round(x + 2), Math.round(y - 2.5), T[3], 1); }
+  p.px(1, 12, T[0]); p.px(14, 2, T[4]);
+});
+S.rl_pouch = RL('#8a5a34', (p, T) => {
+  ball(p, 8, 10, 6, T, 5.2);
+  fillLit(p, [[6, 5], [10, 5], [11, 9], [5, 9]], T, { bias: -0.05 });
+  fillLit(p, [[3.5, 1.5], [8, 3.5], [12.5, 1.5], [11.5, 5.5], [4.5, 5.5]], T, { bias: 0.1 });
+  p.line(5, 6, 11, 6, '#c9a227'); p.line(5, 7, 11, 7, T[0]);
+  p.path([[10, 6], [13, 8], [13, 11]], '#c9a227', 1); p.path([[10, 7], [12, 10], [11, 12]], '#8f6f1a', 1);
+  p.px(4, 10, T[4]); p.px(4, 11, T[4]); p.px(5, 13, T[3]);
+  p.px(13, 12, '#c9a227'); p.px(13, 13, '#8f6f1a');
+});
+S.rl_dice = RL('#d8cfb8', (p, T) => {
+  p.poly([[8, 1], [14.5, 4.4], [8, 7.8], [1.5, 4.4]], T[4]);
+  p.poly([[1.5, 4.4], [8, 7.8], [8, 15], [1.5, 11.6]], T[2]);
+  p.poly([[14.5, 4.4], [8, 7.8], [8, 15], [14.5, 11.6]], T[1]);
+  p.line(1, 4, 8, 7, T[4]); p.line(8, 7, 14, 4, T[3]);
+  const pip = '#16131a';
+  p.px(7, 4, pip); p.px(8, 4, pip); p.px(8, 5, pip);
+  p.px(3, 7, pip); p.px(3, 8, pip); p.px(6, 11, pip); p.px(6, 12, pip);
+  p.px(10, 8, pip); p.px(12, 7, pip); p.px(11, 10, pip); p.px(10, 12, pip); p.px(12, 11, pip);
+});
+S.rl_whistle = RL('#d8cfb8', (p, T) => {
+  cyl(p, 3, 6, 10, 4, T, false);
+  cyl(p, 0, 7, 4, 2, T, false);
+  p.rect(7, 5, 3, 1, T[1]); p.rect(8, 6, 2, 1, '#0b0a0d'); p.px(2, 7, '#0b0a0d');
+  p.rect(3, 6, 10, 1, T[4]); p.rect(3, 9, 10, 1, T[0]);
+  p.path([[12, 6], [14, 3], [11, 2], [9, 4]], '#977049', 1); p.px(9, 4, '#6e5039');
+  p.px(13, 7, T[0]); p.px(13, 8, T[0]);
+});
+S.rl_cloak = RL('#4b3b5e', (p, T) => {
+  fillLit(p, [[8, 1], [11, 3], [12, 6.5], [14.5, 15], [1.5, 15], [4, 6.5], [5, 3]], T, { bias: -0.05 });
+  p.ellipse(8, 5.2, 2.6, 3.2, '#0b0a0d'); p.px(7, 5, '#7fd1c4'); p.px(9, 5, '#7fd1c4');
+  p.line(4, 7, 3, 14, T[1]); p.line(12, 7, 13, 14, T[0]); p.line(8, 9, 8, 15, T[1]);
+  p.line(6, 10, 5, 15, T[1]); p.line(10, 10, 11, 15, T[0]);
+  ball(p, 8, 8.4, 1.5, ['#8f6f1a', '#c9a227', '#f0d27a']);
+  p.rect(2, 14, 12, 1, T[0]);
+});
+S.rl_bowl = RL('#977049', (p, T) => {
+  fillLit(p, [[1, 6], [15, 6], [13.4, 11.4], [10.5, 14.4], [5.5, 14.4], [2.6, 11.4]], T, { lx: 0.3, ly: 0.35 });
+  p.ellipse(8, 6, 7.2, 1.9, T[3]); p.ellipse(8, 6.4, 6.2, 1.3, '#241f2b'); p.ellipse(8, 6.5, 5.2, 0.9, '#5e1212'); p.px(6, 6, '#8a1c1c');
+  p.rect(5, 14, 6, 1, T[0]); p.rect(6, 9, 5, 1, T[1]); p.px(3, 8, T[4]); p.px(3, 9, T[4]);
+  p.px(7, 3, '#79747a'); p.px(8, 2, '#57535c'); p.px(9, 1, '#79747a'); p.px(10, 3, '#57535c');
+});
+S.rl_shell = RL('#e0a8a0', (p, T) => {
+  fillLit(p, [[8, 14], [1, 7], [2.5, 3.5], [8, 1.5], [13.5, 3.5], [15, 7]], T, { bias: 0.05 });
+  for (let k = 0; k < 7; k++) { const a = Math.PI + (k * Math.PI) / 6 - 0.0; p.line(8, 13, Math.round(8 + Math.cos(a) * 7), Math.round(13 + Math.sin(a) * 11.5), k % 2 ? T[1] : T[3]); }
+  p.rect(6, 13, 4, 2, T[1]); p.px(6, 13, T[3]);
+  p.line(2, 6, 4, 3, T[4]);
+});
+S.rl_stone = RL('#7a767a', (p, T) => {
+  fillLit(p, [[3, 4], [7, 1.8], [12, 3], [14.2, 7], [13, 12], [9, 14.6], [4, 13], [1.8, 8]], T);
+  p.px(4, 5, T[4]); p.px(5, 4, T[4]); p.px(10, 3, T[3]); p.px(12, 11, T[0]); p.px(10, 13, T[0]);
+  const g = '#7fd1c4';
+  p.line(8, 5, 8, 12, g); p.line(8, 7, 11, 5, g); p.line(8, 9, 11, 11, g);
+  p.px(8, 8, '#cff5ec');
+});
+S.rl_idol = RL('#a0764a', (p, T) => {
+  ball(p, 8, 3.8, 3, T);
+  fillLit(p, [[4.5, 6.5], [11.5, 6.5], [12.5, 11], [11, 14.2], [5, 14.2], [3.5, 11]], T);
+  fillLit(p, [[2.5, 7.5], [4.8, 7.5], [4.4, 12], [2.6, 12]], T, { bias: -0.1 }); fillLit(p, [[11.2, 7.5], [13.5, 7.5], [13.4, 12], [11.6, 12]], T, { bias: -0.2 });
+  p.rect(4, 14, 8, 2, T[1]); p.rect(4, 14, 8, 1, T[3]);
+  p.px(7, 3, '#e0644c'); p.px(9, 3, '#e0644c'); p.line(7, 5, 9, 5, T[0]);
+  p.line(7, 8, 9, 8, T[0]); p.line(6, 10, 10, 10, T[1]); p.px(8, 12, T[0]);
+  p.rect(6, 0, 4, 1, T[2]); p.px(5, 1, T[3]); p.px(10, 1, T[1]);
+});
+S.rl_pipe = RL('#6e5039', (p, T) => {
+  const stem = []; for (let t = 0; t <= 1; t += 0.05) stem.push([2.5 + t * 6, 13.5 - Math.sin(t * Math.PI) * 2 - t * 2.5, 1.1]);
+  tube(p, stem, T);
+  p.px(1, 14, '#0b0a0d'); p.px(2, 14, '#0b0a0d'); p.px(1, 13, '#16131a');
+  ball(p, 11, 8.5, 3.8, T, 4.4);
+  p.ellipse(11, 5.4, 3.6, 1.2, T[3]); p.ellipse(11, 5.6, 2.6, 0.7, '#16131a'); p.px(10, 5, '#e8a33a');
+  p.rect(7, 10, 2, 3, '#8f6f1a'); p.px(7, 10, '#f0d27a');
+  p.px(9, 7, T[4]); p.px(9, 8, T[4]);
+  p.px(11, 3, '#79747a'); p.px(12, 2, '#a19c9c'); p.px(11, 1, '#79747a'); p.px(13, 0, '#57535c');
+});
+S.rl_spoon = RL('#bccfd9', (p, T) => {
+  shader(p, 7, 0, 16, 9, (x, y) => {
+    const dx = x + 0.5 - 11.2, dy = y + 0.5 - 4.4, along = (-dx + dy) / Math.SQRT2, across = (dx + dy) / Math.SQRT2;
+    const a = along / 4.8, c = across / 3.3;
+    if (a * a + c * c > 1) return null;
+    if (a * a + c * c < 0.5) return lit([T[0], T[1], T[2]], 0.55 + c * 0.35 + a * 0.2, x, y, 0.25);
+    return lit(T, 0.6 - c * 0.5 - a * 0.25, x, y, 0.3);
+  });
+  const h = []; for (let t = 0; t <= 1; t += 0.05) h.push([9 - t * 6, 6.5 + t * 7, 1.15 + t * 0.4]);
+  tube(p, h, T);
+  p.px(10, 2, T[4]); p.px(9, 3, T[4]);
+  circ(p, 2.8, 14, 1.3, T[2]);
+});
+S.rl_thimble = RL('#c9a227', (p, T) => {
+  fillLit(p, [[4, 4.5], [12, 4.5], [13, 14], [3, 14]], T, { lx: 0.55, ly: 0.1 });
+  ball(p, 8, 4.8, 4, T, 2.6);
+  for (let y = 4; y < 12; y += 2) for (let x = 5 + ((y / 2) % 2); x < 12; x += 2) p.px(x, y, T[0]);
+  cyl(p, 2, 12, 12, 3, T, false); p.rect(2, 12, 12, 1, T[4]); p.rect(2, 14, 12, 1, T[0]);
+  p.px(5, 8, T[4]);
+});
+S.rl_locket = RL('#c9a227', (p, T) => {
+  p.ring(8, 3, 3.2, '#8e98a3', 1); p.ring(8, 3, 2.2, '#545a63', 1);
+  ball(p, 8, 10, 5.6, T, 5.8);
+  p.ring(8, 10, 5.4, T[0], 1); p.ring(8, 10, 3.8, T[1], 1);
+  shader(p, 5, 7, 11, 13, (x, y) => { const X = (x + 0.5 - 8) / 2.5, Y = -(y + 0.5 - 9.6) / 2.5 + 0.1; return Math.pow(X * X + Y * Y - 0.62, 3) - X * X * Y * Y * Y <= 0 ? '#8a1c1c' : null; });
+  p.px(7, 9, '#e0644c'); p.px(5, 7, T[4]); p.px(6, 6, T[4]); p.px(12, 10, T[0]);
+});
+S.rl_map = RL('#d8c9a0', (p, T) => {
+  fillLit(p, [[1.5, 3], [5.5, 2], [10.5, 3.2], [14.5, 2.2], [14.5, 13], [10.5, 14], [5.5, 12.8], [1.5, 14]], T, { lx: 0.3, ly: 0.3, bias: 0.05 });
+  p.line(5, 3, 6, 13, T[1]); p.line(10, 3, 11, 13, T[1]); p.line(6, 3, 6, 12, T[3]); p.line(11, 3, 11, 12, T[3]);
+  const r = '#8a1c1c';
+  p.px(3, 11, r); p.px(4, 10, r); p.px(5, 9, r); p.px(7, 9, r); p.px(8, 8, r); p.px(9, 7, r); p.px(10, 6, r);
+  p.line(12, 5, 14, 7, '#b8302a'); p.line(14, 5, 12, 7, '#b8302a');
+  p.px(3, 5, T[0]); p.px(4, 5, T[0]); p.px(8, 12, T[0]); p.px(9, 12, T[0]);
+  p.rect(2, 3, 2, 1, T[4]);
+});
+S.rl_quill = RL('#e8dcc0', (p, T) => {
+  circ(p, 11, 14.2, 3.4, '#16131a'); p.ellipse(11, 12, 3.4, 1.1, '#363040'); p.ellipse(11, 12.1, 2.4, 0.6, '#0b0a0d'); p.rect(8, 14, 6, 2, '#241f2b'); p.px(9, 13, '#57535c');
+  fillLit(p, [[2, 13], [3.5, 8], [7, 3], [14.4, 0.4], [14.2, 6.4], [10, 10.2], [5, 12.6]], T, { lx: 0.25, ly: 0.25 });
+  p.line(1, 14, 11, 2, T[0]); p.line(1, 13, 11, 1, T[3]);
+  p.line(6, 8, 10, 7, T[1]); p.line(5, 10, 9, 9, T[1]); p.line(9, 5, 12, 4, T[1]);
+  p.px(0, 15, '#0b0a0d'); p.px(1, 15, '#16131a'); p.px(1, 14, '#241f2b');
+});
+S.rl_mortar = RL('#8e98a3', (p, T) => {
+  fillLit(p, [[1.5, 7], [14.5, 7], [12.6, 12.4], [10.4, 14.6], [5.6, 14.6], [3.4, 12.4]], T, { lx: 0.3, ly: 0.4 });
+  p.ellipse(8, 7, 7, 1.7, T[3]); p.ellipse(8, 7.3, 5.9, 1.2, '#241f2b');
+  p.px(5, 7, '#5c7a2a'); p.px(7, 6, '#8fae3a'); p.px(9, 7, '#5c7a2a'); p.px(11, 7, '#3d5226');
+  p.rect(5, 14, 6, 2, T[1]); p.rect(5, 14, 6, 1, T[3]);
+  const pe = []; for (let t = 0; t <= 1; t += 0.05) pe.push([8.5 + t * 5.5, 8 - t * 6.5, 1.6 - t * 0.2]);
+  tube(p, pe, T);
+  ball(p, 14, 1.8, 1.9, T); p.px(3, 9, T[4]); p.px(3, 10, T[4]);
 });
 
 defineSprites(S);

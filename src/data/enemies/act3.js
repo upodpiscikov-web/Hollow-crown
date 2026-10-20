@@ -1355,3 +1355,371 @@ defineSprites({
     },
   },
 });
+
+// A small mask, for Wren's many faces.
+function maskFace(p, x, y, kind, col = PAL.bone) {
+  p.ellipse(x, y, 5, 6, col, { shade: 0.3 });
+  if (kind === 'wolf') { p.tri(x - 5, y - 3, x - 4, y - 9, x - 1, y - 5, col); p.tri(x + 5, y - 3, x + 4, y - 9, x + 1, y - 5, col); p.rect(x - 2, y + 2, 4, 4, PAL.stone); }
+  if (kind === 'moth') { p.path([[x - 2, y - 5], [x - 6, y - 11]], col, 1); p.path([[x + 2, y - 5], [x + 6, y - 11]], col, 1); p.px(x - 6, y - 11, PAL.lilac); p.px(x + 6, y - 11, PAL.lilac); }
+  if (kind === 'owl') { p.ring(x - 2, y - 1, 3, PAL.gold, 1); p.ring(x + 2, y - 1, 3, PAL.gold, 1); p.tri(x - 1, y + 1, x + 1, y + 1, x, y + 5, PAL.gold); }
+  if (kind !== 'owl') { p.px(x - 2, y - 1, PAL.void); p.px(x - 3, y - 1, PAL.void); p.px(x + 2, y - 1, PAL.void); p.px(x + 3, y - 1, PAL.void); }
+  else { p.px(x - 2, y - 1, PAL.void); p.px(x + 2, y - 1, PAL.void); }
+}
+
+defineSprites({
+  // ------------------------------------------------------------ bosses
+  en_severin_crane: {
+    w: 92, h: 108,
+    draw(p) {
+      p.path([[84, 106], [82, 60]], PAL.ink, 3);                                            // ebony cane (planted)
+      p.circle(82, 58, 4, PAL.gold, { shade: 0.3 });
+      p.rect(36, 90, 12, 16, PAL.ink, { shade: 0.3 }); p.rect(54, 90, 12, 16, PAL.ink, { shade: 0.3 });   // boots
+      p.rect(33, 103, 17, 3, PAL.void); p.rect(52, 103, 17, 3, PAL.void);
+      p.poly([[36, 38], [70, 36], [86, 98], [24, 100]], PAL.night, { shade: 0.4 });         // long coat
+      p.poly([[50, 42], [58, 42], [66, 100], [44, 100]], PAL.wine, { shade: 0.3 });         // lining
+      for (const y of [50, 60, 70, 80]) p.circle(54, y, 1.2, PAL.gold);
+      p.path([[24, 100], [86, 98]], PAL.gold, 1);
+      fray(p, 100, 24, 86, 6, 2);
+      p.path([[40, 40], [48, 62], [62, 42]], PAL.gold, 1); p.circle(48, 62, 2, PAL.gold, { shade: 0.3 });   // chain of office
+      p.ellipse(54, 38, 22, 8, PAL.bone, { shade: 0.35 });                                  // ermine mantle
+      for (const [x, y] of [[40, 36], [48, 40], [58, 36], [66, 40], [74, 38], [34, 40]]) p.rect(x, y, 2, 3, PAL.ink);
+      p.poly([[38, 26], [46, 20], [58, 24], [64, 34], [46, 40]], PAL.ink, { shade: 0.2 });  // high collar
+      p.path([[38, 26], [46, 20], [58, 24]], PAL.gold, 1);
+      p.path([[64, 38], [72, 50], [76, 56]], PAL.night, 6);                                 // cane arm
+      p.circle(78, 58, 3, PAL.pale);
+      p.path([[44, 40], [34, 46], [28, 40]], PAL.night, 6);                                 // watch arm
+      p.circle(26, 38, 3, PAL.pale);
+      p.circle(22, 40, 8, PAL.gold, { shade: 0.4 }); p.circle(22, 40, 6, PAL.parch, { shade: 0.2 });         // pocket-watch
+      p.line(22, 40, 22, 35, PAL.ink, 1); p.line(22, 40, 26, 41, PAL.ink, 1);
+      p.glow(22, 40, PAL.candle, 8);
+      p.path([[22, 48], [28, 62], [30, 76]], PAL.gold, 1);                                  // watch chain
+      p.ellipse(44, 18, 9, 11, PAL.pale, { shade: 0.35 });                                  // head
+      p.poly([[36, 14], [38, 4], [50, 3], [54, 12], [48, 10], [40, 10]], PAL.fog, { shade: 0.35 });   // slicked grey hair
+      p.poly([[36, 18], [31, 22], [36, 23]], PAL.pale);                                     // nose
+      p.rect(36, 26, 6, 1, PAL.dusk);                                                       // thin lips
+      p.rect(37, 17, 5, 1, PAL.void);
+      eyes(p, [[39, 18]], PAL.frost, 2);
+      p.path([[41, 14], [46, 13]], PAL.dusk, 1);                                            // brow
+      p.rect(48, 28, 10, 1, PAL.gold);
+    },
+  },
+  en_choir_immaculate: {
+    w: 110, h: 100,
+    draw(p) {
+      // halo of gold behind the central voice
+      p.circle(54, 26, 23, PAL.gold, { shade: 0.25 });
+      p.circle(54, 26, 18, PAL.dusk);
+      for (let a = 0; a < 18; a++) { const r = (a * Math.PI * 2) / 18; p.tri(54 + Math.cos(r - 0.1) * 22, 26 + Math.sin(r - 0.1) * 22, 54 + Math.cos(r) * 31, 26 + Math.sin(r) * 31, 54 + Math.cos(r + 0.1) * 22, 26 + Math.sin(r + 0.1) * 22, PAL.candle); }
+      p.glow(54, 26, PAL.candle, 12);
+      p.poly([[4, 98], [8, 62], [22, 44], [38, 34], [54, 28], [72, 34], [88, 46], [102, 64], [106, 98]], PAL.bone, { shade: 0.4 });   // fused mass
+      for (const x of [16, 28, 40, 52, 64, 76, 88, 98]) p.path([[x, 50 + Math.abs(x - 54) * 0.4], [x - 2, 96]], PAL.parch, 1);       // folds
+      p.rect(4, 90, 102, 8, PAL.gold, { shade: 0.2 });
+      p.rect(4, 70, 102, 2, PAL.dusk);
+      fray(p, 98, 4, 106, 6, 3);
+      // each voice: a cowled face tipped upward, stitched eyes, mouth wide open mid-note
+      const voice = (x, y, r) => {
+        p.ellipse(x, y - 1, r + 2, r + 3, PAL.dusk, { shade: 0.3 });                       // cowl frame
+        p.ellipse(x - 1, y, r, r + 1.5, PAL.pale, { shade: 0.3 });                           // face
+        const ey = y - r * 0.45;
+        p.rect(x - r * 0.85, ey, r * 0.55, 1, PAL.void); p.rect(x + r * 0.1, ey, r * 0.55, 1, PAL.void);   // sewn eyes
+        p.px(x - r * 0.6, ey - 1, PAL.blood); p.px(x - r * 0.6, ey + 1, PAL.blood); p.px(x + r * 0.35, ey - 1, PAL.blood); p.px(x + r * 0.35, ey + 1, PAL.blood);
+        p.ellipse(x - r * 0.45, y + r * 0.55, r * 0.5, r * 0.68, PAL.void);                   // the open mouth
+        p.rect(x - r * 0.85, y + r * 0.0, r * 0.8, 1, PAL.bone);                            // teeth
+      };
+      voice(80, 46, 6); voice(28, 48, 6);
+      voice(18, 68, 6); voice(40, 64, 6.5); voice(66, 64, 6.5); voice(90, 68, 6);
+      voice(10, 88, 5); voice(32, 84, 6); voice(54, 82, 6); voice(76, 84, 6); voice(98, 88, 5);
+      voice(54, 28, 14);                                                                    // the great central voice
+      p.ellipse(49, 36, 7, 10, PAL.void); p.glow(49, 37, PAL.candle, 4); p.px(49, 37, PAL.candle);
+      for (const [x, y] of [[20, 76], [46, 72], [70, 72], [96, 76]]) {                       // hymnals clutched
+        p.rect(x - 4, y, 9, 7, PAL.wine, { shade: 0.3 }); p.rect(x - 4, y, 2, 7, PAL.gold);
+      }
+      p.speckle(PAL.gold, 0.02, 4, [4, 34, 106, 98]);
+    },
+  },
+  en_rival_knight: {
+    w: 92, h: 108,
+    draw(p) {
+      p.poly([[52, 30], [84, 40], [90, 100], [70, 106], [60, 92], [54, 60]], PAL.blood, { shade: 0.4 });    // torn cape
+      fray(p, 106, 56, 90, 5, 4);
+      p.rect(38, 78, 12, 26, PAL.iron, { shade: 0.35 }); p.rect(54, 78, 12, 26, PAL.iron, { shade: 0.35 }); // greaves
+      p.circle(44, 80, 6, PAL.steel, { shade: 0.3 }); p.circle(60, 80, 6, PAL.steel, { shade: 0.3 });
+      p.rect(34, 100, 18, 6, PAL.ink); p.rect(52, 100, 18, 6, PAL.ink);
+      p.poly([[34, 36], [70, 34], [74, 66], [64, 82], [38, 82], [32, 62]], PAL.iron, { shade: 0.45 });       // cuirass
+      p.poly([[46, 38], [60, 38], [62, 82], [44, 82]], PAL.gore, { shade: 0.3 });                           // tabard
+      p.rect(34, 66, 40, 4, PAL.ink); p.rect(48, 65, 8, 6, PAL.gold);                                        // belt
+      p.path([[34, 42], [70, 70]], PAL.steel, 2); p.path([[72, 42], [38, 72]], PAL.steel, 2);                 // oath-chains
+      p.rect(51, 53, 4, 5, PAL.gold); p.rect(52, 55, 2, 2, PAL.void);                                         // lock
+      p.ellipse(32, 38, 12, 9, PAL.iron, { shade: 0.45 });                                                  // pauldrons
+      p.tri(24, 32, 20, 22, 30, 30, PAL.steel); p.tri(32, 30, 34, 20, 38, 30, PAL.steel);
+      p.ellipse(68, 36, 10, 8, PAL.iron, { shade: 0.45 }); p.tri(64, 30, 68, 20, 72, 30, PAL.steel);
+      p.path([[30, 46], [20, 54], [16, 46]], PAL.iron, 8);                                                  // arm to the hilt
+      p.circle(15, 44, 5, PAL.steel, { shade: 0.3 });
+      p.rect(13, 22, 4, 22, PAL.leather);                                                                   // grip
+      p.circle(15, 20, 3, PAL.gold);
+      p.rect(3, 38, 24, 4, PAL.gold, { shade: 0.3 });                                                        // crossguard
+      p.poly([[10, 42], [20, 42], [18, 106], [15, 108], [12, 106]], PAL.steel, { shade: 0.45 });             // greatsword
+      p.line(15, 44, 15, 100, PAL.frost, 1);
+      for (const y of [56, 70, 84]) p.glow(15, y, PAL.blood, 2);                                            // oath-runes
+      p.ellipse(50, 22, 11, 13, PAL.iron, { shade: 0.5 });                                                  // great helm
+      p.rect(38, 21, 14, 3, PAL.void); p.rect(46, 14, 2, 18, PAL.void);
+      p.rect(40, 30, 6, 1, PAL.void);
+      eyes(p, [[41, 22]], PAL.blood, 3);
+      crown(p, 38, 8, 24, PAL.gold, 5, 8);                                                                  // crown over the helm
+      p.speckle(PAL.gore, 0.1, 5, [38, 2, 62, 14]);
+      p.path([[44, 10], [42, 14]], PAL.blood, 1);
+    },
+  },
+  en_rival_witch: {
+    w: 88, h: 106,
+    draw(p) {
+      p.path([[8, 104], [10, 22]], PAL.bone, 2);                                              // bone staff
+      p.path([[10, 22], [14, 14], [20, 14]], PAL.bone, 2);
+      p.path([[18, 16], [18, 20]], PAL.iron, 1);
+      p.rect(14, 20, 9, 9, PAL.iron); p.rect(15, 21, 7, 7, PAL.bile); p.glow(18, 25, PAL.venom, 7);        // blight lantern
+      strands(p, [[[60, 28], [74, 40], [82, 62], [78, 88]], [[62, 30], [78, 50], [84, 72]], [[58, 26], [70, 46], [72, 72], [66, 90]]], PAL.moss, 3);   // root-hair
+      strands(p, [[[60, 28], [74, 40], [82, 62], [78, 88]]], PAL.ink, 1);
+      p.poly([[34, 50], [56, 50], [86, 104], [6, 104]], PAL.rot, { shade: 0.45 });             // gown
+      p.poly([[40, 56], [52, 56], [66, 104], [26, 104]], PAL.moss, { shade: 0.3 });
+      for (const [x1, x2] of [[20, 14], [30, 26], [42, 40], [54, 56], [66, 70], [76, 82]]) p.path([[x1 + 6, 70], [x2 + 4, 102]], PAL.bone, 1);   // lace ribs
+      p.speckle(PAL.bile, 0.08, 7, [6, 56, 86, 104]); p.speckle(PAL.void, 0.07, 3, [6, 56, 86, 104]);
+      p.path([[44, 56], [40, 74], [46, 90]], PAL.venom, 1); p.path([[56, 62], [60, 80]], PAL.venom, 1);      // blight veins
+      for (const [x, y] of [[12, 100], [22, 102], [76, 100], [66, 102], [84, 98]]) { p.rect(x, y - 6, 2, 6, PAL.bone); p.ellipse(x + 1, y - 7, 4, 3, PAL.rose, { shade: 0.3 }); }   // mushrooms
+      fray(p, 104, 6, 86, 5, 3);
+      p.poly([[36, 34], [58, 34], [58, 52], [48, 58], [36, 52]], PAL.bone, { shade: 0.35 });   // bodice
+      p.rect(36, 46, 22, 2, PAL.moss);
+      p.ellipse(47, 34, 13, 5, PAL.moss, { shade: 0.3 });                                      // collar of leaves
+      p.path([[40, 38], [28, 46], [22, 40]], PAL.bone, 5);                                     // arm out, spores
+      p.circle(20, 38, 3, PAL.sick);
+      for (const [x, y, r] of [[14, 32, 5], [8, 40, 4], [14, 46, 3], [4, 34, 2]]) { p.circle(x, y, r, PAL.bile); p.glow(x, y, PAL.venom, r + 1); }
+      p.path([[56, 38], [62, 48], [56, 54]], PAL.bone, 5);                                     // other arm: draught
+      p.rect(52, 52, 6, 8, PAL.ink); p.rect(53, 53, 4, 5, PAL.void); p.glow(55, 54, PAL.venom, 2);
+      p.ellipse(44, 22, 9, 11, PAL.sick, { shade: 0.35 });                                    // face
+      p.poly([[34, 12], [38, 4], [52, 4], [56, 14], [50, 12], [40, 10]], PAL.ink);            // hair top
+      p.rect(36, 22, 6, 1, PAL.void); p.rect(37, 28, 4, 1, PAL.wine);
+      eyes(p, [[39, 21]], PAL.venom, 3);
+      p.path([[36, 26], [35, 34]], PAL.bile, 1);                                              // weeping rot
+      p.rect(33, 8, 22, 3, PAL.iron, { shade: 0.3 });                                          // crown of rot: thorns and gems
+      for (let i = 0; i < 6; i++) p.tri(34 + i * 4, 8, 36 + i * 4, 1 + (i % 2) * 3, 38 + i * 4, 8, PAL.iron);
+      p.circle(44, 9, 2, PAL.bile); p.glow(44, 9, PAL.venom, 2);
+      p.path([[56, 9], [60, 16], [58, 24]], PAL.moss, 1);
+    },
+  },
+  en_rival_wren: {
+    w: 84, h: 106,
+    draw(p) {
+      // fan of masks behind the head
+      const fan = [[14, 30, 'wolf'], [22, 14, 'moth'], [38, 6, 'owl'], [56, 6, 'wolf'], [72, 14, 'moth'], [78, 30, 'owl']];
+      for (const [x, y, k] of fan) maskFace(p, x, y + 4, k, PAL.bone);
+      p.poly([[34, 38], [60, 36], [80, 102], [10, 104]], PAL.violet, { shade: 0.45 });         // cloak
+      p.poly([[44, 44], [54, 44], [60, 104], [34, 104]], PAL.bruise, { shade: 0.3 });
+      p.poly([[16, 98], [22, 106], [28, 98], [36, 106], [44, 98], [52, 106], [60, 98], [70, 106], [80, 100]], PAL.violet);
+      fray(p, 104, 10, 80, 5, 4);
+      for (const [x, y] of [[26, 70], [58, 62], [46, 84], [68, 84], [36, 92], [54, 54]]) { p.px(x, y, PAL.frost); p.px(x + 1, y, PAL.frost); p.px(x, y - 1, PAL.frost); p.px(x, y + 1, PAL.frost); }
+      for (const [x, y, k] of [[34, 66, 'moth'], [60, 78, 'wolf'], [44, 92, 'owl']]) maskFace(p, x, y, k, PAL.lilac);   // masks pinned to the cloak
+      p.ellipse(47, 38, 16, 8, PAL.violet, { shade: 0.35 });                                  // shoulders
+      p.path([[38, 42], [26, 52], [16, 50]], PAL.violet, 7);                                  // blade arm
+      p.circle(14, 50, 4, PAL.pale, { shade: 0.3 });
+      p.poly([[2, 42], [10, 48], [18, 50], [10, 52], [0, 48]], PAL.frost, { shade: 0.45 });    // long knife
+      p.line(2, 44, 16, 50, PAL.void, 1);
+      p.path([[58, 42], [66, 54], [60, 64]], PAL.violet, 7);                                  // second arm
+      p.circle(59, 66, 4, PAL.pale);
+      p.poly([[52, 68], [58, 62], [62, 70], [56, 78]], PAL.frost, { shade: 0.4 });            // knife, downward
+      p.ellipse(47, 26, 11, 13, PAL.violet, { shade: 0.35 });                                 // hood
+      p.ellipse(42, 27, 8, 10, PAL.pale, { shade: 0.35 });                                    // smooth, blank face
+      p.rect(36, 28, 2, 1, PAL.dusk); p.rect(36, 24, 3, 1, PAL.dusk);                          // hint of brow and cheek
+      crown(p, 36, 8, 22, PAL.lilac, 5, 9);                                                    // silver-violet crown
+      p.px(47, 9, PAL.frost);
+      p.glow(40, 25, PAL.lilac, 2);
+    },
+  },
+  en_rival_cantor: {
+    w: 90, h: 108,
+    draw(p) {
+      for (const [x, y, c] of [[16, 70, PAL.spirit], [80, 56, PAL.frost], [22, 34, PAL.ghost]]) { p.path([[x, y + 3], [x + 4, y + 10]], c, 2); p.circle(x, y, 4, c); p.glow(x, y, c, 8); p.px(x - 1, y - 1, PAL.void); p.px(x + 1, y - 1, PAL.void); }   // orbiting spirits
+      p.poly([[34, 38], [64, 36], [78, 76], [74, 92], [60, 100], [46, 106], [34, 98], [22, 94], [18, 80]], PAL.ash, { shade: 0.45 });   // chasuble; the body ends in smoke
+      p.poly([[44, 42], [54, 42], [58, 98], [40, 98]], PAL.gold, { shade: 0.3 });              // orphrey band
+      p.rect(40, 56, 18, 3, PAL.gold); p.rect(47, 50, 4, 14, PAL.candle);                      // cross
+      p.ellipse(50, 38, 22, 8, PAL.ash, { shade: 0.35 });                                       // shoulders
+      // dissolve into smoke toward the bottom
+      let s = 12345;
+      for (let y = 74; y < 108; y++) for (let x = 10; x < 86; x++) { s = (s * 1664525 + 1013904223) >>> 0; if (s / 4294967296 < (y - 74) / 36) p.erase(x, y); }
+      p.path([[24, 96], [16, 102], [8, 104]], PAL.dusk, 2); p.path([[70, 98], [78, 102], [84, 100]], PAL.dusk, 2);
+      p.path([[34, 38], [24, 52], [20, 62]], PAL.ash, 7);                                      // censer arm
+      p.circle(19, 64, 3, PAL.bone);
+      p.path([[19, 66], [16, 80], [18, 88]], PAL.iron, 1);                                     // chain
+      p.circle(19, 92, 5, PAL.gold, { shade: 0.4 }); p.rect(14, 92, 11, 2, PAL.iron); p.glow(19, 94, PAL.ember, 4);
+      p.path([[18, 88], [12, 80], [14, 70]], PAL.fog, 1); p.path([[22, 88], [28, 78], [24, 68]], PAL.fog, 1);
+      p.path([[62, 42], [66, 54], [56, 60]], PAL.ash, 7);                                      // book arm
+      p.poly([[44, 54], [58, 52], [60, 66], [46, 68]], PAL.parch, { shade: 0.3 }); p.rect(44, 52, 2, 16, PAL.wine);
+      p.ellipse(47, 22, 12, 13, PAL.dusk, { shade: 0.3 });                                     // grave-hood
+      p.ellipse(44, 25, 8, 10, PAL.fog, { shade: 0.45 });                                      // skull face
+      p.ellipse(39, 23, 3, 3, PAL.void); p.ellipse(48, 23, 3, 3, PAL.void);
+      eyes(p, [[39, 23], [48, 23]], PAL.candle, 2);
+      p.poly([[41, 27], [45, 27], [43, 31]], PAL.void); p.rect(39, 33, 9, 1, PAL.void);
+      for (const x of [40, 42, 44, 46]) p.px(x, 34, PAL.bone);
+      p.rect(33, 10, 28, 3, PAL.iron, { shade: 0.3 });                                         // candle crown: iron band, flame-tipped spikes
+      for (const x of [34, 41, 48, 55]) { p.rect(x, 3, 3, 8, PAL.bone, { shade: 0.2 }); p.tri(x, 3, x + 1.5, 0, x + 3, 3, PAL.flame); p.glow(x + 1, 2, PAL.candle, 3); }
+    },
+  },
+});
+
+// Scatter-erase the bottom of a figure so it dissolves into smoke (deterministic).
+const dissolve = (p, x0, x1, y0, y1, seed = 7) => {
+  let s = seed >>> 0;
+  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) { s = (s * 1664525 + 1013904223) >>> 0; if (s / 4294967296 < (y - y0) / (y1 - y0)) p.erase(x, y); }
+};
+
+defineSprites({
+  // ------------------------------------------------------------ the Requiem King's kept dead
+  en_kept_wisp: {
+    w: 28, h: 32,
+    draw(p) {
+      p.path([[18, 18], [24, 24], [22, 30]], PAL.spirit, 4);
+      p.poly([[12, 4], [20, 16], [20, 24], [14, 28], [6, 24], [6, 16]], PAL.ghost, { shade: 0.4 });
+      p.ellipse(12, 20, 7, 8, PAL.frost, { shade: 0.35 });
+      p.glow(12, 20, PAL.spirit, 6);
+      p.ellipse(9, 18, 2, 3, PAL.void); p.ellipse(15, 18, 2, 3, PAL.void);
+      p.ellipse(12, 25, 2, 2, PAL.void);
+      p.px(9, 17, PAL.candle); p.px(15, 17, PAL.candle);
+    },
+  },
+  en_kept_warden: {
+    w: 34, h: 46,
+    draw(p) {
+      p.path([[28, 44], [30, 6]], PAL.iron, 2); p.tri(28, 8, 30, 0, 32, 8, PAL.steel);           // spear
+      p.poly([[14, 18], [26, 18], [28, 34], [20, 42], [12, 34]], PAL.steel, { shade: 0.4 });       // cuirass
+      p.poly([[16, 20], [24, 20], [25, 33], [20, 38], [15, 33]], PAL.ghost, { shade: 0.3 });
+      p.ellipse(20, 11, 6, 7, PAL.steel, { shade: 0.4 });                                          // helm
+      p.rect(14, 10, 6, 2, PAL.void); p.rect(17, 9, 2, 8, PAL.void);
+      eyes(p, [[15, 11]], PAL.spirit, 2);
+      p.poly([[1, 16], [14, 14], [14, 36], [8, 44], [1, 34]], PAL.dusk, { shade: 0.3 });           // old kite shield
+      p.poly([[3, 19], [12, 17], [12, 34], [8, 40], [3, 32]], PAL.ghost, { shade: 0.2 });
+      p.rect(7, 22, 2, 9, PAL.candle); p.rect(5, 25, 6, 2, PAL.candle);
+      p.path([[24, 20], [26, 30]], PAL.steel, 3);
+      dissolve(p, 6, 30, 34, 46, 21);
+    },
+  },
+  en_kept_banshee: {
+    w: 34, h: 46,
+    draw(p) {
+      strands(p, [[[22, 8], [30, 14], [32, 26], [28, 40]], [[20, 10], [28, 20], [30, 34]], [[24, 6], [32, 10], [33, 20]]], PAL.fog, 2);   // hair streaming back
+      p.poly([[14, 18], [24, 18], [30, 44], [10, 40], [8, 30]], PAL.frost, { shade: 0.4 });       // shroud gown
+      p.path([[14, 20], [8, 10], [4, 4]], PAL.frost, 3);                                           // arms raised
+      p.path([[22, 20], [28, 28]], PAL.ghost, 3);
+      p.circle(4, 3, 2, PAL.pale);
+      p.ellipse(16, 12, 6, 8, PAL.pale, { shade: 0.35 });                                           // face
+      p.ellipse(12, 15, 3, 5, PAL.void);                                                            // wail
+      p.ellipse(13, 9, 2, 2, PAL.void); p.ellipse(18, 9, 2, 2, PAL.void);
+      eyes(p, [[13, 9], [18, 9]], PAL.spirit, 1);
+      dissolve(p, 4, 32, 32, 46, 5);
+    },
+  },
+
+  // ------------------------------------------------------------ ACT 4
+  en_the_unspent: {
+    w: 80, h: 78,
+    draw(p) {
+      p.poly([[2, 76], [4, 52], [16, 36], [32, 28], [50, 26], [66, 34], [78, 54], [78, 76]], PAL.dusk, { shade: 0.45 });   // the heap
+      p.poly([[10, 76], [14, 56], [30, 42], [52, 38], [66, 50], [72, 76]], PAL.ash, { shade: 0.35 });
+      p.speckle(PAL.void, 0.12, 5, [2, 28, 78, 76]);
+      // arms reaching out of the heap, always toward the player
+      for (const [x, y, ex, ey] of [[26, 40, 6, 22], [40, 34, 22, 8], [56, 36, 40, 14], [14, 52, 0, 40], [66, 40, 54, 20], [8, 66, 0, 58]]) {
+        p.path([[x, y], [(x + ex) / 2 - 2, (y + ey) / 2 - 4], [ex, ey]], PAL.pale, 3);
+        for (const [fx, fy] of [[-2, -3], [0, -4], [2, -3], [-3, 0]]) p.path([[ex, ey], [ex + fx, ey + fy]], PAL.bone, 1);
+      }
+      const face = (x, y, r) => {
+        p.ellipse(x, y, r, r + 1, PAL.bone, { shade: 0.35 });
+        p.ellipse(x - r * 0.45, y - 1, 1.6, 2, PAL.void); p.ellipse(x + r * 0.35, y - 1, 1.6, 2, PAL.void);
+        p.ellipse(x - r * 0.3, y + r * 0.55, r * 0.35, r * 0.45, PAL.void);
+        p.px(x - r * 0.45, y - 1, PAL.ghost); p.px(x + r * 0.35, y - 1, PAL.ghost);
+      };
+      face(52, 48, 7); face(30, 52, 6); face(16, 66, 5); face(44, 64, 6); face(64, 62, 5); face(26, 70, 4); face(58, 72, 4); face(72, 54, 4);
+      face(38, 34, 8);                                                                              // the tallest, nearly standing
+      p.glow(35, 33, PAL.ghost, 3); p.glow(41, 33, PAL.ghost, 3);
+      for (const [x, y, c] of [[20, 58, PAL.wine], [48, 54, PAL.gold], [60, 70, PAL.rose], [34, 62, PAL.violet], [70, 66, PAL.candle]]) p.rect(x, y, 4, 3, c);   // scraps of court finery
+      p.tri(30, 46, 33, 40, 36, 46, PAL.gold); p.rect(30, 46, 6, 2, PAL.gold);                      // a crown among them
+      p.speckle(PAL.ghost, 0.025, 8, [2, 26, 78, 76]);
+    },
+  },
+  en_held_hand: {
+    w: 32, h: 34,
+    draw(p) {
+      p.ellipse(16, 32, 15, 3, PAL.ash, { shade: 0.3 }); p.speckle(PAL.void, 0.15, 3, [1, 29, 31, 34]);
+      p.path([[20, 32], [18, 22], [12, 14]], PAL.pale, 6);                                         // forearm
+      p.path([[18, 28], [18, 24]], PAL.sick, 4);
+      p.ellipse(11, 12, 5, 5, PAL.pale, { shade: 0.35 });                                          // palm
+      for (const [x, y] of [[2, 4], [6, 1], [11, 0], [16, 3]]) p.path([[11, 12], [x, y]], PAL.pale, 2);   // fingers
+      p.path([[11, 12], [17, 10]], PAL.pale, 2);                                                    // thumb
+      for (const [x, y] of [[2, 4], [6, 1], [11, 0], [16, 3]]) p.px(x, y, PAL.bone);
+      p.ring(12, 14, 2, PAL.gold, 1);                                                               // a wedding ring, long since sunk
+      p.speckle(PAL.ghost, 0.05, 2, [0, 0, 28, 28]);
+    },
+  },
+  en_hollow_king: {
+    w: 108, h: 112,
+    draw(p) {
+      p.path([[18, 110], [18, 20]], PAL.gold, 3);                                                   // sceptre
+      p.circle(18, 16, 5, PAL.ember, { shade: 0.4 }); p.glow(18, 16, PAL.flame, 8);
+      p.poly([[12, 24], [18, 34], [24, 24]], PAL.gold);
+      p.poly([[30, 40], [64, 32], [98, 46], [104, 108], [12, 110], [18, 72]], PAL.wine, { shade: 0.45 });   // rotted mantle
+      p.poly([[44, 42], [66, 40], [72, 108], [34, 110]], PAL.dusk, { shade: 0.35 });                       // tunic
+      p.path([[42, 68], [46, 106]], PAL.gold, 2); p.path([[66, 66], [62, 106]], PAL.gold, 2);                // embroidered bands
+      p.rect(40, 70, 30, 3, PAL.gold); p.circle(55, 71, 3, PAL.iron);                                          // belt
+      p.rect(46, 46, 14, 20, PAL.void);                                                             // open chest: ribs and nothing
+      for (const y of [49, 53, 57, 61]) p.path([[46, y], [52, y + 2], [60, y]], PAL.bone, 1);
+      p.glow(53, 56, PAL.spirit, 6);
+      p.path([[28, 40], [64, 30], [100, 46]], PAL.bone, 9);                                         // ermine collar
+      for (const [x, y] of [[34, 38], [44, 33], [56, 30], [68, 31], [80, 35], [92, 42]]) p.rect(x, y, 3, 4, PAL.ink);
+      fray(p, 110, 12, 104, 6, 4);
+      p.path([[28, 46], [20, 56], [20, 62]], PAL.bone, 6);                                           // near arm
+      p.circle(19, 62, 4, PAL.fog, { shade: 0.3 });
+      p.path([[86, 48], [92, 70], [88, 84]], PAL.bone, 7);                                           // far arm
+      p.circle(88, 86, 4, PAL.fog);
+      p.poly([[34, 30], [56, 30], [54, 62], [46, 70], [38, 58]], PAL.fog, { shade: 0.35 });          // ash-grey beard
+      for (const x of [40, 46, 50]) p.path([[x, 38], [x - 1, 66]], PAL.stone, 1);
+      p.ellipse(44, 20, 10, 12, PAL.fog, { shade: 0.45 });                                           // face
+      p.ellipse(39, 19, 3, 4, PAL.void); p.ellipse(48, 19, 3, 4, PAL.void);
+      eyes(p, [[39, 19], [48, 19]], PAL.candle, 2);
+      p.poly([[42, 24], [45, 24], [43, 28]], PAL.void);
+      p.poly([[32, 14], [28, 40], [34, 30]], PAL.fog);                                               // long thin hair
+      p.poly([[56, 14], [60, 40], [54, 28]], PAL.fog);
+      crown(p, 31, 10, 27, PAL.iron, 5, 9);                                                          // the Crown, iron, with its empty socket
+      p.circle(44, 12, 3, PAL.void); p.ring(44, 12, 3, PAL.gold, 1); p.glow(44, 12, PAL.violet, 4);
+      for (const [x, y] of [[88, 84], [19, 62], [53, 56]]) p.path([[44, 12], [(44 + x) / 2 + (x < 44 ? -14 : 14), (12 + y) / 3], [x, y]], PAL.steel, 1);   // the Crown's strings
+      p.speckle(PAL.void, 0.02, 3, [10, 40, 104, 110]);
+    },
+  },
+  en_hollow_crown: {
+    w: 112, h: 112,
+    draw(p) {
+      // the held hour: a great clock-ring behind, both hands stopped at midnight
+      p.ring(56, 52, 52, PAL.dusk, 4); p.ring(56, 52, 48, PAL.bruise, 1);
+      for (let h = 0; h < 12; h++) { const a = (h * Math.PI) / 6; const r1 = h % 3 === 0 ? 40 : 44; p.line(56 + Math.sin(a) * r1, 52 - Math.cos(a) * r1, 56 + Math.sin(a) * 48, 52 - Math.cos(a) * 48, PAL.gold, h % 3 === 0 ? 2 : 1); }
+      p.glow(56, 56, PAL.violet, 34);
+      p.line(56, 56, 56, 8, PAL.bone, 2); p.line(55, 56, 55, 18, PAL.candle, 1);
+      p.circle(56, 56, 3, PAL.gold);
+      // fallen mantle pooled beneath, the dead king's last robe
+      p.poly([[6, 108], [18, 86], [42, 78], [70, 80], [96, 88], [108, 108]], PAL.wine, { shade: 0.45 });
+      p.rect(6, 104, 102, 4, PAL.gold, { shade: 0.2 });
+      p.path([[14, 100], [30, 92], [50, 96]], PAL.gore, 2); p.path([[66, 94], [82, 92], [98, 100]], PAL.gore, 2);
+      fray(p, 108, 6, 108, 6, 2);
+      // the Crown itself: a tall spiked circlet, hollow within
+      p.ellipse(56, 62, 44, 15, PAL.iron, { shade: 0.45 });                                           // back rim
+      const tips = [[14, 40], [26, 28], [38, 16], [50, 26], [62, 26], [74, 16], [86, 28], [98, 40]];   // spikes of uneven height
+      for (const [x, ty] of tips) p.tri(x - 6, 64, x, ty, x + 6, 64, PAL.iron, { shade: 0.4 });
+      for (const [x, ty] of tips) { p.line(x - 2, 62, x, ty + 3, PAL.steel, 1); p.px(x, ty + 1, PAL.frost); }
+      p.ellipse(56, 63, 38, 10, PAL.void);                                                            // the hollow within
+      p.glow(56, 63, PAL.violet, 14);
+      p.rect(12, 64, 88, 12, PAL.iron, { shade: 0.4 });                                                // front band
+      p.ellipse(56, 76, 44, 5, PAL.iron, { shade: 0.45 });
+      p.rect(12, 64, 88, 2, PAL.steel); p.rect(12, 74, 88, 2, PAL.gold);
+      for (let x = 18; x < 98; x += 8) p.rect(x, 68, 4, 3, PAL.steel);                                 // rivets
+      p.circle(34, 70, 10, PAL.gold, { shade: 0.4 }); p.circle(34, 70, 8, PAL.ink);                   // THE EMPTY SOCKET
+      p.circle(34, 70, 6, PAL.void); p.glow(34, 70, PAL.violet, 9); p.glow(34, 70, PAL.lilac, 4);
+      p.px(32, 68, PAL.frost); p.px(36, 72, PAL.frost);
+      for (let i = 0; i < 4; i++) p.tri(26 + i * 5, 80, 28 + i * 5, 90 + (i % 2) * 6, 30 + i * 5, 80, PAL.iron);   // cracks/fangs dripping below the band
+      p.speckle(PAL.void, 0.05, 3, [10, 30, 102, 76]);
+    },
+  },
+});

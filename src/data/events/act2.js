@@ -13,6 +13,9 @@ export const notHero = (...hs) => (g) => !hs.includes(g.run.hero);
 export const hpReq = (n) => (g) => g.player.hp > n || 'You are too weak to risk it.';
 export const goldReq = (n) => (g) => g.run.gold >= n || `You need ${n} gold.`;
 export const roll = (g, p) => rnd(g.run.rng.events) < p;
+export const removable = (g) => g.run.deck.filter((c) => !(CARDS[c.id] && CARDS[c.id].unremovable));
+export const deckReq = (n) => (g) => removable(g).length > n || 'Your deck is too thin.';
+export const upReq = (n) => (g) => g.run.deck.filter((c) => g.canUpgrade(c)).length >= n || 'Nothing left to improve.';
 
 // Named special relics fall back to a random relic if undefined or already owned,
 // and the label says so honestly.
@@ -85,7 +88,7 @@ defineEvents([
         choices: [
           { label: () => `[Gather the amber] Gain 80 gold. Become Cursed — ${curseName('grief')}.`,
             fx(g) { g.gainGold(80); addCurse(g, 'grief'); g.unlockLore('lore_a2_weeping_wood'); return 'gather'; } },
-          { label: '[Weep with them] Lose 6 HP. Remove a card from your deck.', req: hpReq(6),
+          { label: '[Weep with them] Lose 6 HP. Remove a card from your deck.', req: (g) => hpReq(6)(g) === true ? deckReq(1)(g) : hpReq(6)(g),
             async fx(g) { g.hurt(6); await g.removeCardChoice(1); g.unlockLore('lore_a2_weeping_wood'); return 'weep'; } },
           { label: '[Leave the tears be]', end: true },
         ],
@@ -177,13 +180,13 @@ defineEvents([
           })),
         choices: [
           { label: (g) => `[Cut her down] Fight the witch-hunters. Reward: ${relicName(g, 'witchfinders_brand')}.`,
-            async fx(g) { g.unlockLore('lore_a2_grall_writ'); await g.eventCombat(foes(g, 2, ['zealot', 'pyre_bearer']), { resume: 'freed', reward: { relic: rewardRelic(g, 'witchfinders_brand') } }); } },
+            async fx(g) { g.unlockLore('lore_a2_grall_writ'); g.unlockLore('lore_a2_pyre_bearers'); g.setFlag('a2_witch_freed'); await g.eventCombat(foes(g, 2, ['zealot', 'pyre_bearer']), { resume: 'freed', reward: { relic: rewardRelic(g, 'witchfinders_brand') } }); } },
           { label: '[Buy her life] Lose 80 gold. Heal 10 HP.', show: notHero('cantor'), req: goldReq(80),
-            fx(g) { g.loseGold(80); g.healOut(10); g.unlockLore('lore_a2_grall_writ'); return 'bought'; } },
+            fx(g) { g.loseGold(80); g.healOut(10); g.setFlag('a2_witch_freed'); g.unlockLore('lore_a2_grall_writ'); return 'bought'; } },
           { label: '[Untie her while they look through you] No one will stop you. No reward.', show: isHero('cantor'),
-            fx(g) { g.unlockLore('lore_a2_grall_writ'); return 'ghost'; } },
+            fx(g) { g.unlockLore('lore_a2_grall_writ'); g.setFlag('a2_witch_freed'); return 'ghost'; } },
           { label: () => `[Walk on] Become Cursed — ${curseName('shame')}.`,
-            fx(g) { addCurse(g, 'shame'); return 'walk'; } },
+            fx(g) { addCurse(g, 'shame'); g.setFlag('a2_walked_on'); return 'walk'; } },
         ],
       },
       freed: {
@@ -309,9 +312,9 @@ defineEvents([
           })),
         choices: [
           { label: (g) => `[Free it] Lose 9 HP. Obtain ${relicName(g, 'antler_shard')}.`, req: hpReq(9),
-            fx(g) { g.hurt(9); giveRelic(g, 'antler_shard'); g.unlockLore('lore_a2_white_harts'); return 'freed'; } },
+            fx(g) { g.hurt(9); giveRelic(g, 'antler_shard'); g.setFlag('a2_hart_freed'); g.unlockLore('lore_a2_white_harts'); return 'freed'; } },
           { label: '[Kill it and eat] Gain 7 Max HP. Then fight what comes for it.',
-            async fx(g) { g.gainMaxHp(7); g.unlockLore('lore_a2_white_harts'); await g.eventCombat(foes(g, 2, ['thornling', 'willow_wight']), { resume: 'eaten' }); } },
+            async fx(g) { g.gainMaxHp(7); g.setFlag('a2_hart_killed'); g.unlockLore('lore_a2_white_harts'); await g.eventCombat(foes(g, 2, ['thornling', 'willow_wight']), { resume: 'eaten' }); } },
           { label: '[Leave it to the wood]', end: true },
         ],
       },
@@ -354,7 +357,7 @@ defineEvents([
           { label: '[Walk under the pole] No one stops you.', show: isHero('cantor'),
             fx(g) { g.unlockLore('lore_a2_pricking'); return 'unseen'; } },
           { label: '[Overturn the table] Fight the witch-hunters. Reward: 40 extra gold.',
-            async fx(g) { g.unlockLore('lore_a2_pricking'); await g.eventCombat(foes(g, 2, ['zealot', 'zealot']), { resume: 'overturned', reward: { gold: 40 } }); } },
+            async fx(g) { g.unlockLore('lore_a2_pricking'); g.unlockLore('lore_a2_pyre_bearers'); await g.eventCombat(foes(g, 2, ['zealot', 'zealot']), { resume: 'overturned', reward: { gold: 40 } }); } },
           { label: '[Turn back]', end: true },
         ],
       },
@@ -407,7 +410,7 @@ defineEvents([
           })),
         choices: [
           { label: (g) => `[Go under the hill] Fight the Fair Folk. Reward: ${relicName(g, 'mothers_seed')}.`,
-            async fx(g) { g.unlockLore('lore_a2_changelings'); await g.eventCombat(foes(g, 2, ['fae_courtier', 'glamour_kin', 'fae_courtier']), { resume: 'returned', reward: { relic: rewardRelic(g, 'mothers_seed') } }); } },
+            async fx(g) { g.unlockLore('lore_a2_changelings'); g.unlockLore('lore_a2_glamour_kin'); await g.eventCombat(foes(g, 2, ['fae_courtier', 'glamour_kin', 'fae_courtier']), { resume: 'returned', reward: { relic: rewardRelic(g, 'mothers_seed') } }); } },
           { label: (g) => (g.run.hero === 'wren' ? '[Tell her it can be loved] Heal 10 HP.' : '[Tell her to raise it] Heal 10 HP.'),
             fx(g) { g.healOut(10); g.unlockLore('lore_a2_changelings'); return 'raise'; } },
           { label: () => `[Burn it] Gain 50 gold. Become Cursed — ${curseName('regret')}.`,
@@ -517,7 +520,7 @@ defineEvents([
           { label: '[Kneel with them] Lose 8 HP. Upgrade 2 random cards.', req: hpReq(8),
             fx(g) { g.hurt(8); g.upgradeRandom(2); g.unlockLore('lore_a2_lowmere_office'); return 'joined'; } },
           { label: '[Dive for the candlesticks] Gain 90 gold. Then fight the drowned brothers.',
-            async fx(g) { g.gainGold(90); g.unlockLore('lore_a2_lowmere_office'); await g.eventCombat(foes(g, 2, ['hollow_novice', 'drowned_monk']), { resume: 'robbed' }); } },
+            async fx(g) { g.gainGold(90); g.unlockLore('lore_a2_lowmere_office'); g.unlockLore('lore_a2_drowned_brothers'); await g.eventCombat(foes(g, 2, ['hollow_novice', 'drowned_monk']), { resume: 'robbed' }); } },
           { label: '[Sing them the Office for the Dead] Bleed 6. Obtain a random relic.', show: isHero('cantor'), req: hpReq(6),
             fx(g) { g.hurt(6); g.obtainRelic(); g.unlockLore('lore_a2_lowmere_office'); return 'rite'; } },
           { label: '[Leave them to their prayers]', end: true },
@@ -643,7 +646,7 @@ defineEvents([
         }),
         choices: [
           { label: (g) => `[Take the locket] Lose 4 Max HP. Obtain ${relicName(g, 'maren_locket')}.`,
-            fx(g) { g.loseMaxHp(4); giveRelic(g, 'maren_locket'); return 'taken'; } },
+            fx(g) { g.loseMaxHp(4); giveRelic(g, 'maren_locket'); g.setFlag('a2_took_locket'); return 'taken'; } },
           { label: '[Leave it for her]', end: true },
         ],
       },
@@ -678,7 +681,7 @@ defineEvents([
             : `"Visitors!" she cries, delighted, and puts a kettle on the brazier, and bids you sit on the rim of the bell-hole, where the great bell hung before it fell into the mere, and tell her everything.`,
         ),
         choices: [
-          { label: (g) => (g.run.hero === 'cantor' ? '[Hear her confession] Remove a card from your deck.' : '[Confess to her] Remove a card from your deck.'),
+          { label: (g) => (g.run.hero === 'cantor' ? '[Hear her confession] Remove a card from your deck.' : '[Confess to her] Remove a card from your deck.'), req: deckReq(1),
             async fx(g) { await g.removeCardChoice(1); g.unlockLore('lore_a2_agathe_daybook'); return 'confess'; } },
           { label: '[Take tea and sleep] Heal 20 HP.',
             fx(g) { g.healOut(20); g.unlockLore('lore_a2_agathe_daybook'); return 'tea'; } },
@@ -788,7 +791,7 @@ defineEvents([
             cantor: `"Brother Cael," the illuminator says, as if you had stepped out a moment ago. "You were at court. What colour was the Queen's gown, that last spring?" "Blue," you tell him. "It was always blue."`,
           })),
         choices: [
-          { label: '[Give him red] Lose 7 HP. Upgrade 2 cards of your choice.', req: hpReq(7),
+          { label: '[Give him red] Lose 7 HP. Upgrade 2 cards of your choice.', req: (g) => (hpReq(7)(g) === true ? upReq(2)(g) : hpReq(7)(g)),
             async fx(g) { g.hurt(7); await g.upgradeCardChoice(2); return 'red'; } },
           { label: '[Give him gold] Lose 60 gold. Gain 7 Max HP.', req: goldReq(60),
             fx(g) { g.loseGold(60); g.gainMaxHp(7); return 'gold'; } },
@@ -834,11 +837,11 @@ function nameChoices() {
   return [
     { label: (g) => `[Sell "${g.run.hero === 'knight' ? 'Aldous' : 'Isolde'}"] Choose 1 of 3 rare cards. Become Cursed — ${curseName('doubt')}.`,
       show: notHero('wren', 'cantor'),
-      async fx(g) { addCurse(g, 'doubt'); await offer(g, { rarity: 'rare' }, 'A knack, for a name'); return 'sold'; } },
+      async fx(g) { addCurse(g, 'doubt'); g.setFlag('a2_sold_name'); await offer(g, { rarity: 'rare' }, 'A knack, for a name'); return 'sold'; } },
     { label: '[Sell "Wren"] Choose 1 of 3 rare cards. Lose 5 Max HP.', show: isHero('wren'),
-      async fx(g) { g.loseMaxHp(5); await offer(g, { rarity: 'rare' }, 'A knack, for a name'); return 'sold_wren'; } },
+      async fx(g) { g.loseMaxHp(5); g.setFlag('a2_sold_name'); await offer(g, { rarity: 'rare' }, 'A knack, for a name'); return 'sold_wren'; } },
     { label: '[Sing it a psalm instead] Lose 6 HP. Choose 1 of 3 uncommon cards.', show: isHero('cantor'), req: hpReq(6),
-      async fx(g) { g.hurt(6); await offer(g, { rarity: 'uncommon' }, 'A knack, for a psalm'); return 'psalm'; } },
+      async fx(g) { g.hurt(6); g.setFlag('a2_sold_name'); await offer(g, { rarity: 'uncommon' }, 'A knack, for a psalm'); return 'psalm'; } },
     { label: '[Ask what it does with names]', show: (g, d) => !d.asked,
       fx(g, d) { d.asked = true; g.unlockLore('lore_a2_true_names'); return 'ask'; } },
     { label: '[Keep your name]', end: true },
@@ -998,6 +1001,30 @@ defineLore([
       `*Lowmere bell, Lowmere bell,*\n*who's that ringing down the well?*\n*Not the abbot, not the nun,*\n*not the fisher's drownded son.*`,
       `*Lowmere bell, Lowmere bell,*\n*who's that ringing, can you tell?*\n*Lady in her nightgown white,*\n*ringing for her own all night.*`,
       `*Ring it once and up they come,*\n*ring it twice and they'll go home,*\n*ring it thrice—*`,
+    ),
+  },
+  {
+    id: 'lore_a2_drowned_brothers', cat: 'bestiary', title: 'The Brothers of Lowmere',
+    text: P(
+      `They are not undead, the abbey's one living witness insists; the dead have somewhere to be. These are men at their devotions who were interrupted and have declined to stop. They kneel. They sing. They tolerate visitors.`,
+      `They fight the way they pray: slowly, together, and without once looking up. A drowned brother who is struck simply resumes his psalm a line later. The novices, who never took their vows, are worse. They do not know the words, and so they sing the only part they were ever taught, which is the end.`,
+      `Do not interrupt a drowned brother at the Gloria. He will finish it.`,
+    ),
+  },
+  {
+    id: 'lore_a2_pyre_bearers', cat: 'bestiary', title: 'Grall\'s Men',
+    text: P(
+      `The Witchfinder General's company wears grey tabards and a crown branded in the palm: one brand, one hand, so each man knows whose fire he carries. The Pyre-Bearers, the elder ones, carry the coals between burnings in iron pots, and have not let them go out in eleven years.`,
+      `They are not cruel men, in the main. That is the difficulty. A cruel man can be shamed. These have been told, kindly and often, that every flame they light is a mercy, and they have found, as people do, that it is easier to be thanked than to be right.`,
+      `They pray before each burning, sincerely, and eat well afterwards.`,
+    ),
+  },
+  {
+    id: 'lore_a2_glamour_kin', cat: 'bestiary', title: 'Glamour-kin',
+    text: P(
+      `When a fae noble puts off a face they do not discard it. They hang it in a closet with the others, and some of these go on wearing themselves. Glamour-kin are the faces that got out.`,
+      `They have no body of their own, only the shape of whatever frightens you most, borrowed straight from your head. Strike one and it shifts to meet the blow, to something kinder, or crueller, or dearer. The old advice is to fight them with your eyes shut. The old advice is also, plainly, written by people who did not do it.`,
+      `Fae courtiers go masked at court so that nobody will know which of them is a glamour. Several of them aren't sure either.`,
     ),
   },
   {

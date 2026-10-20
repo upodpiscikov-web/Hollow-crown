@@ -347,7 +347,7 @@ const event = {
       return scr;
     }
     const artId = page.art && hasSprite(page.art) ? page.art : (def && def.art && hasSprite(def.art) ? def.art : null);
-    const art = h('div.ev-art', artId ? sprFit(artId, 300, 200, 'ev-img') : h('div.ev-noart', icon('map_event', 4, '', '?')));
+    const art = h('div.ev-art', artId ? sprFit(artId, 232, 168, 'ev-img') : h('div.ev-noart', icon('map_event', 4, '', '?')));
     const textEl = h('div.ev-text.prose', { html: prose(page.text) });
     if (fresh || true) [...textEl.children].forEach((p, i) => { p.classList.add('fade-p'); p.style.animationDelay = (i * 0.28) + 's'; });
     const speaker = page.speaker ? portraitOf(page.speaker) : null;

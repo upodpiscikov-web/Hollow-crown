@@ -18,6 +18,9 @@ should answer one small question and raise another. Never dump the whole truth a
    him the captaincy if he will crown Crane's puppet. Hints: no one else was ever in the room.
 5. `truth_knight` (Act 3) **The Unopened Door.** He opens the king's chamber door in Ashgrave:
    only the king, alone, begging the Crown to let him die. Aldous swears his own oath.
+   (Continuity: Brother Cael was at the king's bedside that night too, but he had already
+   died — one of the Unspent, whom the living cannot see or hear. That is why Aldous only
+   ever heard ONE voice, and why the room looks empty to him. Do not contradict `cantor_4`.)
 
 ## The Witch — Isolde Marrow (KIN)
 1. `witch_1` (Act 1) **The Plague Cart.** The Blight's victims are not dying; they're *stopped*.
