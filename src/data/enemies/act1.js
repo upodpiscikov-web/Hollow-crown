@@ -93,7 +93,7 @@ defineStatuses([
   },
   {
     id: 'brood_hunger', name: 'Brood-Hunger', kind: 'buff', icon: 'heart',
-    desc: () => 'Devours her own leeches to heal twice their remaining HP. Kill them before she feeds.',
+    desc: () => 'Devours her own leeches, healing their remaining HP + 6. Kill them before she feeds.',
   },
   {
     id: 'chorus', name: 'Chorus', kind: 'buff', icon: 'echo',
@@ -114,7 +114,7 @@ defineStatuses([
   },
   {
     id: 'hanging_judge', name: 'Hanging Judge', kind: 'buff', icon: 'chain',
-    desc: (n) => `The Noose deals ${n} more damage for each card you played this turn. Every Warrant left in your hand gives him 2 Might.`,
+    desc: (n) => `The Noose deals ${n} more damage for each card you played this turn. Every Warrant left in your hand at end of turn gives him 1 Might.`,
   },
   {
     id: 'teeming', name: 'Teeming', kind: 'buff', icon: 'split',
@@ -135,11 +135,11 @@ defineCards([
   {
     id: 'sheriffs_warrant', name: 'Warrant', hero: 'status', type: 'status', rarity: 'special', cost: 1, target: 'none',
     kw: ['exhaust'], art: 'scroll', noUp: true,
-    text: 'Answer the charge. If this is in your hand at end of turn, the Sheriff gains 2 Might.',
+    text: 'Answer the charge. If this is in your hand at end of turn, the Sheriff gains 1 Might.',
     play() {},
     endTurnInHand(g) {
       const s = g.enemies.find((x) => x.id === 'hanged_sheriff');
-      if (s) g.apply(s, 'might', 2, s);
+      if (s) g.apply(s, 'might', 1, s);
     },
   },
 ]);
@@ -171,7 +171,7 @@ function spawnLeeches(g, n) {
 
 function spawnRats(g, n, hp) {
   for (let i = 0; i < n && g.enemies.length < 5; i++) {
-    g.spawn('rat_swarm', { minion: true, front: true, hp: hp || int(g.crng, 9, 11) });
+    g.spawn('rat_swarm', { minion: true, front: true, hp: hp || int(g.crng, 8, 10) });
   }
 }
 
@@ -328,7 +328,7 @@ defineEnemies([
     ai(g, e) { return g.aiPick(e, { gnaw: 60, swarm: 40 }, { gnaw: 2, swarm: 2 }); },
   },
   {
-    id: 'war_hound', name: 'War Hound', kind: 'normal', act: 1, hp: [15, 17], sprite: 'en_war_hound',
+    id: 'war_hound', name: 'War Hound', kind: 'normal', act: 1, hp: [13, 15], sprite: 'en_war_hound',
     desc: 'Bragg\'s mastiffs, collared in nails and fed on men. They fight harder over their brothers\' bodies.',
     init(g, e) { g.addStatus(e, 'pack', 3, { silent: true }); },
     moves: {
@@ -344,8 +344,8 @@ defineEnemies([
     desc: 'Hanged at the crossroads for cowardice, eighty years ago. The rope never let him go, so he took it with him.',
     init(g, e) { g.addStatus(e, 'hanged_man', 3, { silent: true }); },
     moves: {
-      chain: { name: 'Strangling Chain', intent: 'atkdebuff', dmg: 6, fx(g, e) { g.apply(g.player, 'choked', 2, e); } },
-      cleave: { name: 'Headsman\'s Cleave', intent: 'atk', dmg: 15 },
+      chain: { name: 'Strangling Chain', intent: 'atkdebuff', dmg: 5, fx(g, e) { g.apply(g.player, 'choked', 2, e); } },
+      cleave: { name: 'Headsman\'s Cleave', intent: 'atk', dmg: 14 },
       swing: { name: 'Gallows Swing', intent: 'atk', dmg: 4, times: 3 },
       brace: { name: 'Rusted Guard', intent: 'def', fx(g, e) { g.gainBlock(e, 14, { raw: true }); } },
     },
@@ -366,7 +366,7 @@ defineEnemies([
     },
   },
   {
-    id: 'bog_mother', name: 'The Bog Mother', kind: 'elite', act: 1, hp: [86, 92], sprite: 'en_bog_mother', leader: true,
+    id: 'bog_mother', name: 'The Bog Mother', kind: 'elite', act: 1, hp: [82, 88], sprite: 'en_bog_mother', leader: true,
     desc: 'Something vast and soft lies under the fen-pools, and the leeches are its children. It loves them. It is also very hungry.',
     init(g, e) { g.addStatus(e, 'brood_hunger', 1, { silent: true }); },
     moves: {
@@ -382,7 +382,7 @@ defineEnemies([
           const kids = g.enemies.filter((x) => x.id === 'bog_leech');
           if (!kids.length) return;
           const fat = kids.reduce((m, x) => (x.hp > m.hp ? x : m));
-          const heal = fat.hp * 2;
+          const heal = fat.hp + 6;
           fat.hp = 0;
           fat.dead = true;
           g.emit('death', { e: fat });
@@ -405,39 +405,37 @@ defineEnemies([
   {
     id: 'choir_precentor', name: 'Precentor of Ash', kind: 'elite', act: 1, hp: [34, 38], sprite: 'en_choir_precentor',
     desc: 'He leads the Ashen Choir in the hymn they sang on the night the King died. They have not stopped singing.',
-    init(g, e) { g.addStatus(e, 'chorus', 3, { silent: true }); },
+    init(g, e) { g.addStatus(e, 'chorus', 2, { silent: true }); },
     moves: {
       hymn: {
         name: 'Hymn of Cinders', intent: 'buff',
         fx(g, e) { for (const x of g.enemies) if (x.st.chorus) g.apply(x, 'might', 2, e); },
       },
-      psalm: { name: 'Cinder Psalm', intent: 'atk', dmg: 7 },
+      psalm: { name: 'Cinder Psalm', intent: 'atk', dmg: 6 },
     },
     ai(g, e) {
-      if (e.turns === 0) return 'hymn';
-      return g.aiPick(e, { psalm: 60, hymn: 40 }, { psalm: 2, hymn: 1 });
+      return step(e, ['hymn', 'psalm', 'psalm']);
     },
   },
   {
     id: 'choir_thurifer', name: 'Thurifer of Ash', kind: 'elite', act: 1, hp: [30, 34], sprite: 'en_choir_thurifer',
     desc: 'Her censer burns the bones of the unshriven. The smoke gets into the lungs, and the mind.',
-    init(g, e) { g.addStatus(e, 'chorus', 3, { silent: true }); },
+    init(g, e) { g.addStatus(e, 'chorus', 2, { silent: true }); },
     moves: {
-      censer: { name: 'Censer Swing', intent: 'atk', dmg: 6 },
+      censer: { name: 'Censer Swing', intent: 'atk', dmg: 5 },
       smoke: {
         name: 'Choking Smoke', intent: 'debuff',
-        fx(g, e) { g.addCard('ash', 'draw'); g.addCard('ash', 'draw'); g.apply(g.player, 'weak', 1, e); },
+        fx(g, e) { g.addCard('ash', 'draw'); g.apply(g.player, 'weak', 1, e); },
       },
     },
     ai(g, e) {
-      if (e.turns === 0) return 'smoke';
-      return g.aiPick(e, { censer: 60, smoke: 40 }, { censer: 2, smoke: 1 });
+      return step(e, ['censer', 'smoke', 'censer']);
     },
   },
   {
     id: 'choir_penitent', name: 'Penitent of Ash', kind: 'elite', act: 1, hp: [28, 32], sprite: 'en_choir_penitent',
     desc: 'He scourges himself for the sin of outliving his King, and every drop he spills is a prayer for his brothers.',
-    init(g, e) { g.addStatus(e, 'chorus', 3, { silent: true }); },
+    init(g, e) { g.addStatus(e, 'chorus', 2, { silent: true }); },
     moves: {
       scourge: {
         name: 'Scourge', intent: 'def',
@@ -447,27 +445,26 @@ defineEnemies([
           g.gainBlock(e, 4, { raw: true });
         },
       },
-      flail: { name: 'Flail', intent: 'atk', dmg: 2, times: 3 },
+      flail: { name: 'Flail', intent: 'atk', dmg: 3, times: 2 },
     },
     ai(g, e) {
-      if (e.turns === 0) return 'scourge';
-      return g.aiPick(e, { flail: 55, scourge: 45 }, { flail: 2, scourge: 1 });
+      return step(e, ['scourge', 'flail', 'flail']);
     },
   },
 
   // ============================================================ BOSSES
   {
-    id: 'bragg', name: 'Bragg the Hound-Lord', kind: 'boss', act: 1, hp: 262, sprite: 'en_bragg', leader: true,
+    id: 'bragg', name: 'Bragg the Hound-Lord', kind: 'boss', act: 1, hp: 250, sprite: 'en_bragg', leader: true,
     desc: 'Captain of the Marcher levy until Ashfall; now lord of every cutthroat between the fens and the Wood. He feeds his hounds first.',
     init(g, e) { g.addStatus(e, 'hound_lord', 1, { silent: true }); },
     moves: {
       loose: { name: 'Loose the Hounds', intent: 'summon', fx(g, e) { summonHounds(g, e, 2); } },
-      cleaver: { name: 'Butcher\'s Cleaver', intent: 'atk', dmg: 15 },
+      cleaver: { name: 'Butcher\'s Cleaver', intent: 'atk', dmg: 14 },
       sic: {
         name: 'Sic \'Em!', intent: 'atkbuff', dmg: 7,
         fx(g, e) { for (const h of g.enemies) if (h.id === 'war_hound') g.apply(h, 'might', 2, e); },
       },
-      gut: { name: 'Gut-Rip', intent: 'atk', dmg: 4, times: 3 },
+      gut: { name: 'Gut-Rip', intent: 'atk', dmg: 3, times: 3 },
       frenzy: {
         name: 'Blood Frenzy', intent: 'buff',
         fx(g, e) {
@@ -483,7 +480,7 @@ defineEnemies([
     ai(g, e) {
       if (e.turns === 0) return 'loose';
       if (e.data.frenzyNow) return 'frenzy';
-      if (!count(g, 'war_hound') && e.turns - (e.data.lastLoose ?? 0) >= 3) return 'loose';
+      if (!count(g, 'war_hound') && e.turns - (e.data.lastLoose ?? 0) >= 4) return 'loose';
       if (e.data.frenzy) return step(e, ['hack', 'cleaver', 'sic'], 'j');
       return step(e, ['cleaver', 'sic', 'gut']);
     },
@@ -499,9 +496,9 @@ defineEnemies([
     },
   },
   {
-    id: 'hanged_sheriff', name: 'The Hanged Sheriff', kind: 'boss', act: 1, hp: 270, sprite: 'en_hanged_sheriff',
+    id: 'hanged_sheriff', name: 'The Hanged Sheriff', kind: 'boss', act: 1, hp: 260, sprite: 'en_hanged_sheriff',
     desc: 'He hanged three hundred men at the Marcher crossroads, all by the King\'s law. When the King died, the Sheriff\'s heart stopped. He did not.',
-    init(g, e) { e.data.per = 3; g.addStatus(e, 'hanging_judge', 3, { silent: true }); },
+    init(g, e) { e.data.per = 2; g.addStatus(e, 'hanging_judge', 2, { silent: true }); },
     moves: {
       charges: {
         name: 'Read the Charges', intent: 'strongdebuff',
@@ -511,14 +508,14 @@ defineEnemies([
       cudgel: { name: 'Reeve\'s Cudgel', intent: 'atk', dmg: 13 },
       noose: {
         name: 'The Noose', intent: 'atk',
-        dmg: (g, e) => 8 + (e.data.per || 3) * (g.cb ? g.cb.cnt.cards : 0),
+        dmg: (g, e) => 6 + (e.data.per || 2) * (g.cb ? g.cb.cnt.cards : 0),
       },
       day: {
         name: 'Hanging Day', intent: 'strongdebuff',
         fx(g, e) {
           e.data.day = true;
           e.data.dayNow = false;
-          e.data.per = 4;
+          e.data.per = 3;
           g.addStatus(e, 'hanging_judge', 1);
           g.gainBlock(e, 12, { raw: true });
           for (let i = 0; i < 3; i++) g.addCard('sheriffs_warrant', 'draw');
@@ -543,17 +540,17 @@ defineEnemies([
     },
   },
   {
-    id: 'mother_of_rats', name: 'Mother of Rats', kind: 'boss', act: 1, hp: 255, sprite: 'en_mother_of_rats', leader: true,
+    id: 'mother_of_rats', name: 'Mother of Rats', kind: 'boss', act: 1, hp: 250, sprite: 'en_mother_of_rats', leader: true,
     desc: 'In the plague-pits under Saltmarsh something has eaten the dead for ten years. It has grown very large. It has had a great many children.',
     init(g, e) {
       e.data.acc = 0;
-      g.addStatus(e, 'teeming', 40, { silent: true });
-      g.addStatus(e, 'swarm_fed', 2, { silent: true });
+      g.addStatus(e, 'teeming', 50, { silent: true });
+      g.addStatus(e, 'swarm_fed', 1, { silent: true });
     },
     moves: {
       birth: { name: 'Birth the Swarm', intent: 'summon', fx(g) { spawnRats(g, 2); } },
       kiss: { name: 'Plague Kiss', intent: 'atkdebuff', dmg: 8, fx(g, e) { g.apply(g.player, 'rot', 3, e); } },
-      wallow: { name: 'Wallow', intent: 'atk', dmg: 16 },
+      wallow: { name: 'Wallow', intent: 'atk', dmg: 15 },
       tide: { name: 'Tide of Teeth', intent: 'atkdebuff', dmg: 3, times: 4 },
       boil: {
         name: 'The Pit Boils', intent: 'summon',
@@ -561,7 +558,7 @@ defineEnemies([
           e.data.boiled = true;
           e.data.boilNow = false;
           g.addStatus(e, 'plague_bite', 1);
-          spawnRats(g, Math.max(0, 3 - count(g, 'rat_swarm')));
+          spawnRats(g, Math.max(0, 2 - count(g, 'rat_swarm')));
         },
       },
     },
@@ -571,10 +568,10 @@ defineEnemies([
       const rats = count(g, 'rat_swarm');
       if (e.data.boiled) {
         const m = step(e, ['tide', 'wallow', 'kiss'], 'j');
-        return m === 'kiss' && rats < 2 ? 'birth' : m;
+        return m === 'kiss' && rats === 0 ? 'birth' : m;
       }
       const m = step(e, ['kiss', 'wallow', 'tide']);
-      return m === 'tide' && rats < 2 ? 'birth' : m;
+      return m === 'tide' && rats === 0 ? 'birth' : m;
     },
     on: {
       hpLost(g, e, n) {
@@ -584,7 +581,7 @@ defineEnemies([
           e.data.acc = (e.data.acc || 0) + n;
           while (e.data.acc >= per) {
             e.data.acc -= per;
-            spawnRats(g, 1, 6);
+            spawnRats(g, 1, 5);
           }
         }
         if (!e.data.boiled && !e.data.boilNow && e.hp <= e.maxHp / 2) {
@@ -646,5 +643,492 @@ const FUR_D = '#433e3a';
 const FLESH_DEAD = '#9a9a80';
 const PINK = '#c08a86';
 
+// Small reusable figures.
+function ratFig(p, x, y, s = 1, col = '#4e4640') {
+  // A single rat facing left at (x,y) = nose. s scales.
+  p.path([[x + 9 * s, y + 2 * s], [x + 13 * s, y + 4 * s], [x + 16 * s, y + 2 * s]], PINK, 1);
+  p.ellipse(x + 6 * s, y + 1.5 * s, 4 * s, 2.4 * s, col, { shade: 0.25 });
+  p.poly([[x, y + 1.5 * s], [x + 3 * s, y - 0.5 * s], [x + 4 * s, y + 3 * s]], col);
+  p.px(x + 3 * s, y - 1 * s, PINK);
+  p.px(x + 2, y + 1, '#d23a2a');
+}
+function leechFig(p, x, y, len, col = '#3f3a26') {
+  // A small leech, mouth at (x,y), body trailing right.
+  p.path([[x, y], [x + len * 0.4, y - 1], [x + len, y + 1]], col, 3);
+  p.px(x, y, PINK);
+}
+
 defineSprites({
+  en_marsh_hound: {
+    w: 48, h: 32,
+    draw(p) {
+      p.path([[17, 19], [14, 25], [12, 31]], FUR_D, 2);
+      p.path([[33, 19], [37, 25], [36, 31]], FUR_D, 2);
+      p.path([[38, 13], [43, 17], [46, 24]], FUR_D, 3);
+      p.ellipse(27, 14, 12, 6, FUR, { shade: 0.3 });
+      p.eraseEllipse(28, 22, 7, 3);
+      p.poly([[9, 10], [17, 5], [24, 8], [22, 18], [13, 19]], FUR, { shade: 0.3 });
+      p.ellipse(9, 13, 6, 4, FUR, { shade: 0.25 });
+      p.poly([[0, 14], [6, 11], [8, 16], [1, 17]], FUR_D);
+      p.tri(8, 10, 9, 3, 13, 9, FUR);
+      p.px(10, 6, PAL.night);
+      p.path([[19, 18], [18, 25], [16, 31]], FUR, 3);
+      p.path([[34, 17], [36, 24], [34, 31]], FUR, 3);
+      for (let i = 0; i < 4; i++) p.line(23 + i * 3, 12, 22 + i * 3, 18, FUR_D);
+      for (let i = 0; i < 6; i++) p.line(14 + i * 3, 6 + (i > 2 ? 1 : 0), 15 + i * 3, 3 + (i > 2 ? 3 : 0), FUR_D);
+      p.line(1, 16, 7, 16, PAL.gore);
+      p.px(2, 17, PAL.bone); p.px(5, 17, PAL.bone); p.px(3, 15, PAL.bone);
+      p.glow(7, 12, PAL.ember, 2);
+    },
+  },
+  en_war_hound: {
+    w: 52, h: 38,
+    draw(p) {
+      const F = '#5a4636', D = '#3c2e24';
+      p.path([[18, 24], [15, 31], [13, 37]], D, 3);
+      p.path([[37, 24], [41, 31], [40, 37]], D, 3);
+      p.path([[42, 15], [47, 13], [50, 8]], F, 3);
+      p.ellipse(31, 18, 13, 8, F, { shade: 0.3 });
+      p.ellipse(16, 17, 9, 10, F, { shade: 0.3 });
+      p.ellipse(10, 14, 8, 6, F, { shade: 0.25 });
+      p.poly([[0, 15], [6, 11], [9, 19], [2, 21]], D);
+      p.poly([[1, 18], [8, 18], [7, 23], [2, 22]], D);
+      p.line(2, 19, 8, 19, PAL.blood); p.line(2, 20, 7, 21, PAL.gore);
+      p.px(2, 18, PAL.bone); p.px(5, 18, PAL.bone); p.px(3, 21, PAL.bone);
+      p.tri(10, 9, 12, 4, 15, 10, D);
+      p.rect(15, 10, 4, 14, PAL.iron, { shade: 0.3 });
+      for (let i = 0; i < 4; i++) p.tri(14, 11 + i * 3, 11, 12 + i * 3, 14, 13 + i * 3, PAL.steel);
+      p.path([[21, 23], [20, 30], [18, 37]], F, 4);
+      p.path([[38, 23], [40, 30], [38, 37]], F, 4);
+      p.line(26, 13, 33, 20, PAL.gore); p.line(30, 12, 36, 18, PAL.gore);
+      p.glow(8, 13, PAL.ember, 2);
+    },
+  },
+  en_gibbet_crow: {
+    w: 30, h: 30,
+    draw(p) {
+      const B = '#1e1b22', W = '#2e2a36';
+      p.rect(12, 26, 16, 3, PAL.wood, { shade: 0.3 });
+      p.path([[14, 20], [13, 26]], PAL.stone, 1); p.path([[18, 20], [19, 26]], PAL.stone, 1);
+      p.poly([[20, 12], [29, 18], [28, 24], [22, 20]], B);
+      p.ellipse(16, 15, 8, 7, B, { shade: 0.25 });
+      p.poly([[12, 9], [24, 10], [27, 19], [14, 19]], W, { shade: 0.3 });
+      for (let i = 0; i < 3; i++) p.line(16 + i * 3, 12, 20 + i * 3, 19, B);
+      p.circle(9, 8, 4.5, B, { shade: 0.25 });
+      p.poly([[0, 10], [6, 6], [7, 10]], PAL.stone);
+      p.line(1, 10, 6, 9, PAL.ash);
+      p.glow(8, 7, PAL.ember, 1);
+    },
+  },
+  en_coughing_dead: {
+    w: 36, h: 54,
+    draw(p) {
+      const S = '#5d5240', SD = '#463d30';
+      p.path([[18, 38], [16, 46], [15, 53]], FLESH_DEAD, 3);
+      p.path([[24, 38], [26, 46], [27, 53]], '#80806a', 3);
+      p.poly([[12, 18], [26, 15], [31, 26], [30, 42], [10, 42], [9, 30]], S, { shade: 0.3 });
+      p.poly([[10, 36], [30, 36], [32, 44], [27, 41], [23, 45], [18, 41], [13, 45], [8, 42]], SD);
+      p.path([[13, 22], [7, 28], [3, 31]], FLESH_DEAD, 3);
+      p.path([[3, 31], [0, 31]], FLESH_DEAD, 1); p.path([[3, 31], [1, 34]], FLESH_DEAD, 1);
+      p.ellipse(13, 14, 7, 7, FLESH_DEAD, { shade: 0.3 });
+      p.poly([[16, 7], [24, 11], [24, 19], [17, 19]], '#6b5a42', { shade: 0.2 });
+      p.ellipse(8, 17, 2.5, 3, PAL.void);
+      p.path([[8, 19], [7, 23], [8, 27]], PAL.bile, 1);
+      p.circle(10, 12, 1.5, PAL.void); p.px(10, 12, PAL.sick);
+      p.circle(15, 11, 1.5, PAL.void);
+      p.speckle(PAL.bile, 0.06, 3, [8, 6, 20, 22]);
+      p.speckle(PAL.rot, 0.05, 9, [10, 16, 31, 42]);
+      p.path([[28, 24], [31, 32], [30, 38]], '#80806a', 3);
+    },
+  },
+  en_ash_cultist: {
+    w: 36, h: 56,
+    draw(p) {
+      const R = '#7d7873', RD = '#57524f';
+      p.poly([[12, 14], [24, 12], [30, 30], [33, 54], [5, 54], [8, 30]], R, { shade: 0.3 });
+      for (let i = 0; i < 4; i++) p.tri(7 + i * 7, 54, 10 + i * 7, 49, 13 + i * 7, 54, RD);
+      p.rect(9, 32, 22, 2, PAL.bark);
+      p.path([[14, 33], [13, 40]], PAL.bark, 1);
+      p.poly([[10, 4], [19, 0], [26, 6], [26, 18], [11, 18], [8, 11]], R, { shade: 0.3 });
+      p.ellipse(14, 12, 4.5, 5.5, PAL.bone, { shade: 0.2 });
+      p.ellipse(13, 11, 1.4, 1.6, PAL.void); p.ellipse(16, 11, 1.2, 1.6, PAL.void);
+      p.line(12, 15, 16, 15, PAL.ash);
+      p.path([[22, 20], [15, 26], [8, 26]], RD, 4);
+      p.line(8, 30, 3, 16, PAL.bark, 2);
+      p.circle(3, 14, 2.5, PAL.ember);
+      p.glow(3, 13, PAL.flame, 3);
+      p.px(2, 10, PAL.ash); p.px(4, 7, PAL.stone); p.px(3, 4, PAL.ash);
+      p.speckle(PAL.fog, 0.04, 5, [6, 14, 32, 54]);
+    },
+  },
+  en_marcher_cutthroat: {
+    w: 38, h: 54,
+    draw(p) {
+      const L = PAL.leather, LD = '#5a4129', H = '#4a3c30';
+      p.path([[19, 34], [13, 44], [9, 53]], LD, 4);
+      p.path([[24, 34], [29, 43], [31, 53]], LD, 4);
+      p.rect(7, 51, 6, 3, PAL.night); p.rect(29, 51, 6, 3, PAL.night);
+      p.poly([[13, 16], [27, 15], [30, 28], [28, 38], [14, 38], [11, 27]], L, { shade: 0.3 });
+      p.line(13, 30, 28, 30, PAL.night, 2);
+      p.path([[26, 19], [32, 27], [34, 31]], LD, 3);
+      p.line(34, 31, 37, 27, PAL.steel, 1);
+      p.poly([[12, 6], [21, 2], [27, 8], [26, 17], [13, 18], [10, 12]], H, { shade: 0.3 });
+      p.ellipse(15, 11, 3.5, 4, PAL.skin, { shade: 0.2 });
+      p.poly([[10, 12], [20, 12], [21, 17], [11, 18]], PAL.blood, { shade: 0.3 });
+      p.poly([[19, 15], [24, 20], [21, 23]], PAL.blood);
+      p.line(12, 10, 16, 10, PAL.void);
+      p.px(13, 10, PAL.parch);
+      p.path([[15, 20], [9, 26], [5, 27]], L, 3);
+      p.poly([[0, 25], [5, 25], [5, 27], [0, 27]], PAL.steel);
+      p.line(0, 25, 4, 25, PAL.frost);
+    },
+  },
+  en_marcher_archer: {
+    w: 44, h: 56,
+    draw(p) {
+      const C = '#4f5446', CD = '#383c32';
+      p.path([[25, 36], [22, 46], [21, 55]], CD, 4);
+      p.path([[30, 36], [33, 46], [34, 55]], CD, 4);
+      p.poly([[30, 12], [36, 8], [39, 10], [34, 24]], PAL.bark);
+      for (let i = 0; i < 3; i++) p.line(34 + i * 2, 9 - i, 31 + i * 2, 4 - i, PAL.bone);
+      p.poly([[21, 14], [33, 14], [36, 30], [34, 40], [20, 40], [18, 28]], C, { shade: 0.3 });
+      p.poly([[19, 34], [36, 34], [38, 44], [17, 44]], CD);
+      p.line(19, 28, 34, 28, PAL.leather, 2);
+      p.poly([[20, 4], [28, 1], [33, 6], [32, 15], [21, 15], [18, 10]], C, { shade: 0.3 });
+      p.ellipse(22, 10, 3, 3.5, PAL.skin, { shade: 0.2 });
+      p.line(20, 9, 23, 9, PAL.void);
+      p.path([[8, 2], [4, 12], [3, 24], [4, 36], [8, 46]], PAL.wood, 2);
+      p.line(8, 2, 8, 46, PAL.fog, 1);
+      p.path([[21, 18], [14, 21], [6, 23]], C, 3);
+      p.path([[28, 19], [22, 22], [16, 24]], C, 3);
+      p.line(1, 24, 17, 24, PAL.bone, 1);
+      p.poly([[0, 24], [3, 22], [3, 26]], PAL.steel);
+      p.px(16, 23, PAL.blood); p.px(16, 25, PAL.blood);
+    },
+  },
+  en_bog_leech: {
+    w: 46, h: 26,
+    draw(p) {
+      const B = '#3f3a26', BL = '#5c5434';
+      p.ellipse(30, 17, 15, 7, B, { shade: 0.35 });
+      p.ellipse(15, 13, 9, 7, B, { shade: 0.35 });
+      p.ellipse(7, 9, 6, 6, B, { shade: 0.3 });
+      for (let i = 0; i < 6; i++) p.line(12 + i * 5, 10 + (i > 1 ? 3 : 0), 14 + i * 5, 23, '#2c2818');
+      p.path([[12, 19], [30, 22], [44, 19]], BL, 2);
+      p.path([[18, 9], [30, 11], [40, 13]], '#7c7348', 1);
+      p.circle(4, 9, 4.5, PINK, { shade: 0.2 });
+      p.circle(4, 9, 2.5, PAL.gore);
+      for (let a = 0; a < 8; a++) p.px(Math.round(4 + Math.cos(a * 0.785) * 3.4), Math.round(9 + Math.sin(a * 0.785) * 3.4), PAL.bone);
+      p.px(4, 9, PAL.void);
+      p.px(15, 9, PAL.frost); p.px(28, 12, PAL.frost); p.px(9, 5, PAL.frost);
+    },
+  },
+  en_grave_robber: {
+    w: 42, h: 52,
+    draw(p) {
+      const T = '#5b4a38', TD = '#43362a';
+      p.path([[18, 36], [14, 44], [13, 51]], TD, 4);
+      p.path([[24, 36], [27, 44], [28, 51]], TD, 4);
+      p.ellipse(32, 26, 8, 10, '#6e5f45', { shade: 0.3 });
+      p.line(28, 17, 34, 16, PAL.bark, 2);
+      p.px(33, 23, PAL.gold); p.px(35, 28, PAL.gold); p.px(30, 30, PAL.candle);
+      p.poly([[12, 18], [26, 16], [30, 30], [27, 39], [12, 39], [9, 28]], T, { shade: 0.3 });
+      p.line(10, 30, 28, 30, PAL.night, 2);
+      p.line(14, 31, 14, 36, PAL.iron); p.circle(14, 38, 2.5, PAL.flame); p.glow(14, 38, PAL.candle, 3);
+      p.line(36, 2, 6, 34, PAL.wood, 2);
+      p.poly([[33, 0], [40, 2], [39, 8], [33, 6]], PAL.iron, { shade: 0.3 });
+      p.ellipse(15, 12, 5, 5.5, PAL.skin, { shade: 0.25 });
+      p.poly([[10, 14], [16, 13], [17, 20], [12, 20]], PAL.ash);
+      p.ellipse(17, 7, 10, 2.5, TD, { shade: 0.3 });
+      p.poly([[11, 6], [16, 1], [23, 3], [23, 7]], TD);
+      p.line(11, 11, 14, 11, PAL.void); p.px(12, 11, PAL.parch);
+      p.px(10, 13, PAL.skin);
+      p.path([[14, 22], [9, 28], [7, 33]], T, 3);
+      p.speckle(MUD, 0.08, 4, [9, 30, 30, 52]);
+    },
+  },
+  en_wight_militiaman: {
+    w: 44, h: 60,
+    draw(p) {
+      const T = '#4a5260', TD = '#363c48';
+      p.line(34, 0, 26, 58, PAL.wood, 2);
+      p.poly([[33, 0], [36, 0], [35, 8]], PAL.steel);
+      p.path([[21, 40], [18, 50], [17, 59]], PAL.bone, 2);
+      p.path([[26, 40], [29, 50], [30, 59]], PAL.bone, 2);
+      p.poly([[16, 18], [30, 17], [33, 32], [31, 44], [15, 44], [13, 30]], T, { shade: 0.3 });
+      for (let i = 0; i < 4; i++) p.tri(14 + i * 5, 44, 16 + i * 5, 40, 18 + i * 5, 44, TD);
+      p.line(15, 33, 31, 33, PAL.bark, 2);
+      p.path([[29, 21], [33, 26], [31, 30]], PAL.bone, 2);
+      p.ellipse(19, 12, 6, 6, PAL.bone, { shade: 0.3 });
+      p.rect(13, 14, 7, 4, PAL.bone, { shade: 0.2 });
+      for (let i = 0; i < 3; i++) p.px(14 + i * 2, 16, PAL.void);
+      p.ellipse(16, 11, 1.6, 1.8, PAL.void); p.ellipse(21, 11, 1.4, 1.8, PAL.void);
+      p.glow(16, 11, PAL.spirit, 2);
+      p.ellipse(19, 7, 11, 2.5, RUST, { shade: 0.35 });
+      p.ellipse(20, 5, 7, 4, RUST, { shade: 0.35 });
+      p.speckle(PAL.ember, 0.12, 2, [8, 1, 32, 10]);
+      p.circle(10, 32, 10, PAL.wood, { shade: 0.35 });
+      p.ring(10, 32, 10, PAL.iron, 2);
+      p.circle(10, 32, 3, RUST, { shade: 0.3 });
+      p.line(4, 26, 16, 38, PAL.bark);
+      p.speckle(PAL.bark, 0.08, 6, [0, 22, 20, 42]);
+    },
+  },
+  en_rat_swarm: {
+    w: 50, h: 30,
+    draw(p) {
+      const R1 = '#4e4640', R2 = '#3a3430', R3 = '#5e544b';
+      p.ellipse(27, 22, 22, 8, R2, { shade: 0.3 });
+      p.ellipse(22, 16, 13, 7, R1, { shade: 0.3 });
+      p.ellipse(36, 15, 10, 6, R3, { shade: 0.3 });
+      p.path([[46, 20], [49, 15], [47, 10]], PINK, 1);
+      p.path([[44, 26], [49, 28]], PINK, 1);
+      p.path([[30, 9], [34, 4], [39, 5]], PINK, 1);
+      ratFig(p, 1, 23, 1.2, R1);
+      ratFig(p, 8, 13, 1.3, R3);
+      ratFig(p, 22, 8, 1.1, R1);
+      ratFig(p, 14, 21, 1, R3);
+      ratFig(p, 30, 16, 1, R2);
+      for (let i = 0; i < 14; i++) p.line(12 + i * 2.5, 19 + (i % 3), 13 + i * 2.5, 17 + (i % 3), R2);
+    },
+  },
+
+  // ---------------------------------------------------------------- elites
+  en_sir_rendrick: {
+    w: 66, h: 78,
+    draw(p) {
+      const A = '#6a6c6e', AD = '#4a4c50', SC = '#5a2430';
+      p.path([[38, 2], [36, 8], [37, 14]], '#8a7a50', 2);
+      p.line(38, 0, 40, 3, '#8a7a50'); p.line(37, 0, 35, 2, '#8a7a50');
+      p.path([[30, 52], [25, 64], [22, 77]], AD, 6);
+      p.path([[40, 52], [45, 64], [47, 77]], AD, 6);
+      p.rect(17, 74, 9, 4, AD); p.rect(44, 74, 9, 4, AD);
+      p.poly([[22, 24], [46, 22], [50, 40], [47, 58], [23, 58], [20, 40]], SC, { shade: 0.3 });
+      for (let i = 0; i < 5; i++) p.tri(22 + i * 5, 58, 25 + i * 5, 52, 28 + i * 5, 58, '#3a1820');
+      p.poly([[24, 24], [44, 23], [46, 36], [26, 37]], A, { shade: 0.35 });
+      p.ellipse(46, 26, 8, 6, A, { shade: 0.35 });
+      p.path([[47, 29], [53, 40], [52, 50]], AD, 5);
+      p.line(22, 44, 48, 44, PAL.bark, 2);
+      p.circle(34, 44, 2, PAL.iron);
+      p.path([[26, 30], [18, 38], [14, 42]], A, 5);
+      p.ellipse(22, 25, 6, 5, A, { shade: 0.35 });
+      p.poly([[27, 8], [40, 9], [41, 22], [27, 22], [25, 15]], A, { shade: 0.35 });
+      p.line(26, 14, 34, 15, PAL.void, 2);
+      p.glow(28, 14, PAL.ember, 2);
+      for (let i = 0; i < 3; i++) p.px(28 + i * 2, 18, PAL.void);
+      p.path([[30, 22], [34, 23], [39, 21], [38, 15]], '#8a7a50', 2);
+      p.speckle(RUST, 0.18, 11, [14, 8, 56, 60]);
+      p.poly([[10, 40], [16, 38], [16, 46], [9, 46]], PAL.bark);
+      p.poly([[3, 44], [17, 42], [15, 50], [2, 74], [0, 72]], PAL.iron, { shade: 0.35 });
+      p.poly([[0, 72], [2, 74], [10, 64], [8, 62]], PAL.steel);
+      p.line(4, 46, 14, 44, PAL.steel);
+      p.path([[50, 46], [55, 54], [53, 62], [56, 70]], PAL.iron, 1);
+      p.path([[14, 46], [12, 56], [16, 62]], PAL.iron, 1);
+    },
+  },
+  en_bog_mother: {
+    w: 80, h: 64,
+    draw(p) {
+      const B = '#3e3a24', BD = '#2a2716', BL = '#5e5636';
+      p.ellipse(44, 58, 36, 6, PAL.deep);
+      p.ellipse(44, 57, 30, 4, PAL.water);
+      p.ellipse(50, 40, 26, 18, B, { shade: 0.35 });
+      p.ellipse(28, 34, 16, 16, B, { shade: 0.35 });
+      p.ellipse(18, 24, 12, 12, B, { shade: 0.3 });
+      for (let i = 0; i < 7; i++) p.path([[24 + i * 7, 22 + (i < 2 ? 4 : 0)], [26 + i * 7, 40], [24 + i * 7, 56]], BD, 1);
+      p.path([[30, 48], [52, 54], [72, 48]], BL, 2);
+      p.path([[30, 20], [48, 22], [66, 28]], '#7c7348', 1);
+      p.circle(13, 24, 10, PINK, { shade: 0.25 });
+      p.circle(13, 24, 7, '#8a4a4a');
+      p.circle(13, 24, 4.5, PAL.gore);
+      p.circle(13, 24, 2, PAL.void);
+      for (let a = 0; a < 14; a++) p.px(Math.round(13 + Math.cos(a * 0.449) * 8.5), Math.round(24 + Math.sin(a * 0.449) * 8.5), PAL.bone);
+      for (let a = 0; a < 10; a++) p.px(Math.round(13 + Math.cos(a * 0.628 + 0.3) * 5.5), Math.round(24 + Math.sin(a * 0.628 + 0.3) * 5.5), PAL.parch);
+      leechFig(p, 38, 30, 9, '#2c2818');
+      leechFig(p, 56, 26, 8, '#2c2818');
+      leechFig(p, 62, 44, 9, '#2c2818');
+      leechFig(p, 44, 46, 7, '#2c2818');
+      p.px(30, 26, PAL.frost); p.px(52, 28, PAL.frost); p.px(20, 15, PAL.frost); p.px(66, 36, PAL.frost);
+      p.path([[73, 56], [74, 40], [72, 32]], PAL.moss, 1);
+      p.path([[76, 56], [78, 44]], PAL.moss, 1);
+      p.path([[4, 56], [3, 44], [5, 38]], PAL.moss, 1);
+    },
+  },
+  en_choir_precentor: {
+    w: 40, h: 62,
+    draw(p) {
+      const R = '#827d77', RD = '#5a5551';
+      p.poly([[14, 16], [27, 14], [33, 34], [36, 61], [6, 61], [9, 34]], R, { shade: 0.3 });
+      for (let i = 0; i < 4; i++) p.tri(7 + i * 7, 61, 10 + i * 7, 55, 13 + i * 7, 61, RD);
+      p.poly([[17, 16], [23, 16], [24, 58], [16, 58]], PAL.wine, { shade: 0.2 });
+      for (let i = 0; i < 4; i++) p.tri(18, 22 + i * 9, 22, 22 + i * 9, 20, 26 + i * 9, PAL.gold);
+      p.poly([[12, 6], [20, 0], [27, 8], [27, 18], [12, 18], [9, 11]], R, { shade: 0.3 });
+      p.poly([[14, 2], [20, -1], [25, 3], [20, 6]], PAL.bone);
+      p.ellipse(15, 12, 4.5, 5.5, PAL.bone, { shade: 0.2 });
+      p.ellipse(13, 11, 1.4, 1.6, PAL.void); p.ellipse(16, 11, 1.2, 1.6, PAL.void);
+      p.ellipse(14, 15, 1.5, 1, PAL.void);
+      p.path([[14, 22], [8, 16], [6, 8]], R, 3);
+      p.ellipse(6, 7, 2, 2, PAL.bone);
+      p.path([[24, 22], [18, 28], [11, 29]], RD, 3);
+      p.poly([[3, 27], [12, 25], [13, 33], [4, 34]], PAL.parch, { shade: 0.2 });
+      p.line(8, 26, 8, 33, PAL.bark);
+      p.line(4, 29, 7, 29, PAL.ash); p.line(9, 28, 12, 28, PAL.ash);
+      p.speckle(PAL.fog, 0.04, 7, [6, 16, 36, 60]);
+    },
+  },
+  en_choir_thurifer: {
+    w: 44, h: 58,
+    draw(p) {
+      const R = '#7d7873', RD = '#57524f';
+      p.poly([[18, 14], [30, 12], [36, 30], [39, 57], [11, 57], [14, 30]], R, { shade: 0.3 });
+      for (let i = 0; i < 4; i++) p.tri(12 + i * 7, 57, 15 + i * 7, 51, 18 + i * 7, 57, RD);
+      p.rect(15, 32, 22, 2, PAL.bark);
+      p.poly([[16, 4], [25, 0], [32, 6], [32, 18], [17, 18], [14, 11]], R, { shade: 0.3 });
+      p.ellipse(20, 12, 4.5, 5.5, PAL.bone, { shade: 0.2 });
+      p.line(17, 11, 20, 11, PAL.void); p.line(17, 15, 21, 15, PAL.ash);
+      p.path([[19, 20], [13, 24], [10, 22]], RD, 3);
+      p.path([[10, 22], [7, 30], [6, 38]], PAL.iron, 1);
+      p.circle(6, 41, 4, PAL.gold, { shade: 0.35 });
+      p.rect(3, 40, 7, 1, '#7a5e1a');
+      p.glow(6, 43, PAL.ember, 3);
+      p.circle(4, 34, 2, PAL.stone); p.circle(2, 28, 2.5, PAL.ash); p.circle(4, 22, 3, '#4a474c');
+      p.circle(1, 15, 2, PAL.ash);
+      p.speckle(PAL.fog, 0.04, 8, [12, 14, 38, 56]);
+    },
+  },
+  en_choir_penitent: {
+    w: 40, h: 56,
+    draw(p) {
+      const R = '#7d7873', RD = '#57524f', SK = '#b09080';
+      p.poly([[12, 32], [30, 32], [34, 55], [8, 55]], R, { shade: 0.3 });
+      for (let i = 0; i < 4; i++) p.tri(9 + i * 6, 55, 12 + i * 6, 50, 15 + i * 6, 55, RD);
+      p.poly([[13, 14], [27, 13], [30, 32], [12, 33], [11, 24]], SK, { shade: 0.3 });
+      for (let i = 0; i < 4; i++) p.line(16 + i * 3, 16, 14 + i * 3, 30, PAL.blood);
+      p.line(12, 32, 30, 31, PAL.iron, 2);
+      p.path([[26, 15], [31, 24], [29, 30]], SK, 3);
+      p.poly([[12, 3], [21, 0], [27, 6], [27, 16], [13, 16], [10, 10]], R, { shade: 0.3 });
+      p.ellipse(15, 11, 4, 5, PAL.bone, { shade: 0.2 });
+      p.line(13, 10, 16, 10, PAL.void); p.px(14, 14, PAL.void);
+      p.path([[15, 18], [9, 12], [7, 6]], SK, 3);
+      p.line(7, 7, 6, 2, PAL.bark, 2);
+      p.path([[6, 2], [2, 6], [1, 12]], PAL.leather, 1);
+      p.path([[6, 2], [3, 8], [4, 14]], PAL.leather, 1);
+      p.path([[6, 2], [5, 9], [7, 15]], PAL.leather, 1);
+      p.px(1, 12, PAL.iron); p.px(4, 14, PAL.iron); p.px(7, 15, PAL.iron);
+      p.path([[29, 31], [33, 40], [31, 48], [35, 54]], PAL.iron, 1);
+    },
+  },
+
+  // ---------------------------------------------------------------- bosses
+  en_bragg: {
+    w: 84, h: 100,
+    draw(p) {
+      const P = '#6a6460', PD = '#48433f', L = '#5c4330', LD = '#3e2d20', SK = '#b08a6c';
+      p.path([[40, 70], [34, 84], [30, 98]], LD, 9);
+      p.path([[54, 70], [60, 84], [62, 98]], LD, 9);
+      p.rect(23, 94, 13, 6, PAL.night); p.rect(58, 94, 13, 6, PAL.night);
+      p.poly([[24, 30], [66, 28], [74, 50], [70, 76], [26, 76], [20, 52]], L, { shade: 0.3 });
+      p.ellipse(46, 58, 20, 14, '#6a5038', { shade: 0.3 });
+      p.speckle(PAL.iron, 0.25, 21, [26, 32, 68, 52]);
+      p.poly([[24, 50], [70, 48], [70, 54], [24, 56]], PAL.blood, { shade: 0.3 });
+      p.rect(42, 49, 7, 7, PAL.gold, { shade: 0.3 });
+      p.poly([[18, 22], [44, 14], [74, 20], [80, 40], [72, 48], [64, 34], [30, 34], [20, 44], [14, 34]], P, { shade: 0.35 });
+      for (let i = 0; i < 8; i++) p.line(18 + i * 8, 26 + (i % 2) * 3, 16 + i * 8, 34 + (i % 2) * 4, PD);
+      p.path([[66, 36], [74, 52], [72, 66]], L, 9);
+      p.path([[72, 66], [70, 76], [64, 86], [58, 92]], PAL.iron, 1);
+      p.path([[58, 92], [52, 96], [46, 94]], PAL.iron, 1);
+      p.ellipse(32, 18, 10, 10, SK, { shade: 0.3 });
+      p.poly([[22, 20], [36, 20], [38, 34], [30, 38], [23, 32]], '#3a2a20', { shade: 0.2 });
+      p.line(25, 22, 30, 22, PAL.void, 2);
+      p.px(26, 21, PAL.parch);
+      p.line(33, 12, 30, 22, '#8a5a4a');
+      p.poly([[20, 12], [34, 4], [50, 8], [52, 20], [40, 16], [28, 14]], P, { shade: 0.35 });
+      p.poly([[18, 12], [22, 6], [26, 11]], PD);
+      p.tri(30, 6, 33, 0, 36, 6, PD);
+      p.poly([[14, 13], [22, 10], [24, 15], [16, 17]], PD);
+      p.px(17, 13, PAL.bone); p.px(20, 15, PAL.bone);
+      p.glow(24, 11, PAL.ember, 1);
+      p.path([[26, 38], [16, 50], [12, 56]], L, 9);
+      p.ellipse(12, 57, 5, 5, SK, { shade: 0.3 });
+      p.rect(10, 58, 4, 10, PAL.bark);
+      p.poly([[0, 34], [14, 34], [16, 58], [2, 58]], PAL.iron, { shade: 0.35 });
+      p.line(1, 34, 1, 58, PAL.steel, 2);
+      p.circle(10, 39, 2, PAL.void);
+      p.speckle(PAL.blood, 0.12, 4, [0, 40, 12, 58]);
+    },
+  },
+  en_hanged_sheriff: {
+    w: 72, h: 104,
+    draw(p) {
+      const C = '#2c2a33', CD = '#1d1b22', SK = '#a8a898', R = '#8a7a50';
+      p.path([[44, 0], [42, 10], [40, 18]], R, 2);
+      p.line(44, 0, 46, 2, R); p.line(44, 0, 42, 1, R);
+      p.path([[34, 74], [31, 88], [30, 102]], CD, 6);
+      p.path([[44, 74], [47, 88], [48, 102]], CD, 6);
+      p.rect(25, 99, 9, 5, PAL.void); p.rect(45, 99, 9, 5, PAL.void);
+      p.poly([[26, 30], [50, 28], [56, 52], [60, 90], [20, 90], [22, 52]], C, { shade: 0.3 });
+      p.poly([[20, 84], [26, 76], [30, 90]], CD); p.poly([[52, 80], [60, 90], [48, 90]], CD);
+      p.poly([[34, 30], [44, 30], [42, 60], [36, 60]], '#5a4a3a', { shade: 0.2 });
+      p.path([[28, 34], [38, 46], [50, 34]], PAL.gold, 1);
+      p.path([[29, 35], [38, 47], [49, 35]], '#7a5e1a', 1);
+      p.circle(38, 48, 3, PAL.gold, { shade: 0.3 });
+      p.px(38, 48, PAL.candle);
+      p.line(22, 62, 56, 62, PAL.bark, 2);
+      p.rect(36, 61, 4, 3, PAL.steel);
+      p.path([[50, 34], [56, 50], [56, 64]], C, 5);
+      p.path([[56, 64], [58, 70], [55, 76]], R, 2);
+      p.ring(56, 80, 5, R, 2);
+      p.path([[30, 26], [32, 30], [42, 30], [43, 22]], R, 2);
+      p.ellipse(34, 19, 8, 9, SK, { shade: 0.3 });
+      p.ellipse(30, 18, 2, 2.2, PAL.void); p.ellipse(36, 17, 2, 2.2, PAL.void);
+      p.glow(30, 18, PAL.candle, 2); p.glow(36, 17, PAL.candle, 1);
+      p.poly([[27, 23], [34, 22], [33, 27], [28, 27]], '#6a6a5c');
+      for (let i = 0; i < 4; i++) p.px(28 + i * 1.5, 24, PAL.void);
+      p.ellipse(35, 10, 17, 3.5, CD, { shade: 0.3 });
+      p.poly([[25, 10], [28, 0], [42, -1], [45, 10]], C, { shade: 0.3 });
+      p.rect(27, 7, 17, 2, '#5a4a3a');
+      p.path([[28, 34], [18, 44], [12, 48]], C, 5);
+      p.ellipse(12, 49, 3, 3, SK);
+      p.poly([[2, 40], [12, 42], [10, 70], [0, 68]], PAL.parch, { shade: 0.2 });
+      p.rect(1, 38, 12, 3, PAL.bone, { shade: 0.3 });
+      p.rect(0, 67, 11, 3, PAL.bone, { shade: 0.3 });
+      for (let i = 0; i < 6; i++) p.line(3, 46 + i * 3.5, 9, 46.5 + i * 3.5, PAL.ash);
+      p.circle(6, 64, 2, PAL.blood);
+    },
+  },
+  en_mother_of_rats: {
+    w: 110, h: 92,
+    draw(p) {
+      const F = '#b08a84', FD = '#8a6460', FL = '#c8a49a';
+      p.ellipse(56, 86, 52, 6, PAL.night);
+      p.path([[96, 72], [106, 66], [108, 52], [102, 44], [94, 48]], FD, 3);
+      p.ellipse(64, 54, 38, 30, F, { shade: 0.35 });
+      p.ellipse(40, 48, 22, 24, F, { shade: 0.35 });
+      p.path([[78, 76], [84, 86], [80, 90]], FD, 7);
+      p.path([[40, 70], [34, 84], [28, 88]], FD, 7);
+      for (let i = 0; i < 5; i++) p.circle(46 + i * 9, 76 - (i % 2) * 2, 2.5, FL);
+      p.speckle(PAL.rot, 0.04, 13, [30, 28, 100, 80]);
+      p.speckle(PAL.gore, 0.03, 17, [30, 28, 100, 80]);
+      p.ellipse(58, 40, 3, 2, PAL.bile); p.ellipse(78, 58, 4, 2.5, PAL.bile); p.ellipse(50, 62, 2.5, 2, PAL.bile);
+      p.poly([[30, 26], [16, 30], [2, 42], [4, 50], [16, 52], [32, 50]], F, { shade: 0.3 });
+      p.ellipse(22, 32, 8, 5, FD);
+      p.circle(25, 22, 6, FD); p.circle(25, 22, 3.5, PINK);
+      p.circle(14, 36, 3.5, '#d8d0c0'); p.circle(14, 36, 2, '#a8b0a0');
+      p.rect(4, 49, 3, 7, PAL.bone); p.rect(8, 49, 3, 7, PAL.bone);
+      p.line(6, 49, 6, 56, '#a89870');
+      p.poly([[0, 42], [5, 40], [6, 45], [1, 46]], PINK);
+      p.px(0, 44, PAL.void);
+      p.line(2, 46, 14, 50, PAL.gore);
+      for (let i = 0; i < 3; i++) { p.line(2, 41 + i, -2, 38 + i * 2, PAL.fog); }
+      const RAT = '#4a423c', RAT2 = '#5c5249';
+      ratFig(p, 50, 28, 1.3, RAT);
+      ratFig(p, 70, 26, 1.2, RAT2);
+      ratFig(p, 82, 36, 1.1, RAT);
+      ratFig(p, 62, 40, 1, RAT2);
+      ratFig(p, 86, 52, 1.2, RAT);
+      ratFig(p, 44, 80, 1.2, RAT);
+      ratFig(p, 62, 82, 1.1, RAT2);
+      ratFig(p, 14, 80, 1.3, RAT);
+    },
+  },
 });

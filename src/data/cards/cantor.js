@@ -43,6 +43,23 @@ function grow(card, key, n) {
   card.bonus = { ...(card.bonus || {}), [key]: ((card.bonus && card.bonus[key]) || 0) + n };
 }
 
+// Workaround (engine request filed): Game.endTurn() returns early when combat ends
+// during end-of-turn effects (Spirit passives, turnEnd powers) and skips afterAction(),
+// so the combat never finishes. Once the engine has fully unwound (not busy), finish
+// it ourselves. A no-op whenever the engine already did, or will, finish the combat.
+function settleCombat(g) {
+  const cb = g.cb;
+  if (!cb || cb.finished || cb.settleQueued) return;
+  cb.settleQueued = true;
+  // enemyDied/hpLost fire before checkEnd() marks the combat over, so decide later.
+  queueMicrotask(() => {
+    cb.settleQueued = false;
+    if (g.cb === cb && !cb.finished && !cb.busy && g.checkEnd()) {
+      g.afterAction().catch((err) => console.error('cantor settle failed', err));
+    }
+  });
+}
+
 function spiritBolt(g, n) {
   const e = g.randomEnemy();
   if (e && live(g)) g.damage(e, n, { type: 'spirit', src: g.player });
@@ -159,13 +176,13 @@ defineCards([
     play(g, v, t) { bleed(g, v.bleed); if (live(g)) g.attack(t, v.dmg); },
   },
   {
-    id: 'wergild_cantor', name: 'Wergild', hero: H, type: 'attack', rarity: 'common', cost: 1, target: 'enemy',
+    id: 'blood_price_cantor', name: 'Blood-Price', hero: H, type: 'attack', rarity: 'common', cost: 1, target: 'enemy',
     v: { dmg: 6, per: 2 }, up: { dmg: 2, per: 1 }, art: 'coin', tier: 0,
     text: 'Deal {dmg} damage, plus {per} for each HP you lost this turn.',
     play(g, v, t) { g.attack(t, v.dmg + v.per * (g.cnt.hpLost || 0)); },
   },
   {
-    id: 'last_rites_cantor', name: 'Last Rites', hero: H, type: 'attack', rarity: 'common', cost: 1, target: 'enemy',
+    id: 'extreme_unction_cantor', name: 'Extreme Unction', hero: H, type: 'attack', rarity: 'common', cost: 1, target: 'enemy',
     v: { dmg: 8, n: 2 }, up: { dmg: 3 }, art: 'skull', tier: 0,
     text: 'Deal {dmg} damage. If this kills the enemy, Channel {n} Wisps.',
     play(g, v, t) {
@@ -188,7 +205,7 @@ defineCards([
     play(g, v) { bleed(g, v.bleed); if (!live(g)) return; g.block(v.blk); g.draw(1); },
   },
   {
-    id: 'lancet_cantor', name: 'Lancet', hero: H, type: 'skill', rarity: 'common', cost: 0, target: 'none',
+    id: 'penitents_thorn_cantor', name: 'Penitent\'s Thorn', hero: H, type: 'skill', rarity: 'common', cost: 0, target: 'none',
     v: { bleed: 1, n: 2 }, up: { n: 1 }, art: 'knife', tier: 0, ...BLEED_GUARD,
     text: 'Bleed {bleed}. Draw {n} cards.',
     play(g, v) { bleed(g, v.bleed); if (live(g)) g.draw(v.n); },
@@ -469,6 +486,8 @@ defineRelics([
     desc: 'At the start of each combat, Channel 1 Wisp.',
     flavor: 'The beads are cold to the touch. So are his fingers. He has stopped noticing.',
     combatStart(g) { g.channel('wisp'); },
+    enemyDied(g) { settleCombat(g); },
+    hpLost(g, r, e) { if (e && e.isPlayer) settleCombat(g); },
   },
   {
     id: 'knotted_cord', name: 'Knotted Cord', rarity: 'common', hero: H, icon: 'rope', tint: '#8a7356',

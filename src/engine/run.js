@@ -536,6 +536,8 @@ export const runMethods = {
       const d = RELICS[r.id];
       if (d.restOption) for (const o of [].concat(d.restOption)) opts.push({ ...o, relic: r.id, disabled: o.can ? !o.can(this, r) : false });
     }
+    // Never leave the player stuck at a site with nothing to do (e.g. no Rest, nothing to upgrade).
+    if (!opts.some((o) => !o.disabled)) opts.push({ id: 'leave', label: 'Move on', desc: 'Nothing here for you.', icon: 'rest' });
     return opts;
   },
 
@@ -552,6 +554,8 @@ export const runMethods = {
       const up = await this.upgradeCardChoice(1);
       if (!up.length) return;
       this.trigger('smithed');
+    } else if (id === 'leave') {
+      // nothing to do
     } else if (opt.relic) {
       const ok = await opt.use(this, run.relics.find((r) => r.id === opt.relic));
       if (ok === false) return;

@@ -396,4 +396,242 @@ defineSprites({
       }
     },
   },
+  // ------------------------------------------------------------------ NPC portraits (40x40)
+  npc_hob: {
+    w: 40, h: 40,
+    draw(p) {
+      const coat = mix(PAL.leather, PAL.bark, 0.5), skin = mix(PAL.skin, PAL.leather, 0.25), skinD = sh(skin, -0.3), lamp = PAL.candle;
+      // spade over the shoulder
+      p.line(30, 40, 37, 6, PAL.wood, 2);
+      p.poly([[33, 1], [39, 3], [39, 9], [36, 10], [33, 7]], PAL.iron, { shade: 0.35 });
+      // coat + scarf
+      p.poly([[0, 40], [2, 31], [10, 27], [30, 27], [37, 31], [40, 40]], coat, { shade: 0.3 });
+      p.rect(7, 34, 4, 4, mix(PAL.wood, PAL.ash, 0.4)); p.px(7, 34, PAL.bone).px(10, 37, PAL.bone); // patch
+      p.poly([[12, 27], [28, 27], [27, 32], [13, 32]], PAL.wine, { shade: 0.3 });
+      // face
+      p.poly([[11, 13], [14, 9], [26, 9], [29, 13], [29, 20], [26, 26], [20, 28], [14, 26], [11, 20]], skin);
+      p.poly([[26, 12], [29, 13], [29, 20], [26, 26], [23, 27], [26, 20]], skinD);
+      p.ellipse(10.5, 17, 1.6, 2.5, skinD); p.ellipse(29.5, 17, 1.6, 2.5, skinD);
+      // battered felt hat
+      p.poly([[3, 12], [10, 9], [12, 3], [20, 1], [28, 3], [30, 9], [37, 12], [30, 13], [10, 13]], mix(PAL.dusk, PAL.bark, 0.5), { shade: 0.3 });
+      p.line(11, 9, 29, 9, PAL.bark); p.px(34, 11, PAL.night).px(5, 11, PAL.ash);
+      // bushy white brows, crinkled kind eyes
+      p.rect(13, 14, 5, 2, PAL.bone); p.rect(22, 14, 5, 2, PAL.bone);
+      p.path([[14, 17], [15, 18], [17, 17]], PAL.ink, 1); p.path([[23, 17], [24, 18], [26, 17]], PAL.ink, 1);
+      p.px(15, 17, PAL.water).px(24, 17, PAL.water);
+      p.px(12, 18, skinD).px(13, 19, skinD).px(27, 18, skinD).px(26, 19, skinD); // crow's feet
+      // big nose
+      p.ellipse(20, 20, 2, 2, sh(skin, 0.1)); p.px(19, 19, sh(skin, 0.35)); p.px(21, 21, skinD);
+      // white beard with a smile in it
+      p.poly([[11, 20], [14, 22], [18, 22], [20, 23], [22, 22], [26, 22], [29, 20], [29, 25], [26, 31], [20, 34], [14, 31], [11, 25]], PAL.bone, { shade: 0.25 });
+      p.path([[17, 24], [20, 25], [23, 24]], sh(PAL.rose, -0.4), 1);
+      p.px(16, 28, PAL.fog).px(20, 30, PAL.fog).px(24, 28, PAL.fog);
+      // lantern light from below-left
+      p.px(12, 21, lamp).px(11, 19, lamp).px(12, 25, lamp).px(14, 30, lamp);
+      p.rect(1, 31, 5, 7, PAL.candle); p.rect(1, 30, 5, 1, PAL.iron); p.rect(1, 38, 5, 1, PAL.iron); p.line(3, 31, 3, 37, PAL.gold);
+      p.glow(3, 34, PAL.candle, 5);
+    },
+  },
+  npc_pell: {
+    w: 40, h: 40,
+    draw(p) {
+      const red = mix(PAL.rose, PAL.ash, 0.35), mus = mix(PAL.gold, PAL.ash, 0.4), teal = mix(PAL.ghost, PAL.ash, 0.45);
+      const T = -0.12;
+      const R = (pts) => pts.map(([x, y]) => [20 + (x - 20) * Math.cos(T) - (y - 18) * Math.sin(T), 18 + (x - 20) * Math.sin(T) + (y - 18) * Math.cos(T)]);
+      const E = (pts, c, o) => p.poly(R(pts), c, o);
+      // motley shoulders (faded diamonds)
+      p.poly([[0, 40], [2, 31], [10, 27], [30, 27], [38, 31], [40, 40]], red, { shade: 0.3 });
+      for (let i = 0; i < 6; i++) { const x = 3 + i * 7; p.poly([[x, 31], [x + 3, 35], [x, 40], [x - 3, 35]], i % 2 ? mus : teal, { shade: 0.2 }); }
+      p.poly([[11, 27], [29, 27], [32, 31], [26, 30], [20, 33], [14, 30], [8, 31]], PAL.bone, { shade: 0.3 }); // ruff
+      // jester hood with drooping points + bells
+      E([[8, 26], [8, 13], [12, 6], [20, 4], [28, 6], [32, 13], [32, 26], [27, 29], [13, 29]], mus, { shade: 0.3 });
+      E([[20, 4], [28, 6], [32, 13], [32, 26], [27, 29], [20, 29]], red, { shade: 0.3 });
+      p.path(R([[12, 7], [6, 3], [2, 8], [2, 14]]), mus, 3);
+      p.path(R([[28, 6], [34, 2], [38, 7], [38, 13]]), red, 3);
+      for (const [x, y] of R([[2, 15], [38, 14]])) { p.circle(x, y, 1.6, PAL.gold, { shade: 0.3 }); p.px(Math.round(x), Math.round(y) + 1, PAL.bark); }
+      // cracked porcelain smile-mask
+      E([[11, 15], [14, 9], [20, 8], [26, 9], [29, 15], [28, 22], [24, 27], [20, 28], [16, 27], [12, 22]], PAL.parch);
+      E([[26, 10], [29, 15], [28, 22], [24, 27], [21, 28], [25, 22], [27, 15]], sh(PAL.parch, -0.18));
+      E([[13, 15], [18, 14], [17, 17], [14, 17]], PAL.void); E([[22, 14], [27, 15], [26, 17], [23, 17]], PAL.void);
+      E([[15, 18], [16, 18], [16, 21], [15, 21]], PAL.ink); E([[24, 18], [25, 18], [25, 21], [24, 21]], PAL.ink); // painted diamonds
+      E([[13, 21], [16, 23], [20, 24], [24, 23], [27, 21], [25, 25], [20, 26], [15, 25]], PAL.blood); // painted grin
+      E([[15, 22], [25, 22], [24, 23], [16, 23]], PAL.gore);
+      p.path(R([[19, 8], [18, 11], [20, 13], [19, 17], [21, 19], [20, 22]]), PAL.ink, 1); // the crack
+      for (const [x, y] of R([[15, 16], [24, 16]])) p.px(Math.round(x), Math.round(y), PAL.candle);
+    },
+  },
+  npc_peddler: {
+    w: 40, h: 40,
+    draw(p) {
+      const cloak = mix(PAL.bark, PAL.dusk, 0.5), cloakL = mix(PAL.wood, PAL.ash, 0.4);
+      // heavy cloak with straps and trinkets
+      p.poly([[0, 40], [1, 30], [9, 25], [31, 25], [39, 30], [40, 40]], cloak, { shade: 0.3 });
+      p.line(9, 27, 17, 40, PAL.leather, 2); p.line(31, 27, 23, 40, PAL.leather, 2);
+      p.rect(5, 32, 3, 5, PAL.rot); p.px(6, 31, PAL.bone); // bottle
+      p.ring(33, 34, 2, PAL.gold, 1); p.line(33, 36, 34, 39, PAL.gold); p.px(35, 39, PAL.gold); // key
+      p.circle(13, 35, 1.5, PAL.gold); p.circle(27, 36, 1.5, PAL.gold); p.px(13, 35, PAL.candle);
+      p.rect(19, 30, 3, 4, PAL.bone); p.px(19, 31, PAL.void).px(21, 31, PAL.void); // skull trinket
+      // deep hood
+      p.poly([[6, 27], [7, 12], [12, 4], [20, 1], [28, 4], [33, 12], [34, 27], [28, 31], [12, 31]], cloakL, { shade: 0.35 });
+      p.poly([[10, 27], [10, 14], [14, 8], [26, 8], [30, 14], [30, 27], [25, 30], [15, 30]], PAL.void);
+      p.line(13, 8, 9, 26, sh(cloakL, 0.25));
+      // only the grin
+      p.poly([[13, 21], [17, 23], [20, 24], [23, 23], [27, 21], [25, 25], [20, 27], [15, 25]], PAL.bone);
+      for (const x of [15, 17, 19, 21, 23, 25]) p.px(x, 24, PAL.ash);
+      p.line(14, 23, 26, 23, sh(PAL.bone, 0.3));
+      p.px(16, 15, PAL.candle).px(24, 15, PAL.candle);
+      p.px(16, 15, '#ffe9a8');
+    },
+  },
+  npc_crane: {
+    w: 40, h: 40,
+    draw(p) {
+      const blk = mix(PAL.ink, PAL.night, 0.5), skin = mix(PAL.pale, PAL.fog, 0.25), skinD = mix(skin, PAL.dusk, 0.45), silver = PAL.steel;
+      // black coat, high collar, silver trim
+      p.poly([[0, 40], [2, 30], [11, 25], [29, 25], [38, 30], [40, 40]], blk, { shade: 0.3 });
+      p.poly([[11, 22], [16, 28], [20, 31], [24, 28], [29, 22], [31, 30], [20, 36], [9, 30]], mix(PAL.night, PAL.dusk, 0.3), { shade: 0.3 });
+      p.path([[9, 30], [20, 36], [31, 30]], silver, 1);
+      // chain of office
+      for (let i = 0; i <= 10; i++) { const t = i / 10, x = 4 + t * 32, y = 33 + Math.sin(t * Math.PI) * 4; p.rect(Math.round(x), Math.round(y), 2, 1, i % 2 ? PAL.frost : silver); }
+      p.circle(20, 38, 2.5, silver, { shade: 0.4 }); p.px(20, 38, PAL.wine);
+      // gaunt face, 3/4 left
+      p.poly([[12, 11], [15, 6], [24, 5], [28, 10], [28, 17], [26, 23], [22, 27], [18, 27], [14, 23], [12, 17]], skin);
+      p.poly([[12, 13], [15, 13], [15, 21], [18, 26], [14, 23], [12, 17]], skinD); // shadowed far cheek
+      p.poly([[23, 17], [26, 16], [25, 22], [23, 21]], skinD); // hollow cheek
+      p.ellipse(28.5, 16, 1.5, 2.5, skinD);
+      // slicked silver hair
+      p.poly([[11, 14], [11, 7], [15, 3], [23, 2], [29, 5], [30, 12], [28, 10], [26, 6], [18, 6], [14, 9], [13, 14]], PAL.fog, { shade: 0.3 });
+      p.line(15, 4, 26, 4, PAL.frost); p.line(14, 7, 25, 5, PAL.stone);
+      // cold pale eyes under severe brows
+      p.line(13, 12, 17, 13, PAL.ash); p.line(20, 13, 25, 12, PAL.ash);
+      p.rect(14, 14, 3, 1, PAL.bone); p.px(14, 14, PAL.frost).px(15, 14, PAL.ink);
+      p.rect(21, 14, 3, 1, PAL.bone); p.px(21, 14, PAL.frost).px(22, 14, PAL.ink);
+      p.line(14, 15, 16, 15, skinD); p.line(21, 15, 23, 15, skinD);
+      // long thin nose, thin hard mouth
+      p.path([[18, 14], [17, 19], [18, 20]], skinD, 1); p.px(19, 16, sh(skin, 0.3));
+      p.line(16, 23, 21, 23, sh(PAL.wine, -0.2)); p.px(15, 22, skinD);
+    },
+  },
+  npc_maren: {
+    w: 40, h: 40,
+    draw(p) {
+      const skin = mix(PAL.ghost, PAL.frost, 0.3), skinD = mix(PAL.ghost, PAL.water, 0.5), hair = mix(PAL.deep, PAL.moss, 0.35), weed = PAL.moss;
+      // weed-tangled hair falling past the shoulders
+      p.poly([[3, 40], [4, 24], [7, 10], [13, 3], [20, 1], [27, 3], [33, 10], [36, 24], [37, 40]], hair, { shade: 0.3 });
+      p.poly([[9, 40], [11, 30], [29, 30], [31, 40]], mix(PAL.water, PAL.ghost, 0.3), { shade: 0.3 }); // drowned gown
+      p.path([[11, 30], [20, 34], [29, 30]], PAL.frost, 1);
+      // face
+      p.poly([[12, 12], [15, 7], [25, 7], [28, 12], [28, 19], [25, 25], [20, 28], [15, 25], [12, 19]], skin);
+      p.poly([[25, 9], [28, 12], [28, 19], [25, 25], [21, 28], [24, 21], [26, 14]], skinD);
+      p.rect(17, 27, 6, 3, skinD);
+      // hair strands across the brow
+      p.poly([[11, 16], [13, 9], [20, 6], [17, 10], [14, 15], [13, 22]], hair); p.poly([[29, 16], [27, 9], [21, 6], [25, 10], [27, 15], [27, 23]], hair);
+      // tarnished crown
+      p.poly([[12, 7], [14, 2], [16, 5], [18, 1], [20, 4], [22, 1], [24, 5], [26, 2], [28, 7], [27, 8], [13, 8]], mix(PAL.gold, PAL.moss, 0.45), { shade: 0.3 });
+      p.px(20, 6, PAL.spirit).px(15, 6, PAL.rot).px(25, 4, PAL.rot);
+      // hollow, sorrowing eyes
+      p.rect(14, 14, 4, 2, PAL.deep); p.rect(22, 14, 4, 2, PAL.deep);
+      p.px(15, 14, PAL.spirit).px(23, 14, PAL.spirit);
+      p.path([[14, 13], [16, 12], [18, 13]], skinD, 1); p.path([[22, 13], [24, 12], [26, 13]], skinD, 1);
+      p.path([[20, 15], [20, 19], [19, 20]], skinD, 1);
+      p.path([[17, 23], [20, 22], [23, 23]], PAL.deep, 1);
+      // water tears and dripping weed
+      p.line(15, 16, 15, 21, PAL.spirit); p.px(15, 22, PAL.frost);
+      p.path([[8, 12], [6, 22], [7, 32], [5, 39]], weed, 1); p.path([[32, 14], [34, 26], [32, 34], [34, 39]], weed, 1);
+      p.path([[11, 20], [9, 28], [10, 36]], PAL.rot, 1); p.px(9, 25, PAL.bile).px(33, 22, PAL.bile);
+      // translucent: dissolve toward the bottom
+      const B = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+      for (let y = 30; y < 40; y++) for (let x = 0; x < 40; x++) if ((B[(y & 3) * 4 + (x & 3)] + 0.5) / 16 < (y - 29) / 13) p.erase(x, y);
+    },
+  },
+  npc_grall: {
+    w: 40, h: 40,
+    draw(p) {
+      const blk = mix(PAL.ink, PAL.bark, 0.25), skin = mix(PAL.skin, PAL.ash, 0.2), skinD = sh(skin, -0.32), hat = mix(PAL.night, PAL.bark, 0.3);
+      // black coat, white falling bands, iron gorget
+      p.poly([[0, 40], [2, 30], [11, 26], [29, 26], [38, 30], [40, 40]], blk, { shade: 0.3 });
+      p.poly([[12, 27], [28, 27], [28, 32], [12, 32]], PAL.iron, { shade: 0.35 });
+      p.poly([[16, 32], [24, 32], [25, 39], [21, 37], [19, 37], [15, 39]], PAL.parch, { shade: 0.25 });
+      p.line(20, 32, 20, 37, sh(PAL.parch, -0.3));
+      // face: heavy jaw, 3/4 left
+      p.poly([[12, 13], [27, 13], [28, 19], [26, 25], [21, 28], [16, 27], [12, 22]], skin);
+      p.poly([[12, 14], [15, 14], [15, 22], [17, 27], [12, 22]], skinD);
+      p.ellipse(28, 18, 1.5, 2.5, skinD);
+      // brows, hard eyes
+      p.rect(14, 15, 5, 1, PAL.night); p.rect(21, 15, 5, 1, PAL.night);
+      p.rect(15, 17, 3, 1, PAL.bone); p.px(15, 17, PAL.ink); p.rect(21, 17, 3, 1, PAL.bone); p.px(21, 17, PAL.ink);
+      p.line(15, 16, 18, 16, skinD); p.line(21, 16, 24, 16, skinD);
+      p.path([[19, 16], [18, 21], [19, 22]], skinD, 1);
+      p.line(16, 24, 22, 24, sh(PAL.rose, -0.5)); p.px(15, 25, skinD).px(23, 25, skinD);
+      p.path([[24, 19], [25, 24]], sh(PAL.rose, 0.15), 1); // old burn scar
+      p.speckle(skinD, 0.12, 4, [13, 22, 27, 28]); // stubble
+      // capotain hat: tall crown, broad brim, buckle
+      p.poly([[13, 12], [14, 2], [26, 1], [27, 12]], hat, { shade: 0.3 });
+      p.rect(13, 9, 14, 2, PAL.ink); p.rect(19, 9, 3, 2, PAL.steel); p.px(20, 9, PAL.ink);
+      p.poly([[2, 14], [9, 11], [31, 11], [38, 14], [31, 15], [9, 15]], hat, { shade: 0.3 });
+      // the brand, iron hot at the tip
+      p.line(36, 40, 33, 14, PAL.iron, 2);
+      p.rect(31, 9, 5, 5, PAL.ember); p.rect(32, 10, 3, 3, PAL.flame); p.px(33, 11, PAL.candle);
+      p.glow(33, 11, PAL.ember, 5);
+      p.px(27, 17, PAL.ember).px(27, 21, PAL.ember).px(26, 24, PAL.ember);
+    },
+  },
+  npc_crown: {
+    w: 40, h: 40, outline: false, rim: false,
+    draw(p) {
+      // darkness, with the faintest hunger-glow
+      for (let y = 0; y < 40; y++) for (let x = 0; x < 40; x++) {
+        const d = Math.hypot(x - 20, (y - 23) * 1.2) / 24;
+        p.px(x, y, mix(mix(PAL.wine, PAL.night, 0.35), PAL.void, Math.min(1, d * 1.1 + ((x * 7 + y * 11) % 5) * 0.025)));
+      }
+      // inside of the circlet (back band in shadow)
+      p.ellipse(20, 24, 15, 5, mix(PAL.ink, PAL.wine, 0.2));
+      p.ellipse(20, 25, 13, 3.5, PAL.void);
+      // front band
+      p.poly([[5, 24], [35, 24], [35, 30], [28, 33], [20, 34], [12, 33], [5, 30]], PAL.iron, { shade: 0.45 });
+      // spikes: one snapped short
+      p.tri(4.5, 26, 10, 26, 6, 15, PAL.iron, { shade: 0.3 });
+      p.poly([[11, 26], [17, 26], [15, 13], [14, 15], [13, 12]], PAL.iron, { shade: 0.3 });
+      p.tri(16, 26, 24, 26, 20, 4, PAL.iron, { shade: 0.3 });
+      p.poly([[23, 26], [29, 26], [28, 19], [26, 20], [25, 18]], PAL.iron, { shade: 0.3 });
+      p.tri(30, 26, 35.5, 26, 34, 15, PAL.iron, { shade: 0.3 });
+      p.line(5, 25, 35, 25, PAL.steel); p.line(6, 31, 34, 31, sh(PAL.iron, -0.45));
+      p.px(9, 28, PAL.ember).px(30, 29, sh(PAL.ember, -0.3)).px(25, 31, sh(PAL.ember, -0.3)).px(13, 30, PAL.bark);
+      // the empty socket, hungry
+      p.glow(20, 29, PAL.wine, 9); p.glow(20, 29, PAL.rose, 5);
+      p.ellipse(20, 29, 3, 2.6, PAL.void);
+      p.ring(20, 29, 3.6, PAL.steel, 1);
+      p.px(18, 28, PAL.wine).px(21, 30, mix(PAL.wine, PAL.void, 0.5));
+      // tips catch a cold light
+      p.px(20, 5, PAL.fog).px(20, 6, PAL.stone).px(6, 16, PAL.stone).px(34, 16, PAL.stone).px(13, 13, PAL.stone);
+      p.speckle(PAL.fog, 0.008, 21, [0, 0, 40, 18]);
+    },
+  },
+  npc_mother: {
+    w: 40, h: 40, outline: false, rim: false,
+    draw(p) {
+      const face = mix(PAL.pale, PAL.sick, 0.2), faceD = mix(face, PAL.moss, 0.35), faceDD = mix(PAL.moss, PAL.ink, 0.3);
+      p.rect(0, 0, 40, 40, mix(PAL.ink, PAL.bark, 0.3));
+      // roots behind
+      for (const [pts, w] of [[[[0, 6], [8, 9], [12, 4], [18, 0]], 2], [[[40, 10], [32, 12], [28, 5], [30, 0]], 2], [[[0, 30], [6, 27], [10, 33], [6, 40]], 2], [[[40, 28], [34, 31], [33, 40]], 2]])
+        p.path(pts, PAL.bark, w);
+      // the immense face
+      p.ellipse(20, 20, 15, 18, face);
+      p.ellipse(25, 23, 10, 15, faceD); p.ellipse(18, 18, 12, 15, face);
+      // brow, closed eyes, nose, lips
+      p.path([[9, 15], [13, 13], [17, 14]], faceD, 1); p.path([[23, 14], [27, 13], [31, 15]], faceDD, 1);
+      p.path([[9, 18], [11, 19], [14, 19], [17, 18]], faceDD, 1); p.path([[23, 18], [26, 19], [29, 19], [31, 18]], faceDD, 1);
+      p.px(10, 19, faceDD).px(30, 19, faceDD);
+      p.path([[20, 17], [21, 25], [19, 26]], faceD, 1); p.px(19, 22, sh(face, 0.3)).px(19, 23, sh(face, 0.3));
+      p.path([[16, 29], [20, 28], [24, 29]], faceDD, 1); p.line(17, 30, 23, 30, faceD);
+      // roots across the face, moss in the hollows
+      p.path([[4, 0], [8, 8], [7, 16], [10, 24], [9, 34], [12, 40]], PAL.wood, 2);
+      p.path([[36, 0], [33, 9], [35, 18], [31, 27], [33, 40]], PAL.bark, 2);
+      p.path([[22, 0], [21, 6], [24, 11]], PAL.wood, 1); p.path([[8, 8], [13, 10]], PAL.wood, 1);
+      p.path([[31, 27], [26, 33], [27, 40]], PAL.bark, 1); p.path([[10, 24], [14, 27]], PAL.wood, 1);
+      p.speckle(PAL.moss, 0.35, 5, [2, 30, 14, 40]); p.speckle(PAL.rot, 0.3, 6, [27, 2, 38, 12]);
+      p.speckle(PAL.moss, 0.25, 7, [28, 30, 38, 40]); p.speckle(PAL.bile, 0.06, 8, [2, 28, 38, 40]);
+      p.px(12, 4, PAL.bone).px(30, 33, PAL.bone).px(7, 33, PAL.lilac);
+    },
+  },
 });

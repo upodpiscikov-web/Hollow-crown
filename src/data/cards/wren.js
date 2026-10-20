@@ -386,7 +386,7 @@ defineCards([
   {
     id: 'catch_the_blade', name: 'Catch the Blade', hero: 'wren', type: 'skill', rarity: 'uncommon', cost: 1, target: 'none',
     v: { blk: 6 }, up: { blk: 3 }, tier: 1, art: 'hand',
-    text: 'Gain {blk} Block. Until your next turn, whenever you are attacked, add a Knife to your hand.',
+    text: 'Gain {blk} Block. Until your next turn, when attacked, add a Knife to your hand.',
     play(g, v) { g.block(v.blk); g.addStatus(g.player, 'wren_catch', 1); },
   },
   {
@@ -511,13 +511,13 @@ defineCards([
 defineRelics([
   {
     id: 'carved_mask', name: 'Carved Mask', rarity: 'starter', hero: 'wren', icon: 'mask', tint: '#c8b08a',
-    desc: 'The first time you Shift each turn, gain 3 Block.',
+    desc: 'The first time you Shift each turn, gain 4 Block.',
     flavor: 'Limewood, whittled by a lonely child who wanted to know what a face felt like.',
     combatStart(g, r) { r.t = 0; },
     shift(g, r) {
       if (!g.cb || r.t === g.cb.turn) return;
       r.t = g.cb.turn;
-      g.gainBlock(g.player, 3, { raw: true });
+      g.gainBlock(g.player, 4, { raw: true });
     },
   },
   {

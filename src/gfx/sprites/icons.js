@@ -627,11 +627,11 @@ S.art_drop = art('water', (p) => {
   p.path([[12, 13], [12, 16], [13, 18]], '#eef6f6', 1); p.px(13, 11, '#bfe0ec');
 }, { gy: 13, fx: (p) => { p.ellipse(16, 22, 9, 1.5, '#2a4556'); p.eraseEllipse; p.ellipse(16, 22, 6, 0.8, '#16242e'); } });
 S.art_blood = art('blood', (p) => {
-  const drop = (cx, cy, r) => shader(p, Math.floor(cx - r - 1), Math.floor(cy - r * 2.4), Math.ceil(cx + r), Math.ceil(cy + r), (x, y) => {
+  const drop = (cx, cy, r) => shader(p, Math.floor(cx - r - 1), Math.floor(cy - r * 2.7), Math.ceil(cx + r), Math.ceil(cy + r), (x, y) => {
     const dy = y + 0.5 - cy, dx = x + 0.5 - cx;
     let ins, nx = dx / r, ny = dy / r;
     if (dy >= 0) ins = dx * dx + dy * dy <= r * r;
-    else { const hw = r * Math.pow(Math.max(0, 1 + dy / (r * 2.3)), 1.5); ins = Math.abs(dx) <= hw; nx = hw ? dx / hw * 0.8 : 0; ny = dy / (r * 2.3); }
+    else { const hw = r * Math.pow(Math.max(0, 1 + dy / (r * 2.6)), 2); ins = Math.abs(dx) <= hw; nx = hw ? dx / hw * 0.8 : 0; ny = dy / (r * 2.6); }
     if (!ins) return null;
     return lit(['#3a0b10', '#5e1212', '#8a1c1c', '#b8302a', '#e0644c'], sphere(nx, ny), x, y);
   });
@@ -704,7 +704,7 @@ S.art_tooth = art('blood', (p) => {
     const hw = t < 0.25 ? 4 + t * 4 : 5 * (1 - t) * 1.25 + 0.2;
     const dx = x + 0.5 - cx;
     if (Math.abs(dx) > hw) return null;
-    if (t < 0.2) return lit(['#6e5039', '#977049', '#c29a68'], 0.5 - dx / hw * 0.4, x, y);
+    if (t < 0.2) return (t < 0.12 && Math.abs(dx) < 1) ? null : lit(['#57535c', '#79747a', '#a19c9c'], 0.5 - dx / hw * 0.4, x, y);
     return lit(['#a19c9c', '#cfc6b0', '#e8dcc0', '#fbf3df'], 0.6 - dx / hw * 0.45 - t * 0.15, x, y);
   });
   p.px(18, 21, '#b8302a'); p.px(18, 20, '#8a1c1c'); p.px(17, 19, '#8a1c1c'); p.px(19, 22, '#8a1c1c');
@@ -734,6 +734,440 @@ S.art_candle = art('gold', (p) => {
   p.poly([[16, 1], [18, 5], [17, 8], [15, 8], [14, 5]], '#e8a33a');
   p.poly([[16, 4], [17, 6], [16, 8], [15, 6]], '#fff3c4');
 }, { gy: 8, fx: (p) => bloom(p, 16, 5, 8, '#f0d27a', 60) });
+
+// ---- masks (shared by mask_* icons and card art)
+const MASK_BLANK = sym([
+  '....7788',
+  '..778888',
+  '.7888899',
+  '.7888999',
+  '78888888',
+  '78800088',
+  '78000008',
+  '78800088',
+  '78888888',
+  '78888888',
+  '.7888888',
+  '.7888888',
+  '..788888',
+  '..778888',
+  '...77788',
+  '.....777',
+], false, 3);
+const MASK_WOLF = sym([
+  '.5......',
+  '.65.....',
+  '.665....',
+  '.6665555',
+  '.6666666',
+  '56666666',
+  '5R006666',
+  '56R00666',
+  '566R6667',
+  '.5666677',
+  '..566677',
+  '...56677',
+  '....5667',
+  '....5600',
+  '.....500',
+  '......55',
+], false, 3);
+const MASK_MOTH = sym([
+  '......h.',
+  '.......h',
+  'tTT....7',
+  'tThhTT.7',
+  'tThHHhT7',
+  'tThH000h',
+  'tThH000h',
+  'tThHhhhh',
+  '.tThhhh7',
+  '..tTTh77',
+  '...tThT7',
+  '..tThhT7',
+  '..tThT.7',
+  '...tt..7',
+  '.......7',
+], false, 3);
+const MASK_OWL = sym([
+  '.x......',
+  '.zx.....',
+  '.Zzxxxxx',
+  'xZZzzzzz',
+  'zZYYYYzz',
+  'zYY00YYz',
+  'zY0000Yz',
+  'zY0000Yk',
+  'zYY00YYk',
+  'zZYYYYkO',
+  '.zZZZkkO',
+  '.zZZkkkO',
+  '..zZZkkk',
+  '...zZZkk',
+  '....zzZk',
+  '......zz',
+], false, 3);
+S.mask_wolf = M(16, 16, MASK_WOLF);
+S.mask_moth = M(16, 15, MASK_MOTH);
+S.mask_owl = M(16, 16, MASK_OWL);
+const maskArt = (mood, rows, ribbon) => art(mood, (p) => {
+  p.path([[8, 8], [4, 10], [2, 14]], ribbon, 1); p.path([[24, 8], [28, 10], [30, 13]], ribbon, 1);
+  pix(p, rows, null, 8, 4);
+}, { gy: 11 });
+S.art_mask = maskArt('violet', MASK_BLANK, '#7b5aa6');
+S.art_mask_wolf = maskArt('blood', MASK_WOLF, '#8a1c1c');
+S.art_mask_moth = maskArt('spirit', MASK_MOTH, '#3f8a80');
+S.art_mask_owl = maskArt('gold', MASK_OWL, '#977049');
+// ---- batch 3: night, light, objects
+S.art_feather = art('night', (p) => {
+  shader(p, 1, 0, 31, 23, (x, y) => {
+    const X = x + 0.5 - 5, Y = y + 0.5 - 22.5;
+    const u = (X - Y) / Math.SQRT2 / 28, v = (X + Y) / Math.SQRT2;
+    if (u < 0 || u > 1) return null;
+    if (Math.abs(v) < 0.75) return u < 0.16 ? '#cfc6b0' : '#fbf3df';
+    if (u < 0.15) return null;
+    const w = Math.sin(Math.PI * Math.pow((u - 0.15) / 0.85, 0.7)) * 5.6;
+    if (Math.abs(v) > w) return null;
+    if ((u > 0.4 && u < 0.43 && v < -1) || (u > 0.62 && u < 0.645 && v > 1)) return null;
+    return v < 0 ? lit(['#79747a', '#a19c9c', '#cfc6b0', '#e8dcc0'], 0.9 - Math.abs(v) / 9, x, y) : lit(['#57535c', '#79747a', '#a19c9c'], 0.85 - Math.abs(v) / 7, x, y);
+  });
+});
+S.art_moon = art('night', (p) => {
+  shader(p, 5, 1, 27, 23, (x, y) => {
+    const nx = (x + 0.5 - 15) / 9.5, ny = (y + 0.5 - 12) / 9.5;
+    if (nx * nx + ny * ny > 1) return null;
+    if (Math.hypot(x + 0.5 - 20, y + 0.5 - 9) < 8.3) return null;
+    return lit(['#79747a', '#a19c9c', '#cfc6b0', '#e8dcc0', '#fbf3df'], sphere(nx, ny) + 0.1, x, y);
+  });
+  p.circle(10, 15, 1.2, '#a19c9c'); p.circle(13, 19, 0.9, '#a19c9c'); p.px(8, 10, '#a19c9c');
+}, { gx: 14, fx: (p) => { p.px(25, 18, '#e8dcc0'); p.px(27, 4, '#cfc6b0'); p.px(23, 21, '#a19c9c'); } });
+S.art_sun = art('gold', (p) => {
+  for (let k = 0; k < 12; k++) {
+    const a = (k / 12) * Math.PI * 2, L = k % 2 ? 8.5 : 11, w = k % 2 ? 0.16 : 0.2;
+    p.tri(16 + Math.cos(a - w) * 6, 12 + Math.sin(a - w) * 6, 16 + Math.cos(a) * L, 12 + Math.sin(a) * L, 16 + Math.cos(a + w) * 6, 12 + Math.sin(a + w) * 6, k % 2 ? '#c9a227' : '#f0d27a');
+  }
+  ball(p, 16, 12, 6.2, ['#c4501e', '#e8a33a', '#f0d27a', '#fff3c4']);
+}, { shadow: false, fx: (p) => bloom(p, 16, 12, 9, '#fff3c4', 40) });
+S.art_star = art('violet', (p) => {
+  const star = (cx, cy, L, s, c1, c2) => {
+    p.poly([[cx, cy - L], [cx + s, cy - s], [cx + L, cy], [cx + s, cy + s], [cx, cy + L], [cx - s, cy + s], [cx - L, cy], [cx - s, cy - s]], c1);
+    p.line(cx, cy - L + 1, cx, cy + L - 1, c2); p.line(cx - L + 1, cy, cx + L - 1, cy, c2);
+  };
+  star(16, 11, 10, 2, '#b49ad6', '#fbf3df');
+  p.poly([[16, 6], [19, 8], [21, 11], [19, 14], [16, 16], [13, 14], [11, 11], [13, 8]], '#e8dcc0');
+  star(16, 11, 10, 1.2, '#e8dcc0', '#fbf3df');
+  star(6, 5, 3, 0.8, '#7b5aa6', '#b49ad6'); star(26, 18, 3, 0.8, '#7b5aa6', '#b49ad6');
+}, { shadow: false, fx: (p) => { bloom(p, 16, 11, 7, '#fbf3df', 55); p.px(25, 4, '#b49ad6'); p.px(7, 19, '#b49ad6'); } });
+S.art_bell = art('gold', (p) => {
+  p.ring(16, 3, 2, '#5e4612', 1);
+  shader(p, 5, 3, 27, 21, (x, y) => {
+    const t = (y + 0.5 - 4) / 15; if (t < 0 || t > 1) return null;
+    const hw = 4 + 1.5 * t + 5.5 * Math.pow(t, 3);
+    const dx = x + 0.5 - 16; if (Math.abs(dx) > hw) return null;
+    if (t > 0.86) return lit(['#5e4612', '#8f6f1a', '#c9a227'], 0.7 - dx / hw * 0.5, x, y);
+    return lit(['#5e4612', '#8f6f1a', '#c9a227', '#f0d27a', '#fff3c4'], 0.62 - dx / hw * 0.55 - (t < 0.15 ? 0 : 0.05), x, y);
+  });
+  p.rect(9, 15, 14, 1, '#8f6f1a');
+  p.circle(16, 21, 1.6, '#5e4612');
+}, { fx: (p) => { p.path([[4, 9], [3, 12], [4, 15]], '#c9a227', 1); p.path([[28, 9], [29, 12], [28, 15]], '#c9a227', 1); } });
+S.art_book = art('night', (p) => {
+  p.rect(10, 4, 14, 17, '#cfc6b0'); for (let y = 5; y < 21; y += 2) p.rect(22, y, 2, 1, '#a19c9c');
+  p.rect(8, 3, 15, 18, '#5e1f3d', { shade: 0.25 });
+  p.rect(8, 3, 2, 18, '#3a0b10'); p.rect(10, 3, 1, 18, '#7a2a4a');
+  p.rect(12, 6, 9, 12, '#3a0b10');
+  p.rect(13, 7, 7, 10, '#5e1f3d');
+  pix(p, ['.YYY.', 'Y.0.Y', 'Y000Y', 'Y.0.Y', '.YYY.'], { 0: '#c9a227' }, 14, 9);
+  p.rect(21, 11, 3, 3, '#c9a227'); p.px(21, 11, '#f0d27a');
+  p.rect(8, 3, 3, 2, '#c9a227'); p.rect(8, 19, 3, 2, '#8f6f1a'); p.rect(20, 3, 3, 2, '#c9a227'); p.rect(20, 19, 3, 2, '#8f6f1a');
+});
+S.art_scroll = art('gold', (p) => {
+  p.rect(7, 6, 18, 12, '#e8dcc0', { shade: 0.2 });
+  for (let y = 8; y < 16; y += 2) p.rect(10, y, y === 14 ? 7 : 12, 1, '#977049');
+  ball(p, 6.5, 12, 2.2, ['#977049', '#c29a68', '#e8dcc0'], 7);
+  ball(p, 25.5, 12, 2.2, ['#977049', '#c29a68', '#e8dcc0'], 7);
+  p.rect(5, 4, 3, 1, '#6e5039'); p.rect(5, 19, 3, 1, '#6e5039'); p.rect(24, 4, 3, 1, '#6e5039'); p.rect(24, 19, 3, 1, '#6e5039');
+  p.poly([[19, 17], [21, 17], [22, 22], [20, 20], [18, 22]], '#8a1c1c');
+  ball(p, 20, 16.5, 2.4, ['#5e1212', '#8a1c1c', '#b8302a']);
+  p.px(19, 16, '#e0644c');
+});
+S.art_chain = art('steel', (p) => {
+  for (let i = 0; i < 5; i++) {
+    const cx = 5 + i * 5.5, cy = 20 - i * 4.2;
+    if (i % 2 === 0) { p.ring(cx, cy, 3.6, '#8e98a3', 2); p.ring(cx, cy, 3.6, '#bccfd9', 1); }
+    else { p.line(cx - 3.5, cy + 2.6, cx + 3.5, cy - 2.6, '#8e98a3', 3); p.line(cx - 3.5, cy + 2.6, cx + 3.5, cy - 2.6, '#eef6f6', 1); }
+  }
+  p.rect(26, 0, 2, 3, '#545a63');
+});
+S.art_grave = art('night', (p) => {
+  p.ellipse(16, 22, 12, 3, '#2c1e16'); p.ellipse(15, 21, 9, 1.4, '#3d5226');
+  shader(p, 9, 2, 23, 21, (x, y) => {
+    const dx = x + 0.5 - 16, dy = y + 0.5 - 8;
+    if (Math.abs(dx) > 6.5) return null;
+    if (dy < 0 && Math.hypot(dx, dy) > 6.5) return null;
+    if (y > 20) return null;
+    return lit(['#363040', '#57535c', '#79747a', '#a19c9c'], 0.6 - dx * 0.06 - dy * 0.015, x, y);
+  });
+  p.rect(15, 5, 2, 10, '#2b2135'); p.rect(12, 8, 8, 2, '#2b2135');
+  p.px(12, 13, '#3d5226'); p.px(11, 15, '#5c7a2a'); p.px(21, 16, '#3d5226');
+  p.line(19, 3, 21, 7, '#363040');
+}, { gy: 10, fx: (p) => { p.px(8, 20, '#5c7a2a'); p.px(23, 20, '#5c7a2a'); p.px(24, 19, '#3d5226'); } });
+S.art_wing = art('night', (p) => {
+  const jx = 25, jy = 4;
+  for (let k = 6; k >= 0; k--) {
+    const a = Math.PI * (0.62 + k * 0.075), L = 21 - k * 1.6;
+    const ex = jx + Math.cos(a) * L, ey = jy + Math.sin(a) * L;
+    p.line(jx, jy, ex, ey, '#16131a', 4);
+    p.line(jx, jy, ex, ey, k % 2 ? '#79747a' : '#a19c9c', 3);
+    p.line(jx - 0.6, jy - 0.6, ex - 0.6, ey - 0.6, k % 2 ? '#a19c9c' : '#cfc6b0', 1);
+  }
+  p.poly([[14, 6], [21, 1], [28, 2], [29, 7], [24, 11], [17, 10]], '#cfc6b0', { shade: 0.3 });
+  for (const [x, y] of [[19, 5], [22, 4], [25, 5], [18, 8], [21, 8], [24, 8], [27, 6]]) p.px(x, y, '#a19c9c');
+  p.path([[14, 6], [21, 1], [28, 2]], '#fbf3df', 1);
+}, { gx: 18 });
+S.art_web = art('night', (p) => {
+  const cx = 16, cy = 10, N = 8, cols = '#a19c9c';
+  const sp = [];
+  for (let k = 0; k < N; k++) { const a = (k / N) * Math.PI * 2 + 0.2; sp.push(a); p.line(cx, cy, cx + Math.cos(a) * 16, cy + Math.sin(a) * 11, '#57535c'); }
+  for (const r of [3, 6, 9.5]) for (let k = 0; k < N; k++) {
+    const a = sp[k], b = sp[(k + 1) % N];
+    p.line(cx + Math.cos(a) * r * 1.3, cy + Math.sin(a) * r * 0.9, cx + Math.cos(b) * r * 1.3, cy + Math.sin(b) * r * 0.9, cols);
+  }
+  p.line(21, 0, 21, 14, '#a19c9c');
+  ball(p, 21, 16, 2.2, ['#16131a', '#363040', '#57535c']);
+  p.circle(21, 13.5, 1.2, '#363040');
+  p.path([[19, 15], [17, 13], [17, 12]], '#16131a', 1); p.path([[23, 15], [25, 13], [25, 12]], '#16131a', 1);
+  p.path([[19, 17], [17, 19], [17, 20]], '#16131a', 1); p.path([[23, 17], [25, 19], [25, 20]], '#16131a', 1);
+  p.px(20, 16, '#b8302a'); p.px(22, 16, '#b8302a');
+}, { rim: 0.4 });
+S.art_thorn = art('blood', (p) => {
+  const pts = [];
+  for (let t = 0; t <= 1; t += 0.01) pts.push([4 + t * 24, 12 + Math.sin(t * Math.PI * 2) * 6]);
+  p.path(pts, '#2c1e16', 3); p.path(pts, '#4a3527', 2);
+  p.path(pts.map(([x, y]) => [x, y - 1]), '#6e5039', 1);
+  for (let i = 4; i < pts.length - 2; i += 8) {
+    const [x, y] = pts[i], [x2, y2] = pts[i + 1];
+    const dx = x2 - x, dy = y2 - y, L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L, s = (i / 8) % 2 ? 1 : -1;
+    p.tri(x - dx * 1.2, y - dy * 1.2, x + dx * 1.2, y + dy * 1.2, x + nx * 3.5 * s + dx, y + ny * 3.5 * s + dy, '#977049');
+    p.px(Math.round(x + nx * 3.2 * s + dx), Math.round(y + ny * 3.2 * s + dy), '#cfc6b0');
+  }
+  p.poly([[9, 8], [11, 5], [13, 8], [11, 9]], '#3d5226'); p.poly([[21, 16], [24, 15], [23, 18]], '#3d5226');
+}, { fx: (p) => { p.px(24, 7, '#b8302a'); p.px(24, 8, '#8a1c1c'); p.px(24, 10, '#8a1c1c'); } });
+S.art_swirl = art('violet', (p) => {
+  let prev = null;
+  for (let t = 0; t < 1; t += 0.004) {
+    const a = t * Math.PI * 5.2, r = 1 + t * 10;
+    const x = 16 + Math.cos(a) * r * 1.2, y = 11.5 + Math.sin(a) * r * 0.9;
+    const w = 1 + t * 2.2;
+    if (prev) p.line(prev[0], prev[1], x, y, t > 0.5 ? '#7b5aa6' : '#b49ad6', w);
+    prev = [x, y];
+  }
+  prev = null;
+  for (let t = 0.05; t < 1; t += 0.004) {
+    const a = t * Math.PI * 5.2, r = 1 + t * 10;
+    const x = 16 + Math.cos(a) * r * 1.2, y = 11.5 + Math.sin(a) * r * 0.9 - 0.6;
+    if (prev) p.line(prev[0], prev[1], x, y, '#e2d6f2', 1);
+    prev = [x, y];
+  }
+}, { shadow: false, fx: (p) => bloom(p, 16, 11.5, 5, '#fbf3df', 60) });
+
+// ---- batch 4: creatures, magic, remaining objects
+S.art_rune = art('spirit', (p) => {
+  shader(p, 9, 2, 23, 22, (x, y) => {
+    const dx = x + 0.5 - 16, dy = y + 0.5 - 12;
+    const hw = 6 - Math.max(0, -dy - 6) * 0.9 + (dy > 0 ? dy * 0.08 : 0);
+    if (Math.abs(dx) > hw || dy < -9.5 || dy > 9.5) return null;
+    return lit(['#363040', '#57535c', '#79747a', '#a19c9c'], 0.6 - dx * 0.06 - dy * 0.02, x, y);
+  });
+  const g = '#7fd1c4';
+  p.line(16, 6, 16, 18, g); p.line(16, 9, 12, 6, g); p.line(16, 9, 20, 6, g); p.line(16, 14, 12, 17, g); p.line(16, 12, 20, 15, g);
+  p.px(13, 20, '#3d5226'); p.px(19, 21, '#5c7a2a');
+}, { fx: (p) => { bloom(p, 16, 12, 6, '#7fd1c4', 45); p.px(16, 11, '#cff5ec'); p.px(16, 7, '#cff5ec'); } });
+S.art_coin = art('gold', (p) => {
+  for (let i = 0; i < 5; i++) { p.ellipse(23, 20 - i * 2, 5.5, 2, '#8f6f1a'); p.ellipse(23, 19.4 - i * 2, 5.5, 1.5, i === 4 ? '#f0d27a' : '#c9a227'); }
+  for (let i = 0; i < 3; i++) { p.ellipse(8, 21 - i * 2, 4.5, 1.6, '#8f6f1a'); p.ellipse(8, 20.5 - i * 2, 4.5, 1.2, '#c9a227'); }
+  ball(p, 14, 11, 7, ['#5e4612', '#8f6f1a', '#c9a227', '#f0d27a', '#fff3c4']);
+  p.ring(14, 11, 7, '#8f6f1a', 1);
+  p.ring(14, 11, 5.4, '#8f6f1a', 1);
+  pix(p, ['j.j.j', 'jjjjj', 'jjjjj'], null, 12, 10);
+  p.px(11, 6, '#fff3c4'); p.px(10, 7, '#fff3c4');
+}, { gy: 13 });
+S.art_key = art('gold', (p) => {
+  p.ring(9, 8, 5, '#c9a227', 3); p.ring(9, 8, 5, '#f0d27a', 1);
+  p.circle(9, 8, 1.2, '#8f6f1a');
+  diagDR(p, 12, 11, 13, ['#f0d27a', '#c9a227', '#8f6f1a']);
+  p.rect(19, 18, 2, 4, '#c9a227'); p.rect(22, 20, 2, 3, '#8f6f1a'); p.rect(19, 21, 5, 1, '#8f6f1a');
+  p.px(13, 12, '#fff3c4'); p.px(5, 5, '#fff3c4');
+}, { gy: 11 });
+S.art_hourglass = art('violet', (p) => {
+  p.rect(9, 1, 14, 2, '#6e5039'); p.rect(9, 1, 14, 1, '#977049');
+  p.rect(9, 21, 14, 2, '#4a3527'); p.rect(9, 21, 14, 1, '#6e5039');
+  p.rect(10, 3, 1, 18, '#977049'); p.rect(21, 3, 1, 18, '#4a3527');
+  shader(p, 11, 3, 20, 20, (x, y) => {
+    const dy = y + 0.5 - 12, hw = 0.8 + Math.pow(Math.abs(dy) / 8.5, 1.4) * 4.6;
+    const dx = x + 0.5 - 16;
+    if (Math.abs(dx) > hw) return null;
+    const sand = (dy < 0 && dy > -4.5) || (dy > 0 && (dy > 5 || (Math.abs(dx) < 0.8)) || (dy > 3 && Math.abs(dx) < 6 - (dy - 3) * -1.6 && dy > 8.5 - (3 - Math.abs(dx)) * 1.3));
+    if (sand) return lit(['#8f6f1a', '#c9a227', '#f0d27a'], 0.6 - dx * 0.1, x, y);
+    return Math.abs(dx) > hw - 1 ? '#7b5aa6' : (dx < -1.5 ? '#4b3b5e' : '#2b2135');
+  });
+  p.px(13, 5, '#e2d6f2'); p.px(13, 6, '#b49ad6'); p.px(13, 16, '#b49ad6');
+}, { gy: 12 });
+S.art_wolf = art('night', (p) => {
+  pix(p, [
+    '...........44.......',
+    '..........4654......',
+    '.........46554.4....',
+    '........466665454...',
+    '.......56666666654..',
+    '.....5566666R066654.',
+    '...5577666666666654.',
+    '.557776666666666665.',
+    '57777666666666666654',
+    '06655555666666666554',
+    '.4.....5556666666544',
+    '..44.4..556666665544',
+    '...4444.55666666544.',
+    '.........5666665544.',
+    '........556666654...',
+    '.......5566666544...',
+    '.......556666544....',
+  ], { 4: '#363040', 5: '#57535c', 6: '#79747a', 7: '#a19c9c', R: '#e0644c' }, 6, 4);
+}, { back: (p) => { ball(p, 23, 6, 4.5, ['#79747a', '#a19c9c', '#cfc6b0']); }, gy: 10 });
+S.art_raven = art('night', (p) => {
+  pix(p, [
+    '.....1222.........',
+    '....12UU22........',
+    '..0012OU222.......',
+    '00002222222.......',
+    '..001222U222......',
+    '....12222U222.....',
+    '....122222U222....',
+    '....1222222U222...',
+    '.....12222222U22..',
+    '......122222222U2.',
+    '.......12222222222',
+    '........1222222122',
+    '.........112221.12',
+    '..........3..3...1',
+    '.........33.33....',
+  ], { 1: '#0b0a0d', 2: '#241f2b', U: '#4b3b5e', 0: '#57535c', O: '#e8a33a', 3: '#79747a' }, 7, 4);
+  p.path([[2, 19], [12, 19], [22, 20], [30, 18]], '#2c1e16', 2); p.path([[2, 19], [12, 19], [22, 20], [30, 18]], '#4a3527', 1);
+  p.line(24, 20, 27, 23, '#2c1e16', 1);
+}, { gy: 10 });
+S.art_moth = art('night', (p) => {
+  shader(p, 2, 1, 30, 22, (x, y) => {
+    const dx = Math.abs(x + 0.5 - 16), dy = y + 0.5 - 11;
+    const up = Math.hypot((dx - 6.5) / 7.5, (dy + 3.5) / 6.2) < 1 && dy < 2;
+    const lo = Math.hypot((dx - 4.5) / 4.8, (dy - 5) / 5) < 1 && dy > 0;
+    if (!up && !lo) return null;
+    const side = x + 0.5 < 16 ? 0.15 : -0.1;
+    if (up && Math.hypot(dx - 7.5, dy + 3.5) < 2.2) return Math.hypot(dx - 7.5, dy + 3.5) < 1.1 ? '#0b0a0d' : '#c29a68';
+    if (up && Math.abs(dy + 3.5 - (dx - 6) * 0.25) < 0.5 && dx > 10) return '#6e5039';
+    return lit(up ? ['#6e5039', '#977049', '#c29a68', '#e8dcc0'] : ['#4a3527', '#6e5039', '#977049'], 0.55 + side - dy * 0.03, x, y);
+  });
+  p.rect(15, 4, 2, 15, '#363040'); p.rect(15, 4, 1, 15, '#57535c');
+  p.circle(16, 4.5, 1.6, '#57535c');
+  p.path([[15, 3], [13, 0]], '#79747a', 1); p.path([[17, 3], [19, 0]], '#79747a', 1);
+}, { gy: 10, fx: (p) => { p.px(5, 20, '#cfc6b0'); p.px(27, 3, '#a19c9c'); } });
+S.art_owl = art('night', (p) => {
+  pix(p, sym([
+    '.x......',
+    '.zx.....',
+    '.zZxxxxx',
+    'xZZZZZZz',
+    'zZkkkZZz',
+    'zkOOOOkz',
+    'zkO00Okk',
+    'zkO00Okk',
+    'zkkOOkkY',
+    'xzkkkkkY',
+    'xzZkZkZk',
+    'xzZZkZkZ',
+    'xzzZkZkZ',
+    '.xzZZkZk',
+    '.xzzZZkZ',
+    '..xzzZZk',
+    '...xYxYx',
+  ], false, 3), { O: '#e8a33a' }, 8, 2);
+  p.path([[3, 19], [12, 19], [22, 19], [29, 20]], '#2c1e16', 2); p.path([[3, 19], [12, 19], [22, 19], [29, 20]], '#4a3527', 1);
+}, { gy: 10 });
+S.art_tree = art('night', (p) => {
+  const br = (x, y, a, L, w, d) => {
+    const ex = x + Math.cos(a) * L, ey = y + Math.sin(a) * L;
+    p.line(x, y, ex, ey, '#16131a', w);
+    if (d > 0) { br(ex, ey, a - 0.5 - d * 0.05, L * 0.7, Math.max(1, w - 1), d - 1); br(ex, ey, a + 0.45, L * 0.66, Math.max(1, w - 1), d - 1); }
+  };
+  br(16, 23, -Math.PI / 2 - 0.05, 8, 4, 4);
+  p.rect(12, 21, 8, 2, '#16131a'); p.px(11, 22, '#16131a'); p.px(20, 22, '#16131a');
+  p.line(16, 23, 15, 16, '#2b2135', 1);
+}, { rim: 0.3, gy: 9, back: (p) => ball(p, 16, 9, 7, ['#57535c', '#79747a', '#a19c9c', '#cfc6b0']), fx: (p) => { p.px(9, 6, '#0b0a0d'); p.px(10, 5, '#0b0a0d'); p.px(23, 4, '#0b0a0d'); } });
+S.art_sigil = art('blood', (p) => {
+  p.ring(16, 11.5, 10, '#b8302a', 1); p.ring(16, 11.5, 8.5, '#8a1c1c', 1);
+  const pts = []; for (let k = 0; k < 5; k++) { const a = -Math.PI / 2 + (k * 4 * Math.PI) / 5; pts.push([16 + Math.cos(a) * 8, 11.5 + Math.sin(a) * 8]); }
+  p.path([...pts, pts[0]], '#e0644c', 1);
+  for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2; p.px(Math.round(16 + Math.cos(a) * 9.3 - 0.5), Math.round(11.5 + Math.sin(a) * 9.3 - 0.5), '#fbf3df'); }
+  p.circle(16, 11.5, 1.5, '#fbf3df');
+}, { shadow: false, rim: 0, fx: (p) => bloom(p, 16, 11.5, 10, '#e0644c', 35) });
+S.art_prayer = art('gold', (p) => {
+  pix(p, sym([
+    '......P',
+    '.....8P',
+    '.....8p',
+    '....8Pp',
+    '....8Pp',
+    '...8PPp',
+    '...8PPp',
+    '...8PPp',
+    '..8PPPp',
+    '..8PPPp',
+    '.8PPPPp',
+    '.8PPP8p',
+    '.8PP8Pp',
+    '.8PPPPp',
+    '..8PPPp',
+    '..PPPPp',
+    '.UUUUUU',
+    '.UUUUUU',
+  ], false, 3), { 8: '#e8d4c0', P: '#c9a48a', p: '#9a735c' }, 9, 4);
+}, { gy: 10, back: (p) => {
+  for (let k = 0; k < 9; k++) { const a = -Math.PI / 2 + (k - 4) * 0.32; p.line(16, 6, 16 + Math.cos(a) * 15, 6 + Math.sin(a) * 15, [240, 210, 122, 60]); }
+}, fx: (p) => bloom(p, 16, 4, 5, '#fff3c4', 50) });
+S.art_cloak = art('violet', (p) => {
+  pix(p, sym([
+    '.....444',
+    '....4555',
+    '...45555',
+    '..455111',
+    '..451000',
+    '..451000',
+    '.4551h00',
+    '.4551100',
+    '.4555111',
+    '45555511',
+    '45555551',
+    '45565551',
+    '45565550',
+    '45565550',
+    '45565550',
+    '45565550',
+    '4556555.',
+    '.4.55.5.',
+  ], false, 3), { 4: '#2b2135', 5: '#4b3b5e', 6: '#6a5480', h: '#cff5ec' }, 8, 3);
+  p.circle(16, 12.5, 1.2, '#c9a227');
+}, { gy: 10 });
+S.art_mirror = art('violet', (p) => {
+  p.rect(15, 16, 3, 7, '#8f6f1a'); p.rect(15, 16, 1, 7, '#c9a227'); p.circle(16.5, 22.5, 1.6, '#c9a227');
+  shader(p, 7, 0, 26, 18, (x, y) => {
+    const nx = (x + 0.5 - 16.5) / 8, ny = (y + 0.5 - 8.5) / 8.5;
+    const d = nx * nx + ny * ny;
+    if (d > 1) return null;
+    if (d > 0.7) return lit(['#5e4612', '#8f6f1a', '#c9a227', '#f0d27a'], sphere(nx, ny), x, y);
+    const sh = Math.abs((x - y) + 0 - 4) < 1.2 || Math.abs((x - y) - 1) < 0.6;
+    if (sh) return '#e2d6f2';
+    return lit(['#2b2135', '#4b3b5e', '#7b5aa6', '#b49ad6'], 0.7 - nx * 0.3 - ny * 0.4, x, y);
+  });
+  p.px(16, 0, '#f0d27a'); p.px(9, 4, '#f0d27a');
+}, { gy: 9, fx: (p) => { p.px(22, 4, '#fbf3df'); } });
 
 // ---- status samples
 S.st_might = M(10, 10, [

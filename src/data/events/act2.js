@@ -20,6 +20,8 @@ export const relicOk = (g, id) => !!RELICS[id] && !g.hasRelic(id);
 export const relicName = (g, id, tier) => (relicOk(g, id) ? RELICS[id].name : tier ? `a random ${tier} relic` : 'a random relic');
 export const giveRelic = (g, id, tier) => g.obtainRelic(relicOk(g, id) ? id : tier);
 export const rewardRelic = (g, id) => (relicOk(g, id) ? id : 'random');
+// Name plus description, for relics whose drawbacks a label must not hide.
+export const relicFull = (g, id, tier) => (relicOk(g, id) ? `${RELICS[id].name} (${RELICS[id].desc.replace(/\.$/, '')})` : relicName(g, id, tier));
 
 // Curses fall back to Regret if a named curse is not defined.
 export const curseId = (id) => (CARDS[id] && CARDS[id].type === 'curse' ? id : 'regret');
@@ -72,7 +74,7 @@ defineEvents([
     pages: {
       start: {
         text: (g) => P(
-          `The trees here are black-barked and bent, as if listening for something underground. Every trunk weeps. Sap runs from knots like eyes and sets in amber beads along the bark, and each bead, when you lean close, hums: a small wet sound, like someone crying in the next room.`,
+          `The trees here are black-barked and bent, as if listening for something underground. Every trunk weeps. Sap runs from knots like eyes and sets along the bark in beads of dark red amber, and each bead, when you lean close, hums: a small wet sound, like someone crying in the next room.`,
           `A woodcutter's board is nailed to the nearest trunk: DO NOT TAKE THE TEARS. Scratched beneath it, in another hand: *they come back.*`,
           H(g, {
             knight: `Aldous touches a bead and hears a man sobbing very quietly, the way you do when you don't want the house to hear. He takes his hand away. "I know that one," he says, and does not say whose it is.`,
@@ -175,7 +177,7 @@ defineEvents([
           })),
         choices: [
           { label: (g) => `[Cut her down] Fight the witch-hunters. Reward: ${relicName(g, 'witchfinders_brand')}.`,
-            async fx(g) { g.unlockLore('lore_a2_grall_writ'); await g.eventCombat(foes(g, 2, ['witch_hunter', 'witch_hunter'], ['witchhunter', 'witchhunter']), { resume: 'freed', reward: { relic: rewardRelic(g, 'witchfinders_brand') } }); } },
+            async fx(g) { g.unlockLore('lore_a2_grall_writ'); await g.eventCombat(foes(g, 2, ['zealot', 'pyre_bearer']), { resume: 'freed', reward: { relic: rewardRelic(g, 'witchfinders_brand') } }); } },
           { label: '[Buy her life] Lose 80 gold. Heal 10 HP.', show: notHero('cantor'), req: goldReq(80),
             fx(g) { g.loseGold(80); g.healOut(10); g.unlockLore('lore_a2_grall_writ'); return 'bought'; } },
           { label: '[Untie her while they look through you] No one will stop you. No reward.', show: isHero('cantor'),
@@ -307,9 +309,9 @@ defineEvents([
           })),
         choices: [
           { label: (g) => `[Free it] Lose 9 HP. Obtain ${relicName(g, 'antler_shard')}.`, req: hpReq(9),
-            fx(g) { g.hurt(9); giveRelic(g, 'antler_shard'); g.unlockLore('lore_a2_antlered_king'); return 'freed'; } },
+            fx(g) { g.hurt(9); giveRelic(g, 'antler_shard'); g.unlockLore('lore_a2_white_harts'); return 'freed'; } },
           { label: '[Kill it and eat] Gain 7 Max HP. Then fight what comes for it.',
-            async fx(g) { g.gainMaxHp(7); g.unlockLore('lore_a2_antlered_king'); await g.eventCombat(foes(g, 2, ['thornling', 'thornling'], ['briar_wight', 'briar_wight']), { resume: 'eaten' }); } },
+            async fx(g) { g.gainMaxHp(7); g.unlockLore('lore_a2_white_harts'); await g.eventCombat(foes(g, 2, ['thornling', 'willow_wight']), { resume: 'eaten' }); } },
           { label: '[Leave it to the wood]', end: true },
         ],
       },
@@ -317,8 +319,8 @@ defineEvents([
         text: (g) => P(
           `The briars fight you for it. They are cleverer than briars ought to be; they close behind your hands, they find the gaps in your sleeves. By the time the last tine comes free you are bleeding in a dozen places.`,
           `The hart stands. It is taller than you thought. For a long moment it simply looks at you, and the wood looks with it.`,
-          `Then it lowers its head and, with great care, snaps a tine from its own antler against a stone, and leaves it at your feet. When you look up it is gone, and you never heard it go.`,
-          H(g, { wren: `The tine is warm in Wren's hand. It fits there exactly, as if it had been cut to size.` })),
+          `Then it lowers its head and shakes loose, from deep among its tines, a shard of antler that was never its own: grey, heavy, far older than the hart, broken from some greater crown in some war nobody sings of now. It leaves the shard at your feet. When you look up it is gone, and you never heard it go.`,
+          H(g, { wren: `The shard is warm in Wren's hand. It fits there exactly, as if it had been cut to size.` })),
         choices: [{ label: '[Leave]', end: true }],
       },
       eaten: {
@@ -352,7 +354,7 @@ defineEvents([
           { label: '[Walk under the pole] No one stops you.', show: isHero('cantor'),
             fx(g) { g.unlockLore('lore_a2_pricking'); return 'unseen'; } },
           { label: '[Overturn the table] Fight the witch-hunters. Reward: 40 extra gold.',
-            async fx(g) { g.unlockLore('lore_a2_pricking'); await g.eventCombat(foes(g, 2, ['witch_hunter', 'witch_pricker'], ['witch_hunter', 'witch_hunter']), { resume: 'overturned', reward: { gold: 40 } }); } },
+            async fx(g) { g.unlockLore('lore_a2_pricking'); await g.eventCombat(foes(g, 2, ['zealot', 'zealot']), { resume: 'overturned', reward: { gold: 40 } }); } },
           { label: '[Turn back]', end: true },
         ],
       },
@@ -405,7 +407,7 @@ defineEvents([
           })),
         choices: [
           { label: (g) => `[Go under the hill] Fight the Fair Folk. Reward: ${relicName(g, 'mothers_seed')}.`,
-            async fx(g) { g.unlockLore('lore_a2_changelings'); await g.eventCombat(foes(g, 2, ['hollow_fae', 'hollow_fae'], ['fae_courtier', 'fae_courtier']), { resume: 'returned', reward: { relic: rewardRelic(g, 'mothers_seed') } }); } },
+            async fx(g) { g.unlockLore('lore_a2_changelings'); await g.eventCombat(foes(g, 2, ['fae_courtier', 'glamour_kin', 'fae_courtier']), { resume: 'returned', reward: { relic: rewardRelic(g, 'mothers_seed') } }); } },
           { label: (g) => (g.run.hero === 'wren' ? '[Tell her it can be loved] Heal 10 HP.' : '[Tell her to raise it] Heal 10 HP.'),
             fx(g) { g.healOut(10); g.unlockLore('lore_a2_changelings'); return 'raise'; } },
           { label: () => `[Burn it] Gain 50 gold. Become Cursed — ${curseName('regret')}.`,
@@ -457,10 +459,10 @@ defineEvents([
             cantor: `The visor turns to Cael without hesitation. "Brother," the knight says, with real gladness. "Have you come to hear my confession? I've had a great deal of time to prepare it."`,
           })),
         choices: [
-          { label: (g) => `${g.run.hero === 'cantor' ? '[Hear his confession, and tell him]' : '[Tell him the King is dead]'} Obtain ${relicName(g, 'severed_oath')}.`,
+          { label: (g) => `${g.run.hero === 'cantor' ? '[Hear his confession, and tell him]' : '[Tell him the King is dead]'} Obtain ${relicFull(g, 'severed_oath')}.`,
             fx(g) { giveRelic(g, 'severed_oath'); g.unlockLore('lore_a2_ambrose_letter'); return 'truth'; } },
           { label: (g) => (g.run.hero === 'knight'
-            ? `[Tell him to keep his vigil] Upgrade 3 random cards. Become Cursed — ${curseName('oathbreaker')}.`
+            ? `[Tell him to keep his vigil] Upgrade 3 random cards. Become Cursed — ${curseName('oathbreaker')} (it cannot be removed).`
             : '[Tell him to keep his vigil] Upgrade 2 random cards.'),
           fx(g) { if (g.run.hero === 'knight') { g.upgradeRandom(3); addCurse(g, 'oathbreaker'); } else g.upgradeRandom(2); return 'lie'; } },
           { label: '[Leave him to his watch]', end: true },
@@ -472,7 +474,7 @@ defineEvents([
             ? `You hear his confession first: thirty years of small sins, mostly impatience. Then you tell him. "Dead," he repeats. The briars creak. "Then I am released."`
             : `"Dead," he repeats. The briars creak. "Then — who releases me?" You have no answer. He does not wait for one.`,
           `He stands, and the thorns tear out of him all at once, and he does not bleed, because there is nothing left in him to bleed. He takes one step toward Ashgrave. Two. On the third his armour is empty and falling, and a little dust drifts from the gorget with the rosehips.`,
-          `Round the hilt of his sword is his oath-cord, cut clean through, and in his saddlebag a letter under the King's seal. The cord weighs more than it ought to.`,
+          `In the empty gauntlet is his vow, written on vellum and folded small, cut clean through as if by a blade. In his saddlebag is a letter under the King's seal. The vow weighs more than vellum ought to.`,
           H(g, {
             knight: `Aldous kneels in the dust a while. "He waited thirty years for a word that was never coming," he says. "And I thought I was loyal."`,
             witch: `Isolde turns the empty gauntlet over. "Thirty years of not dying," she says, "and it took three steps to catch up with him."`,
@@ -515,7 +517,7 @@ defineEvents([
           { label: '[Kneel with them] Lose 8 HP. Upgrade 2 random cards.', req: hpReq(8),
             fx(g) { g.hurt(8); g.upgradeRandom(2); g.unlockLore('lore_a2_lowmere_office'); return 'joined'; } },
           { label: '[Dive for the candlesticks] Gain 90 gold. Then fight the drowned brothers.',
-            async fx(g) { g.gainGold(90); g.unlockLore('lore_a2_lowmere_office'); await g.eventCombat(foes(g, 2, ['drowned_monk', 'drowned_monk'], ['drowned_brother', 'drowned_brother']), { resume: 'robbed' }); } },
+            async fx(g) { g.gainGold(90); g.unlockLore('lore_a2_lowmere_office'); await g.eventCombat(foes(g, 2, ['hollow_novice', 'drowned_monk']), { resume: 'robbed' }); } },
           { label: '[Sing them the Office for the Dead] Bleed 6. Obtain a random relic.', show: isHero('cantor'), req: hpReq(6),
             fx(g) { g.hurt(6); g.obtainRelic(); g.unlockLore('lore_a2_lowmere_office'); return 'rite'; } },
           { label: '[Leave them to their prayers]', end: true },
@@ -648,7 +650,7 @@ defineEvents([
       taken: {
         text: (g) => P(
           `The locket is so cold it burns. You close your hand on it anyway, and some of the cold goes into you and settles there, in the bones of your fingers, like a winter that has decided to stay.`,
-          `It will not open. Inside, faintly, something ticks.`,
+          `Inside: a curl of dark hair, and beside it an oval where a second portrait has been scratched away, carefully, with a pin.`,
           `When you look up, the fog in the glass has cleared entirely. The mirror shows the parlour, the wet floor, the dressing table, and you. Only you. And yet you have the strongest sense that somebody, a moment ago, turned away from the glass and walked off down a long corridor, satisfied.`,
           H(g, { wren: `Wren looks into the clear mirror and sees only the mask. Wren looks for a long time anyway.` })),
         choices: [{ label: '[Leave]', end: true }],
@@ -739,7 +741,7 @@ defineEvents([
           { label: '[Search the shingle behind them] Gain 60 gold. 1 in 4 chance one of them turns back: a fight.',
             async fx(g) {
               g.gainGold(60); g.unlockLore('lore_a2_bell_rhyme');
-              if (roll(g, 0.25)) { await g.eventCombat(foes(g, 2, ['drowned_monk', 'drowned_monk'], ['drowned_brother', 'drowned_brother']), { resume: 'turned' }); return; }
+              if (roll(g, 0.25)) { await g.eventCombat(foes(g, 2, ['drowned_monk']), { resume: 'turned' }); return; }
               return 'searched';
             } },
           { label: '[Stop your ears and go]', end: true },
@@ -773,40 +775,53 @@ defineEvents([
   },
 
   {
-    id: 'a2_coffin_ferry', title: 'The Coffin Ferry', acts: [2], art: 'scene_water',
+    id: 'a2_illuminator', title: 'The Illuminator', acts: [2], art: 'scene_abbey',
     pages: {
       start: {
         text: (g) => P(
-          `The causeway to the abbey went under with the rest. Where it used to begin, a ferryman waits, leaning on a pole. His boat is a coffin, a good one, elm with brass handles, its lid propped up behind him as a backrest.`,
-          `He is very obviously dead. The water has not been kind to him, but he has kept his hat on through all of it, and he touches the brim. "Crossing? Fare's a coin. Used to be you'd bring it under your tongue, but nobody's been dying proper lately, so I take it in the hand. Times change." He considers. "Well. They don't. You know what I mean."`,
+          `In the scriptorium, just above the waterline, one brother is still at work. He sits at his desk with the mere dripping from his cowl onto the vellum, painting the same page over and over: the abbey chronicle for the year the water came. Each time he finishes, the drips wash it away, and he sighs, and scrapes, and begins again.`,
+          `"Twenty years," he says, "and I have never once got the colours right." He holds up a dry brush. "I'm out of red. And gold. The Queen's page wants both." He looks up with eyes like boiled eggs, hopeful. "You wouldn't have any about you?"`,
           H(g, {
-            knight: `"Is it safe?" Aldous asks. The ferryman looks at the coffin, and at Aldous, and out across the grey water, and says nothing for long enough to be an answer.`,
-            witch: `Isolde looks at his hands, gone soft and white as soap. "Grave-wax," she says, almost admiringly. "You look well on it." "Thank you, miss. Nobody says."`,
-            wren: `"Can I lie down in it?" Wren asks. The ferryman sucks his teeth. "You can," he says. "Most don't ask."`,
-            cantor: `The ferryman peers at Cael. "No coin under your tongue, Brother. Shame. I'd have taken you the whole way for that." "Only across, I think." "If you say so, Brother."`,
+            knight: `Aldous studies the half-washed page: a crowned woman in a boat, the King's men on the shore with torches. The brother has painted the King's men very small, and very angry.`,
+            witch: `"Vermilion's quicksilver," Isolde says. "Gold leaf is beaten coin. Red lead if you're poor." The brother looks at her with dawning love. "You *understand*."`,
+            wren: `Wren leans over the page. The painted woman in the boat holds a little bundle in her lap. No: a box. The paint has run. Wren looks a long time anyway.`,
+            cantor: `"Brother Cael," the illuminator says, as if you had stepped out a moment ago. "You were at court. What colour was the Queen's gown, that last spring?" "Blue," you tell him. "It was always blue."`,
           })),
         choices: [
-          { label: '[Pay the fare] Lose 25 gold. Upgrade a card.', req: goldReq(25),
-            async fx(g) { g.loseGold(25); await g.upgradeCardChoice(1); return 'scriptorium'; } },
-          { label: '[Lie down in the coffin] Transform 2 cards.',
-            async fx(g) { await g.transformCardChoice(2); return 'coffin'; } },
-          { label: '[Stay on this shore]', end: true },
+          { label: '[Give him red] Lose 7 HP. Upgrade 2 cards of your choice.', req: hpReq(7),
+            async fx(g) { g.hurt(7); await g.upgradeCardChoice(2); return 'red'; } },
+          { label: '[Give him gold] Lose 60 gold. Gain 7 Max HP.', req: goldReq(60),
+            fx(g) { g.loseGold(60); g.gainMaxHp(7); return 'gold'; } },
+          { label: '[Read the page over his shoulder]', fx(g) { g.unlockLore('lore_a2_lowmere_chronicle'); return 'read'; } },
+          { label: '[Leave him to his work]', end: true },
         ],
       },
-      scriptorium: {
+      red: {
         text: P(
-          `He poles you across in silence, the coffin riding low, and leaves you at the scriptorium stair. The copying desks stand in rows above the waterline, inkwells long dry, books open to whatever page the brothers were working on when the mere rose.`,
-          `On one desk lies an illuminated page: a knight, a beast, a saint, a margin full of snails. Somebody's unfinished work, twenty years old, the gold leaf still bright. You study it until something in the craft of it, the patience, the sureness of the line, becomes a little bit yours.`,
+          `You open your palm for him with your own knife. He dips his brush in it as if it were the most natural thing in the world, and in Lowmere perhaps it is, and paints with great care: the torches of the King's men, the Queen's mouth, the wax seal on the box in her lap.`,
+          `For once the drips do not wash it out. "Blood holds," he says, delighted. "Blood always holds."`,
+          `Watching him work, your hands learn something about patience and the sureness of a line. When he is done he lets you look: the boat, the woman, the burning shore. It is very beautiful. It is a little bit yours.`,
         ),
         choices: [{ label: '[Leave]', end: true }],
       },
-      coffin: {
+      gold: {
         text: (g) => P(
-          g.run.hero === 'cantor'
-            ? `He shuts the lid on you, not unkindly. "Comfortable, Brother?" "Oddly," you say, and mean it. It fits as if it were made for you.`
-            : `He shuts the lid on you, not unkindly. "Mind your elbows."`,
-          `It is dark and close and smells of elm and mere. The coffin rocks. You hear the water slide by, and then voices, muffled, as though through earth: someone reading the words they read over graves, someone weeping, someone saying your name the way you have never heard it said, as if you were already a story.`,
-          `When the lid opens you are on the far shore and the ferryman is lifting his hat, and you are not who you were when you lay down. Not entirely. Some of what you knew stayed in the box.`,
+          `He beats your coins flat with the back of a spoon, thin as breath, and lays the gold on the Queen's crown and the King's banners. Then, in the margin, among the snails and the hares, he paints you: small, gilded, unmistakable.`,
+          H(g, {
+            knight: `He gives Aldous a shield far grander than any he ever carried, and a door behind him, very carefully shut.`,
+            witch: `He gives Isolde a halo, and then, after a glance at her face, a sprig of hemlock in her hand instead of a lily.`,
+            wren: `He paints Wren's mask, then hesitates and paints a second, smaller mask behind it, and a third behind that. "I can't get to the bottom of you," he says, aggrieved.`,
+            cantor: `He paints Cael with a candle in his hand, and his sandalled feet not quite touching the ground.`,
+          }),
+          `"There," he says, blotting it. "Now you're in the Chronicle. Whatever happens, you will have been here. That's what books are for. Holding things." You feel the hold of it, set in gold, and stand a little straighter.`,
+        ),
+        choices: [{ label: '[Leave]', end: true }],
+      },
+      read: {
+        text: P(
+          `You read over his shoulder while he works. The hand is beautiful and the spelling is terrible.`,
+          `*In this yeare the Queene came to us by water at Candlemas, alone, with a box she wolde not open. And she was with us untill Midsommer, and walked much by the mere, and wept, and was merry, and wept. And on the Vigil of Midsommer she rowed out into the midst of the water with the box in her lap, and the Kinges men came after with torches, and the mere rose up and*`,
+          `The rest is washed away. The brother sighs, scrapes the vellum clean, and begins again from the top. *In this yeare the Queene came to us by water...*`,
         ),
         choices: [{ label: '[Leave]', end: true }],
       },
@@ -848,7 +863,6 @@ const SILT_FINDS = {
   gold: `Coins: a pilgrim's offering-bowl, still full, the silver gone black with silt. Something brushes your wrist as you draw back. Weed, probably.`,
   tincture: `A stoppered phial of holy water, or what passed for it here. It is mere-water now. It is still holy. It is just holy about something else.`,
   relic: `A casket the size of a hymnal, sealed with lead. Inside, wrapped in rotted silk, something that was precious to somebody once, and has not stopped being precious. Under the silt, someone sighs.`,
-  rare: `—`,
 };
 
 // ------------------------------------------------------------------ lore
@@ -857,7 +871,7 @@ defineLore([
     id: 'lore_a2_weeping_wood', cat: 'world', title: 'The Weeping Wood',
     text: P(
       `*From* The Forester's Almanack, *Morrow edition, much reprinted.*`,
-      `The Weeping Wood lies west of the Marches and is to be avoided by all who can avoid it. Its trees are of no known kind. They weep a resin like amber, said to hold the griefs of travellers who wept beneath them, which sells well in the cities for that reason, the rich being fond of other people's sorrow.`,
+      `The Weeping Wood lies north of the Marches and is to be avoided by all who can avoid it. Its trees are of no known kind. They weep a resin like red amber, said to hold the griefs of travellers who wept beneath them, which sells well in the cities for that reason, the rich being fond of other people's sorrow.`,
       `Do not gather the tears. Those who do report that the sorrow comes with them, and is not always their own. Do not speak your name aloud beneath the trees. Do not accept food. Do not follow lights.`,
       `If you must cross, cross by day, and cross quickly. And if you hear someone weeping behind you, do not, under any circumstances, offer them comfort.`,
     ),
@@ -893,12 +907,11 @@ defineLore([
     ),
   },
   {
-    id: 'lore_a2_antlered_king', cat: 'bestiary', title: 'The Antlered King and His Harts',
+    id: 'lore_a2_white_harts', cat: 'bestiary', title: 'The White Harts',
     text: P(
-      `Lord of the Weeping Wood, eldest of the fae courts still standing in Morrow. Huntsmen describe a figure of bark and bone, crowned with antlers so vast that rooks nest in them, though no two huntsmen ever agreed upon his face.`,
-      `His white harts walk the wood as his eyes. They are not beasts, or not only; wounded, they bleed sap. To free one is to be remembered kindly. To kill one is to be remembered.`,
-      `He serves, it is said, a lady older than he is, whom he has not seen in four hundred years. He keeps her chair. He keeps her table laid. He has sworn that when she comes home he will bow, and that until then he will bow to nothing.`,
-      `He has not bowed in a very long time.`,
+      `The Antlered King's harts walk the Weeping Wood as his eyes. They are white as peeled sticks, antlered like winter trees, and they are not beasts, or not only: wounded, they bleed sap. Some have run so long without their master's eye on them that they have gone grey and feral, and hang their tines with the bones of huntsmen.`,
+      `The old foresters kept one rule about them above all others. To free a hart from a snare is to be remembered kindly. To kill one is to be remembered.`,
+      `The wood, they said, keeps accounts. It is in no hurry to settle them.`,
     ),
   },
   {
@@ -931,6 +944,15 @@ defineLore([
       `*Make haste, make haste to help us.*\n*The water is come in at the door of the soul.*\n*There is no floor beneath us and no roof above,*\n*and the candles burn on, and we do not.*`,
       `*We were told that we would see Thy face.*\n*We have waited with our eyes open.*\n*Make haste.*\n*Make haste.*`,
       `The office has no ending. When the last verse is sung, the brothers begin again.`,
+    ),
+  },
+  {
+    id: 'lore_a2_lowmere_chronicle', cat: 'world', title: 'The Lowmere Chronicle',
+    text: P(
+      `*The last page of the abbey chronicle, as the drowned illuminator paints it, again and again.*`,
+      `*In this yeare the Queene came to us by water at Candlemas, alone, with a box she wolde not open. And she was with us untill Midsommer, and walked much by the mere, and wept, and was merry, and wept.*`,
+      `*And on the Vigil of Midsommer she rowed out into the midst of the water with the box in her lap, and the Kinges men came after with torches, and the mere rose up and*`,
+      `The page has never been finished. The water always gets there first.`,
     ),
   },
   {

@@ -876,20 +876,22 @@ export const combatMethods = {
     if (!cb || cb.phase !== 'player' || cb.busy) return;
     cb.busy = true;
     try {
+      // Early exits (combat decided mid end-of-turn) must still reach afterAction().
+      endTurnBody: {
       const P = this.player;
       cb.phase = 'enemy';
       this.emit('endTurn', {});
       // Spirit passives
       for (const k of [...cb.spirits]) {
         if (!SPIRITS[k].startOfTurn) { SPIRITS[k].passive(this, this.st(P, 'soul')); this.emit('spiritPulse', { kind: k }); }
-        if (this.checkEnd()) return;
+        if (this.checkEnd()) break endTurnBody;
       }
       this.ownerTurnHooks(P, 'turnEnd');
-      if (this.checkEnd()) return;
+      if (this.checkEnd()) break endTurnBody;
       for (const c of [...cb.hand]) { const d = CARDS[c.id]; if (d.endTurnInHand) d.endTurnInHand(this, c); }
-      if (this.checkEnd()) return;
+      if (this.checkEnd()) break endTurnBody;
       this.trigger('turnEnd', cb.turn);
-      if (this.checkEnd()) return;
+      if (this.checkEnd()) break endTurnBody;
       const retainAll = this.sumMod(P, 'retainAll') > 0;
       for (const c of [...cb.hand]) {
         if (this.hasKw(c, 'ethereal')) this.exhaustCard(c);
@@ -903,6 +905,7 @@ export const combatMethods = {
       this.emit('handDiscarded', {});
       await this.ui.wait(250);
       await this.enemyPhase();
+      }
     } finally {
       cb.busy = false;
     }

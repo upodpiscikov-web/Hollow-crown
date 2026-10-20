@@ -607,14 +607,16 @@ function choir(I, t, midis, dur, vel, o = {}) {
   mix.connect(lp);
   const lg = V.gain(o.vib ?? 8, null);
   V.osc('sine', rnd(4.2, 5.2), t, end, lg);
-  for (const m of midis) {
+  // chords of 3+ notes use one saw per note (CPU); solos/dyads get a detuned pair
+  const pair = midis.length < 3 ? [-7, 6] : [0];
+  midis.forEach((m, i) => {
     const f = mtof(m);
-    for (const dt of [-7, 6]) {
+    for (const dt of pair) {
       const s = V.osc('sawtooth', f, t, end, mix);
-      s.detune.value = dt + rnd(-3, 3);
+      s.detune.value = dt + (pair.length === 1 ? (i % 2 ? 6 : -6) : 0) + rnd(-3, 3);
       lg.connect(s.detune);
     }
-  }
+  });
   V.done();
 }
 // Pipe organ: drawbar PeriodicWave, slow speech, tiny chiff.
@@ -763,9 +765,7 @@ function drone(I, t, midis, o = {}) {
   env.gain.linearRampToValueAtTime(1, t + (o.a ?? 4));
   const lp = V.filter('lowpass', o.cut ?? 400, o.q ?? 0.8, env);
   const mix = V.gain(0.5 / midis.length, lp);
-  for (const m of midis) {
-    for (const dt of [-5, 4]) V.osc(o.type || 'sawtooth', mtof(m), t, end, mix).detune.value = dt + rnd(-2, 2);
-  }
+  midis.forEach((m, i) => { V.osc(o.type || 'sawtooth', mtof(m), t, end, mix).detune.value = (i % 2 ? 4 : -5) + rnd(-2, 2); });
   V.done();
   return { V, lp, env };
 }

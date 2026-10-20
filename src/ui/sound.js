@@ -6,7 +6,18 @@ let curTrack = undefined;
 let unlocked = false;
 const lastSfx = new Map();
 
+// UI event names → the audio engine's sfx names (src/audio/audio.js).
+const MAP = {
+  tip: 'page', cardHover: 'hover', confirm: 'click', open: 'page', discard: 'card_draw', draw: 'card_draw',
+  cardSelect: 'card_select', cardAttack: 'card_play', cardSkill: 'card_play', cardPower: 'card_play', echo: 'card_play',
+  hitMagic: 'hit', hurt: 'player_hurt', blockHit: 'block', blockBreak: 'block_break', enemyDeath: 'enemy_death',
+  enemyAttack: 'attack_light', enemyAttackHeavy: 'attack_heavy', mask: 'mask_shift', oathDone: 'oath_done',
+  turnStart: 'turn_start', endTurn: 'end_turn', phase: 'boss_intro', bossIntro: 'boss_intro', eliteIntro: 'bell',
+  revive: 'heal', heroDeath: 'player_death', spirit: null, mapStep: 'map_step', buy: 'purchase', select: 'card_select',
+};
+
 export function sfx(name, opts) {
+  if (name && Object.prototype.hasOwnProperty.call(MAP, name)) name = MAP[name];
   if (!name) return;
   // Avoid machine-gun stacking of the same sound within a few ms.
   const now = performance.now();
