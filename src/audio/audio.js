@@ -37,7 +37,7 @@ const XFADE = 1.5;         // music crossfade, seconds
 const MAX_SFX = 6;         // simultaneous sfx voices (oldest/lowest priority stolen)
 const MAX_MUSIC = 9;       // music voices; non-essential notes are skipped beyond this
 const IDLE_S = 20;         // auto-suspend the context after this long of total silence
-const MUSIC_GAIN = 1.0;    // bus calibration (see tools/scratch/audio)
+const MUSIC_GAIN = 1.7;    // bus calibration (see tools/scratch/audio)
 const SFX_GAIN = 1.0;
 
 const HAS = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
@@ -526,20 +526,20 @@ const SFX = {
 // Per-sound mixing: w = reverb send, l = level, j = random pitch jitter (semitones),
 // g = min re-trigger gap (s), pri = steal priority, duck = dip the music for N s.
 const META = {
-  click: { w: 0.03, j: 0.5 }, hover: { w: 0, j: 0.6, g: 0.05 },
-  card_draw: { w: 0.05, j: 1 }, card_play: { w: 0.1, j: 0.8 }, card_select: { w: 0.08, j: 0.3 },
+  click: { w: 0.03, j: 0.5 }, hover: { w: 0, j: 0.6, g: 0.05, l: 1.6 },
+  card_draw: { w: 0.05, j: 1, l: 1.6 }, card_play: { w: 0.1, j: 0.8 }, card_select: { w: 0.08, j: 0.3, l: 1.3 },
   attack_light: { w: 0.12, j: 1.2 }, attack_heavy: { w: 0.15, j: 0.8 },
   hit: { w: 0.1, j: 1.2 }, crit: { w: 0.25, j: 0.5, pri: 2 },
   block: { w: 0.2, j: 0.8 }, block_break: { w: 0.25, j: 0.5, pri: 2 },
   buff: { w: 0.35, j: 0.2 }, debuff: { w: 0.3, j: 0.4 }, rot: { w: 0.15, j: 0.8 },
-  heal: { w: 0.45, j: 0.15 }, gold: { w: 0.2, j: 0.4 }, relic: { w: 0.55, j: 0, pri: 2 },
+  heal: { w: 0.45, j: 0.15 }, gold: { w: 0.2, j: 0.4, l: 1.5 }, relic: { w: 0.55, j: 0, pri: 2 },
   potion: { w: 0.2, j: 0.5 }, enemy_death: { w: 0.3, j: 1.5, pri: 2 },
   player_hurt: { w: 0.12, j: 1 }, player_death: { w: 0.6, j: 0, pri: 3, duck: 4.5 },
-  end_turn: { w: 0.25, j: 0.2 }, turn_start: { w: 0.35, j: 0 }, shuffle: { w: 0.05, j: 0.6 },
-  exhaust: { w: 0.3, j: 0.8 }, mask_shift: { w: 0.35, j: 0.3 }, channel: { w: 0.5, j: 0.6 },
+  end_turn: { w: 0.25, j: 0.2 }, turn_start: { w: 0.35, j: 0, l: 1.3 }, shuffle: { w: 0.05, j: 0.6, l: 1.8 },
+  exhaust: { w: 0.3, j: 0.8 }, mask_shift: { w: 0.35, j: 0.3 }, channel: { w: 0.5, j: 0.6, l: 1.3 },
   release: { w: 0.4, j: 0.6 }, brew: { w: 0.2, j: 0.6 }, oath: { w: 0.45, j: 0, pri: 2 },
   oath_done: { w: 0.5, j: 0, pri: 2 }, map_step: { w: 0.05, j: 2 }, door: { w: 0.35, j: 0.8 },
-  chest: { w: 0.3, j: 0.4 }, page: { w: 0.05, j: 1, g: 0.08 }, error: { w: 0.05, j: 0, g: 0.12 },
+  chest: { w: 0.3, j: 0.4 }, page: { w: 0.05, j: 1, g: 0.08, l: 1.6 }, error: { w: 0.05, j: 0, g: 0.12 },
   victory: { w: 0.5, j: 0, pri: 3, duck: 2.5 }, boss_intro: { w: 0.5, j: 0, pri: 3, duck: 3 },
   bell: { w: 0.6, j: 0, pri: 2 }, spawn: { w: 0.35, j: 0.8 }, flee: { w: 0.15, j: 0.6 },
   burn: { w: 0.2, j: 0.8 }, ward: { w: 0.5, j: 0.3 }, upgrade: { w: 0.4, j: 0.2, pri: 2 },

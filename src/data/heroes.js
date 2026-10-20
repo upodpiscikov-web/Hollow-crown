@@ -31,7 +31,7 @@ defineHeroes([
   },
   {
     id: 'cantor', name: 'Brother Cael', title: 'the Gravecantor', claim: 'Witness',
-    hp: 76, gold: 99, color: '#f0d27a', accent: '#7a767a', sprite: 'hero_cantor',
+    hp: 72, gold: 99, color: '#f0d27a', accent: '#7a767a', sprite: 'hero_cantor',
     deck: ['strike_cantor', 'strike_cantor', 'strike_cantor', 'strike_cantor',
       'defend_cantor', 'defend_cantor', 'defend_cantor', 'defend_cantor', 'call_the_wisp', 'requiem'],
     relic: 'bone_rosary',

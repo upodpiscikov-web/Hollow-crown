@@ -666,35 +666,47 @@ const flame = (p, cx, base, h, w) => {
 defineSprites({
   // ------------------------------------------------------------ normals
   en_lantern_moth: {
-    w: 32, h: 28,
+    w: 34, h: 30,
     draw(p) {
-      p.poly([[17, 12], [24, 1], [31, 4], [28, 13]], PAL.night, { shade: 0.2 });          // far wing
-      p.poly([[17, 15], [25, 22], [29, 18], [24, 14]], PAL.night);
-      p.ellipse(22, 14, 7, 4, PAL.flame, { shade: 0.25 });                                 // lantern abdomen
-      p.rect(19, 10, 1, 8, PAL.bark); p.rect(23, 10, 1, 8, PAL.bark);
-      p.glow(22, 14, PAL.candle, 4);
-      p.circle(13, 14, 4, PAL.bruise, { shade: 0.3 });                                     // thorax
-      p.circle(8, 14, 3, PAL.dusk, { shade: 0.3 });                                        // head
-      p.poly([[14, 13], [2, 3], [8, 0], [20, 3], [18, 12]], PAL.bruise, { shade: 0.35 });  // near wing
-      p.path([[14, 12], [7, 3]], PAL.dusk, 1); p.path([[16, 12], [14, 2]], PAL.dusk, 1);
-      p.circle(10, 5, 2, PAL.candle); p.px(10, 5, PAL.ink);                                // eye-spot
-      p.poly([[13, 15], [5, 23], [11, 27], [19, 18]], PAL.dusk, { shade: 0.3 });            // lower wing
-      p.path([[7, 12], [4, 7], [1, 6]], PAL.bone, 1); p.path([[8, 12], [7, 6], [5, 4]], PAL.bone, 1);
-      p.glow(6, 14, PAL.flame, 1);
+      // wings swept up and back (side view, facing left)
+      p.poly([[16, 14], [20, 2], [28, 0], [33, 8], [28, 16]], PAL.violet, { shade: 0.3 });   // upper wing
+      p.poly([[16, 16], [27, 18], [32, 26], [22, 29], [15, 22]], PAL.bruise, { shade: 0.3 }); // lower wing
+      p.path([[17, 14], [26, 4]], PAL.lilac, 1); p.path([[18, 15], [30, 10]], PAL.lilac, 1);
+      p.path([[17, 17], [28, 24]], PAL.violet, 1);
+      p.circle(26, 8, 3, PAL.candle); p.circle(26, 8, 1.5, PAL.ink);                           // eyespot
+      p.circle(25, 23, 2, PAL.flame); p.px(25, 23, PAL.ink);
+      // glowing lantern abdomen
+      p.ellipse(19, 20, 5, 3.5, PAL.flame, { shade: 0.2 });
+      p.ellipse(19, 20, 2.5, 2, PAL.candle);
+      p.glow(19, 20, PAL.candle, 5);
+      // fuzzy thorax + head
+      p.ellipse(14, 15, 5, 5, PAL.dusk, { shade: 0.35 });
+      p.speckle(PAL.fog, 0.2, 4, [9, 10, 20, 20]);
+      p.circle(9, 13, 3.5, PAL.dusk, { shade: 0.35 });
+      p.px(7, 12, PAL.candle); p.px(7, 13, PAL.candle);
+      p.glow(7, 12, PAL.candle, 1);
+      // feathered antennae
+      p.path([[8, 10], [5, 5], [2, 2]], PAL.bone, 1); p.path([[10, 10], [10, 4], [8, 0]], PAL.bone, 1);
+      p.px(4, 5, PAL.bone); p.px(3, 4, PAL.bone); p.px(11, 6, PAL.bone); p.px(9, 3, PAL.bone);
+      // legs
+      p.path([[12, 19], [10, 24]], PAL.dusk, 1); p.path([[15, 19], [14, 25]], PAL.dusk, 1);
     },
   },
   en_thornling: {
-    w: 34, h: 32,
+    w: 36, h: 34,
     draw(p) {
-      const spikes = [[17, 2], [27, 5], [32, 14], [30, 24], [6, 6], [2, 15], [11, 2], [24, 1]];
-      for (const [x, y] of spikes) p.tri(17 + (x - 17) * 0.45 - 2, 15 + (y - 15) * 0.45, 17 + (x - 17) * 0.45 + 2, 15 + (y - 15) * 0.45 + 1, x, y, PAL.bone);
-      p.path([[12, 24], [9, 30], [6, 31]], PAL.bark, 2); p.path([[20, 25], [22, 30], [25, 31]], PAL.bark, 2);
-      p.circle(17, 16, 10, PAL.bark, { shade: 0.35 });
-      p.ellipse(20, 10, 6, 3, PAL.moss, { shade: 0.3 }); p.ellipse(24, 19, 3, 2, PAL.moss);
-      p.path([[9, 12], [24, 22]], PAL.wood, 1); p.path([[12, 22], [26, 10]], PAL.wood, 1);
-      p.ellipse(10, 20, 4, 2, PAL.ink); p.px(8, 19, PAL.bone); p.px(10, 21, PAL.bone); p.px(12, 19, PAL.bone);
-      eyes(p, [[9, 14], [14, 14]], PAL.venom);
-      p.tri(4, 22, 9, 20, 7, 25, PAL.bone);
+      const cx = 18, cy = 17;
+      const spikes = [[18, 1], [28, 4], [34, 14], [32, 26], [5, 5], [1, 15], [10, 1], [25, 0], [33, 20]];
+      for (const [x, y] of spikes) p.tri(cx + (x - cx) * 0.5 - 2.5, cy + (y - cy) * 0.5, cx + (x - cx) * 0.5 + 2.5, cy + (y - cy) * 0.5 + 1.5, x, y, PAL.bone);
+      p.path([[12, 26], [9, 32], [5, 33]], PAL.bark, 2); p.path([[22, 27], [24, 32], [28, 33]], PAL.bark, 2);
+      p.circle(cx, cy, 11, PAL.bark, { shade: 0.4 });
+      p.ellipse(21, 10, 7, 3, PAL.moss, { shade: 0.3 }); p.ellipse(26, 20, 3, 2, PAL.moss);
+      p.path([[9, 12], [26, 24]], PAL.wood, 1); p.path([[13, 24], [28, 10]], PAL.wood, 1);
+      p.ellipse(11, 21, 5, 3, PAL.void);                                                       // grin
+      for (const x of [8, 10, 12, 14]) p.tri(x, 19, x + 1, 22, x + 2, 19, PAL.bone);
+      p.ellipse(9, 13, 2.5, 2.5, PAL.void); p.ellipse(15, 13, 2.5, 2.5, PAL.void);
+      eyes(p, [[9, 13], [15, 13]], PAL.venom, 2);
+      p.tri(3, 22, 8, 19, 6, 26, PAL.bone);
     },
   },
   en_glamour_kin: {
@@ -937,26 +949,36 @@ defineSprites({
     },
   },
   en_mere_hag: {
-    w: 76, h: 68,
+    w: 78, h: 70,
     draw(p) {
-      p.ellipse(40, 62, 36, 6, PAL.deep);                                                       // the mere
-      p.poly([[24, 30], [56, 22], [66, 46], [60, 62], [22, 62], [18, 44]], PAL.sick, { shade: 0.4 }); // hunched body
-      p.speckle(PAL.rot, 0.1, 21, [18, 22, 66, 62]);
-      p.ellipse(28, 26, 12, 10, PAL.moss, { shade: 0.3 });                                     // hair mass
-      p.ellipse(22, 30, 8, 8, PAL.sick, { shade: 0.35 });                                       // face
-      p.tri(15, 30, 9, 36, 16, 34, PAL.sick);                                                   // long nose
-      p.poly([[13, 37], [24, 37], [22, 41], [15, 41]], PAL.void);                               // maw
-      for (const x of [15, 18, 21]) p.tri(x, 37, x + 1, 39, x + 2, 37, PAL.bone);
-      eyes(p, [[17, 28], [22, 27]], PAL.candle);
-      strands(p, [[[20, 18], [12, 34], [12, 52]], [[26, 16], [30, 40], [28, 60]], [[32, 18], [42, 34], [44, 56]], [[36, 20], [52, 32], [58, 52]], [[24, 18], [20, 40], [22, 56]]], PAL.moss, 2);
-      strands(p, [[[18, 20], [8, 40], [10, 56]], [[40, 22], [56, 40], [64, 58]]], PAL.rot, 1);
-      // long arms reaching forward-left, clawed
-      p.path([[30, 44], [16, 50], [6, 46]], PAL.sick, 4);
-      for (const [dx, dy] of [[-6, -5], [-7, -1], [-6, 3]]) p.path([[6, 46], [6 + dx, 46 + dy]], PAL.bone, 1);
-      p.path([[46, 46], [34, 56], [20, 58]], PAL.sick, 4);
-      for (const [dx, dy] of [[-6, -3], [-7, 0], [-5, 3]]) p.path([[20, 58], [20 + dx, 58 + dy]], PAL.bone, 1);
-      p.ring(40, 62, 30, PAL.water, 1); p.ellipse(40, 64, 30, 3, PAL.water);
-      drips(p, [[8, 50, 3], [14, 54, 2], [50, 50, 2]], PAL.frost);
+      p.ellipse(40, 64, 37, 5, PAL.deep);                                                       // the mere
+      // hunched, drowned body: dark so the face and hands pop
+      p.poly([[30, 36], [52, 24], [68, 38], [66, 64], [24, 64], [22, 46]], PAL.moss, { shade: 0.35 });
+      p.poly([[40, 44], [66, 42], [66, 64], [36, 64]], PAL.deep);
+      p.speckle(PAL.rot, 0.12, 21, [22, 26, 68, 64]);
+      p.ellipse(52, 30, 12, 8, PAL.rot, { shade: 0.3 });                                        // humped shoulder
+      // hair: dark mass behind the face, weed streaming over the body
+      p.ellipse(26, 26, 14, 14, PAL.ink, { shade: 0.2 });
+      strands(p, [[[22, 14], [12, 32], [10, 54]], [[28, 12], [34, 36], [32, 58]], [[34, 16], [48, 34], [52, 58]], [[40, 20], [58, 36], [62, 58]], [[18, 18], [14, 40], [16, 58]]], PAL.moss, 2);
+      strands(p, [[[24, 14], [18, 34], [20, 52]], [[36, 18], [44, 40], [46, 56]]], PAL.rot, 1);
+      // the face, big and pale-green
+      p.ellipse(22, 28, 9, 10, PAL.sick, { shade: 0.35 });
+      p.tri(13, 28, 6, 36, 15, 34, PAL.sick);                                                    // hooked nose
+      p.ellipse(18, 25, 3, 2.5, PAL.void); p.ellipse(25, 24, 3, 2.5, PAL.void);                 // sockets
+      eyes(p, [[18, 25], [25, 24]], PAL.candle, 2);
+      p.poly([[14, 37], [27, 37], [25, 43], [16, 43]], PAL.void);                               // maw
+      for (const x of [15, 18, 21, 24]) p.tri(x, 37, x + 1.5, 40, x + 3, 37, PAL.bone);
+      for (const x of [17, 20, 23]) p.tri(x, 43, x + 1.5, 40, x + 3, 43, PAL.bone);
+      // long bony arms: one reaching up-left, one trailing in the water
+      p.path([[34, 44], [22, 46], [10, 38]], PAL.pale, 4);
+      p.path([[10, 38], [4, 28]], PAL.pale, 2);
+      for (const [dx, dy] of [[-5, -6], [-7, -2], [-6, 3]]) p.path([[4, 28 + (dy > 0 ? 6 : 0)], [4 + dx, 28 + dy + (dy > 0 ? 6 : 0)]], PAL.bone, 1);
+      p.path([[44, 52], [30, 58], [18, 60]], PAL.pale, 4);
+      for (const [dx, dy] of [[-6, -3], [-7, 0], [-5, 3]]) p.path([[18, 60], [18 + dx, 60 + dy]], PAL.bone, 1);
+      // ripples
+      p.ellipse(40, 66, 34, 2, PAL.water);
+      p.rect(8, 64, 8, 1, PAL.ghost); p.rect(52, 66, 10, 1, PAL.ghost); p.rect(30, 67, 6, 1, PAL.ghost);
+      drips(p, [[6, 40, 3], [12, 46, 2], [3, 36, 2], [48, 56, 2]], PAL.frost);
     },
   },
 

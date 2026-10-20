@@ -68,15 +68,15 @@ export async function fight(g, ids, opts = {}) {
 
 const leave = (label = '[Leave]') => ({ label, end: true });
 
-// Preferred Act 1 enemies for event fights (fallback: random Act 1 encounter).
+// Act 1 enemies for event fights (fight() falls back to a random encounter if an id goes missing).
 const FOES = {
-  wolves: ['marsh_wolf', 'marsh_wolf'],
-  deserters: ['deserter', 'deserter_crossbow'],
-  archer: ['deserter_crossbow'],
-  rats: ['plague_rat', 'plague_rat', 'plague_rat'],
-  corpse: ['risen_corpse'],
-  cultists: ['ash_cultist', 'ash_cultist'],
-  hunters: ['bounty_hunter', 'bounty_hunter'],
+  wolves: ['marsh_hound', 'marsh_hound', 'war_hound'],
+  deserters: ['marcher_cutthroat', 'marcher_archer'],
+  archer: ['marcher_archer'],
+  rats: ['rat_swarm', 'rat_swarm'],
+  corpse: ['wight_militiaman'],
+  cultists: ['ash_cultist', 'gibbet_crow'],
+  hunters: ['marcher_cutthroat', 'marcher_cutthroat'],
 };
 
 // ------------------------------------------------------------------ events

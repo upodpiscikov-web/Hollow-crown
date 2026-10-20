@@ -51,7 +51,7 @@ let mounted = null; // { name, scr, host }
 let rq = 0, holdTimer = 0;
 
 function currentName() {
-  if (g.run) return g.run.screen || 'map';
+  if (g.run && UI.inRun) return g.run.screen || 'map';
   return UI.view || 'title';
 }
 
@@ -104,14 +104,14 @@ function showCrash(name, e) {
       h('p', `Something went wrong drawing the "${name}" screen.`),
       h('pre', String(e && (e.message || e))),
       h('div.row',
-        g.run ? h('button.btn', { onTap: () => { if (g.run) { g.run.screen = 'map'; g.run.combat = null; } requestRender(); } }, 'Return to the map') : null,
-        h('button.btn', { onTap: () => { if (g.run) g.abandonRun(); UI.view = 'title'; requestRender(); } }, 'Abandon & return to title')))));
+        g.run && UI.inRun ? h('button.btn', { onTap: () => { if (g.run) { g.run.screen = 'map'; g.run.combat = null; } requestRender(); } }, 'Return to the map') : null,
+        h('button.btn', { onTap: () => { UI.inRun = false; UI.view = 'title'; requestRender(); } }, 'Return to title')))));
 }
 
 SCREENS.missing = {
   mount(root, gg) {
     root.appendChild(h('div.screen.crash', h('div.crash-box', h('h2', 'Lost in the fog'), h('p', `Unknown screen: ${currentName()}`),
-      h('button.btn', { onTap: () => { if (gg.run) gg.run.screen = 'map'; else UI.view = 'title'; requestRender(); } }, 'Continue'))));
+      h('button.btn', { onTap: () => { if (gg.run && UI.inRun) gg.run.screen = 'map'; else UI.view = 'title'; requestRender(); } }, 'Continue'))));
   },
 };
 
@@ -170,5 +170,6 @@ if (UI.dev) initDev(g);
 const boot = document.getElementById('boot');
 if (boot) anim(boot, [{ opacity: 1 }, { opacity: 0 }], 500).then(() => boot.remove());
 UI.view = 'title';
+UI.inRun = false;
 render();
 window.__hc = { g, UI, render: requestRender };

@@ -43,23 +43,6 @@ function grow(card, key, n) {
   card.bonus = { ...(card.bonus || {}), [key]: ((card.bonus && card.bonus[key]) || 0) + n };
 }
 
-// Workaround (engine request filed): Game.endTurn() returns early when combat ends
-// during end-of-turn effects (Spirit passives, turnEnd powers) and skips afterAction(),
-// so the combat never finishes. Once the engine has fully unwound (not busy), finish
-// it ourselves. A no-op whenever the engine already did, or will, finish the combat.
-function settleCombat(g) {
-  const cb = g.cb;
-  if (!cb || cb.finished || cb.settleQueued) return;
-  cb.settleQueued = true;
-  // enemyDied/hpLost fire before checkEnd() marks the combat over, so decide later.
-  queueMicrotask(() => {
-    cb.settleQueued = false;
-    if (g.cb === cb && !cb.finished && !cb.busy && g.checkEnd()) {
-      g.afterAction().catch((err) => console.error('cantor settle failed', err));
-    }
-  });
-}
-
 function spiritBolt(g, n) {
   const e = g.randomEnemy();
   if (e && live(g)) g.damage(e, n, { type: 'spirit', src: g.player });
@@ -486,8 +469,6 @@ defineRelics([
     desc: 'At the start of each combat, Channel 1 Wisp.',
     flavor: 'The beads are cold to the touch. So are his fingers. He has stopped noticing.',
     combatStart(g) { g.channel('wisp'); },
-    enemyDied(g) { settleCombat(g); },
-    hpLost(g, r, e) { if (e && e.isPlayer) settleCombat(g); },
   },
   {
     id: 'knotted_cord', name: 'Knotted Cord', rarity: 'common', hero: H, icon: 'rope', tint: '#8a7356',

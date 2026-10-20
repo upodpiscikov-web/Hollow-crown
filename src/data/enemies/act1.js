@@ -721,24 +721,36 @@ defineSprites({
     },
   },
   en_coughing_dead: {
-    w: 36, h: 54,
+    w: 38, h: 54,
     draw(p) {
-      const S = '#5d5240', SD = '#463d30';
-      p.path([[18, 38], [16, 46], [15, 53]], FLESH_DEAD, 3);
-      p.path([[24, 38], [26, 46], [27, 53]], '#80806a', 3);
-      p.poly([[12, 18], [26, 15], [31, 26], [30, 42], [10, 42], [9, 30]], S, { shade: 0.3 });
-      p.poly([[10, 36], [30, 36], [32, 44], [27, 41], [23, 45], [18, 41], [13, 45], [8, 42]], SD);
-      p.path([[13, 22], [7, 28], [3, 31]], FLESH_DEAD, 3);
-      p.path([[3, 31], [0, 31]], FLESH_DEAD, 1); p.path([[3, 31], [1, 34]], FLESH_DEAD, 1);
-      p.ellipse(13, 14, 7, 7, FLESH_DEAD, { shade: 0.3 });
-      p.poly([[16, 7], [24, 11], [24, 19], [17, 19]], '#6b5a42', { shade: 0.2 });
-      p.ellipse(8, 17, 2.5, 3, PAL.void);
-      p.path([[8, 19], [7, 23], [8, 27]], PAL.bile, 1);
-      p.circle(10, 12, 1.5, PAL.void); p.px(10, 12, PAL.sick);
-      p.circle(15, 11, 1.5, PAL.void);
-      p.speckle(PAL.bile, 0.06, 3, [8, 6, 20, 22]);
-      p.speckle(PAL.rot, 0.05, 9, [10, 16, 31, 42]);
-      p.path([[28, 24], [31, 32], [30, 38]], '#80806a', 3);
+      const S = '#6b5f48', SD = '#4a4234', SK = '#a3a58a';
+      // legs
+      p.path([[17, 38], [15, 46], [14, 53]], SK, 3);
+      p.path([[24, 38], [26, 46], [28, 53]], '#868a72', 3);
+      p.rect(11, 52, 6, 2, PAL.night); p.rect(26, 52, 6, 2, PAL.night);
+      // hunched torso in a tattered smock
+      p.poly([[13, 20], [28, 17], [33, 28], [31, 42], [11, 42], [9, 31]], S, { shade: 0.3 });
+      p.poly([[9, 38], [32, 38], [34, 45], [29, 42], [25, 47], [20, 42], [15, 47], [11, 42], [7, 45]], SD);
+      p.line(11, 31, 31, 31, PAL.bark, 2);
+      // buboes
+      p.circle(26, 26, 2.5, PAL.bile, { shade: 0.2 }); p.px(26, 26, PAL.venom);
+      p.circle(14, 36, 2, PAL.rot);
+      // left arm hanging forward, reaching
+      p.path([[14, 23], [8, 30], [4, 37]], SK, 3);
+      p.path([[4, 37], [1, 40]], SK, 1); p.path([[4, 37], [3, 41]], SK, 1); p.path([[4, 37], [6, 41]], SK, 1);
+      // right arm limp
+      p.path([[29, 24], [33, 32], [32, 39]], '#868a72', 3);
+      // head, thrust forward, jaw slack
+      p.ellipse(15, 15, 7, 7, SK, { shade: 0.3 });
+      p.poly([[19, 8], [25, 12], [25, 20], [19, 20]], '#5a4a36');
+      p.ellipse(11, 20, 3, 3.5, PAL.void);
+      p.path([[11, 22], [10, 27], [11, 31]], PAL.venom, 1);
+      p.px(10, 33, PAL.bile);
+      p.ellipse(11, 13, 2, 2, PAL.void); p.px(11, 13, PAL.sick);
+      p.ellipse(17, 12, 1.6, 1.8, PAL.void);
+      p.line(8, 11, 12, 9, PAL.void);
+      p.speckle(PAL.bile, 0.07, 3, [8, 8, 22, 24]);
+      p.speckle(PAL.rot, 0.05, 9, [10, 18, 32, 42]);
     },
   },
   en_ash_cultist: {
@@ -875,21 +887,22 @@ defineSprites({
     },
   },
   en_rat_swarm: {
-    w: 50, h: 30,
+    w: 52, h: 34,
     draw(p) {
-      const R1 = '#4e4640', R2 = '#3a3430', R3 = '#5e544b';
-      p.ellipse(27, 22, 22, 8, R2, { shade: 0.3 });
-      p.ellipse(22, 16, 13, 7, R1, { shade: 0.3 });
-      p.ellipse(36, 15, 10, 6, R3, { shade: 0.3 });
-      p.path([[46, 20], [49, 15], [47, 10]], PINK, 1);
-      p.path([[44, 26], [49, 28]], PINK, 1);
-      p.path([[30, 9], [34, 4], [39, 5]], PINK, 1);
-      ratFig(p, 1, 23, 1.2, R1);
-      ratFig(p, 8, 13, 1.3, R3);
-      ratFig(p, 22, 8, 1.1, R1);
-      ratFig(p, 14, 21, 1, R3);
-      ratFig(p, 30, 16, 1, R2);
-      for (let i = 0; i < 14; i++) p.line(12 + i * 2.5, 19 + (i % 3), 13 + i * 2.5, 17 + (i % 3), R2);
+      const R1 = '#5a5048', R2 = '#403934', R3 = '#6c6157';
+      // Heap base, then individual rats on top so they read as bodies, not a blob.
+      p.ellipse(27, 27, 23, 6, R2, { shade: 0.25 });
+      ratFig(p, 2, 26, 1.4, R1);
+      ratFig(p, 14, 28, 1.3, R3);
+      ratFig(p, 26, 27, 1.3, R1);
+      ratFig(p, 36, 28, 1.2, R3);
+      ratFig(p, 6, 19, 1.4, R3);
+      ratFig(p, 19, 20, 1.5, R1);
+      ratFig(p, 32, 19, 1.3, R2);
+      ratFig(p, 11, 11, 1.4, R1);
+      ratFig(p, 24, 11, 1.5, R3);
+      ratFig(p, 18, 3, 1.3, R2);
+      for (const [x, y] of [[4, 25], [8, 18], [13, 10], [20, 19], [26, 10], [20, 2], [33, 18], [28, 26]]) p.glow(x, y, '#e0402e', 1);
     },
   },
 

@@ -154,7 +154,13 @@ const bossRelic = simple('bossRelic', (g) => {
 }, { sig: (g) => (g.run.bossRelics || []).join() });
 
 // ------------------------------------------------------------------ rest
-const ICON_FOR_REST = { rest: ['map_rest', '♨'], smith: ['art_greatsword', '⚒'] };
+const ICON_FOR_REST = { rest: ['map_rest', '♨'], smith: ['art_greatsword', '⚒'], leave: ['ui_back', '➤'] };
+function restIcon(o) {
+  if (ICON_FOR_REST[o.id] && !o.relic) { const [id, gl] = ICON_FOR_REST[o.id]; return icon(id, 2.5, '', gl); }
+  if (o.icon && hasSprite('rl_' + o.icon)) return spr('rl_' + o.icon, 2.5, '', o.relic && RELICS[o.relic] && RELICS[o.relic].tint ? { c: RELICS[o.relic].tint } : undefined);
+  if (o.relic) return relicIcon(RELICS[o.relic], 2.5);
+  return icon('missing', 2.5, '', '✦');
+}
 
 const rest = simple('rest', (g) => {
   const run = g.run;
@@ -167,7 +173,7 @@ const rest = simple('rest', (g) => {
   const done = run.rest && run.rest.done;
   let busy = false;
   const btns = h('div.rest-opts', opts.map((o) => {
-    const ic = o.relic ? relicIcon(RELICS[o.relic], 2.5) : icon((ICON_FOR_REST[o.id] || [])[0] || 'missing', 2.5, '', (ICON_FOR_REST[o.id] || [])[1] || '✦');
+    const ic = restIcon(o);
     const b = h('button.rest-opt' + (o.disabled || done ? '.disabled' : '') + (done && run.rest.did === o.id ? '.did' : ''), h('div.ro-ic', ic), h('div.ro-label', o.label), h('div.ro-desc', { html: inline(o.desc || '', true) }));
     tap(b, async () => {
       if (busy || done) return;
@@ -461,6 +467,7 @@ function killerName(g) {
 
 function backToWaystone(g) {
   g.closeRun();
+  UI.inRun = false;
   UI.view = 'hub';
   UI.hubShown = false;
   UI.render();

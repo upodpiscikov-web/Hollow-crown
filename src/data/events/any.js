@@ -489,7 +489,7 @@ defineEvents([
         ),
         choices: [
           { label: '[Help them dig the rich grave] Lose 5 HP. Gain 35 Gold. Obtain a Tincture.', show: (g) => g.run.hero !== 'cantor', req: hasHp(5), fx(g) { g.hurt(5); if (g.run.over) return; g.gainGold(35); g.obtainPotion(); return 'dig'; } },
-          { label: '[Rob the robbers] Fight.', show: (g) => g.run.hero !== 'cantor', fx(g) { return fight(g, null, { pool: 'easy', resume: 'robbed', reward: { gold: 40 } }); } },
+          { label: '[Rob the robbers] Fight.', show: (g) => g.run.hero !== 'cantor', fx(g) { return fight(g, g.run.act === 1 ? ['grave_robber'] : null, { pool: 'easy', resume: 'robbed', reward: { gold: 40 } }); } },
           { label: '[Pick up their lantern] Gain 40 Gold. Obtain a Tincture.', show: isHero('cantor'), fx(g) { g.gainGold(40); g.obtainPotion(); return 'lantern'; } },
           leave('[Leave them to it]'),
         ],
