@@ -1527,12 +1527,12 @@ You have, you discover, the whole of the road clear in your mind. Down through t
 
 "No," you say. "They'll walk with me. They've all been waiting for a priest."`,
         choices: [
-          { label: '["Then I will carry it down."] Obtain the Grave Lantern.', fx(g) { giveRelic(g, 'grave_lantern', 'rare'); return 'end'; } },
-          { label: '[Say the office for the dead, for the whole hall] Remove 2 cards from your deck.', async fx(g) { await g.removeCardChoice(2); return 'end'; } },
-          { label: '[Rise, unburdened] Gain 12 Max HP. Upgrade a card.', async fx(g) { g.gainMaxHp(12); await g.upgradeCardChoice(1); return 'end'; } },
+          { label: '["Then I will carry it down."] Obtain the Grave Lantern.', fx(g) { giveRelic(g, 'grave_lantern', 'rare'); return 'last'; } },
+          { label: '[Say the office for the dead, for the whole hall] Remove 2 cards from your deck.', async fx(g) { await g.removeCardChoice(2); return 'last'; } },
+          { label: '[Rise, unburdened] Gain 12 Max HP. Upgrade a card.', async fx(g) { g.gainMaxHp(12); await g.upgradeCardChoice(1); return 'last'; } },
         ],
       },
-      end: {
+      last: {
         text: `You turn your back on the throne, and the Crown does not call after you.
 
 The long walk back up the nave takes a long time. At the doors, you stop. You have been carrying a candle all this while, one of the forty-one from the gallery, and you look at it: it burns, and it throws no shadow.
@@ -1686,8 +1686,8 @@ Pell sets the puppet down, very gently, in the dirt. He looks, for a moment, not
 
 "That's the tale. Don't ask me how it ends. A fool never gives away the ending of a tale until the third time he's been paid."`,
         choices: [
-          { label: '[Sit with the tale until the fire is out] Heal 20 HP.', fx(g) { g.healOut(20); return 'end'; } },
-          { label: '[Leave bread at the roots of the nearest tree, as the fen-people did] Lose 15 Gold. Gain 8 Max HP.', req: goldReq(15), fx(g) { g.loseGold(15); g.gainMaxHp(8); return 'end'; } },
+          { label: '[Sit with the tale until the fire is out] Heal 20 HP.', fx(g) { g.healOut(20); return 'last'; } },
+          { label: '[Leave bread at the roots of the nearest tree, as the fen-people did] Lose 15 Gold. Gain 8 Max HP.', req: goldReq(15), fx(g) { g.loseGold(15); g.gainMaxHp(8); return 'last'; } },
           { label: '["Where is the heart now?"] Choose a card to add to your deck.', async fx(g) { await offerHeroCards(g, { rarity: 'uncommon', title: 'The fool will not say' }); return 'ask'; } },
         ],
       },
@@ -1701,7 +1701,7 @@ He is grinning, and the crack in his face goes from the corner of his eye to the
 He turns away to the fire, and when you look again there is only the fire, and a small wooden woman in the dirt with her glow gone out.`,
         choices: [leave('lore_story_lady_under_hill')],
       },
-      end: {
+      last: {
         text: `The fire dies down. The puppet lies in the dirt. Pell has gone, as he does, between one blink and the next, and has taken the bells of his cap with him so that you do not hear him go.
 
 You sit a while in the dark, with the wood-smell and the cold. You were told the old tale as a child, in some form: the Lady under the hill, the Hunger beneath the throne, the thing the priests warned against. You were told it as a monster story.
@@ -1899,8 +1899,8 @@ He steps back. "Say it all at the throne, and know every word is true, and the i
 
 The bells chime, and the candles gutter all at once, and the ten thousand reflections of the hall bow to you at the same moment, like a field of barley under a wind.`,
         choices: [
-          { label: '[Commit it to memory, word for word] Upgrade 2 random cards.', fx(g) { g.upgradeRandom(2); return 'end'; } },
-          { label: '["What does it hold, exactly?"] Choose a rare card to add to your deck.', async fx(g) { await offerHeroCards(g, { rarity: 'rare', title: 'What it holds' }); return 'end'; } },
+          { label: '[Commit it to memory, word for word] Upgrade 2 random cards.', fx(g) { g.upgradeRandom(2); return 'last'; } },
+          { label: '["What does it hold, exactly?"] Choose a rare card to add to your deck.', async fx(g) { await offerHeroCards(g, { rarity: 'rare', title: 'What it holds' }); return 'last'; } },
           { label: () => `["I mean to wear it."] Obtain a random relic. Become Cursed — ${curseName('crowns_whisper')}.`, fx(g) { g.obtainRelic(); curse(g, 'crowns_whisper'); return 'wear'; } },
         ],
       },
@@ -1916,7 +1916,7 @@ You take it. The hall rings with a note like a struck glass, and the Crown, some
 "Do remember," says Pell, as you go, "what it holds."`,
         choices: [leave('lore_story_how_crown_breaks')],
       },
-      end: {
+      last: {
         text: `You leave him in the Hall of Mirrors, among the dancers who do not know they are dead, with their steps going on and on in the glass.
 
 You can still hear his voice behind you, down the length of the white floor: not a rhyme, this time, but a plain thing, simply said, as one who has laid down a heavy parcel at last.
