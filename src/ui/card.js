@@ -39,7 +39,7 @@ export function cardEl(card, opts = {}) {
   el.appendChild(art);
   // Name banner
   const nm = def.name + (card.up ? '+' : '');
-  el.appendChild(h('div.c-name' + (nm.length > 17 ? '.xs' : nm.length > 13 ? '.sm' : ''), h('span', nm)));
+  el.appendChild(h('div.c-name' + (nm.length > 16 ? '.xs' : nm.length > 11 ? '.sm' : nm.length > 9 ? '.md' : ''), h('span', nm)));
   // Cost gem
   const cost = costInfo(g, card, def, opts.live);
   if (cost) el.appendChild(h('div.c-cost' + (cost.cls ? '.' + cost.cls : ''), h('span', String(cost.text))));

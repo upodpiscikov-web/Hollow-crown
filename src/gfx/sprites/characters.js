@@ -390,11 +390,17 @@ defineSprites({
       p.px(15, 19, skinD).px(25, 19, skinD);
       // candlelight from the right
       p.px(28, 13, PAL.candle).px(28, 17, PAL.candle).px(27, 21, PAL.candle).px(29, 15, PAL.flame).px(25, 24, PAL.candle);
-      // shoulders fading out (he is not quite here)
-      const B = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+      // not quite here: shoulders go ghost-blue and fray away at the edges
+      const D = p.d, G = [169, 198, 194];
       for (let y = 28; y < 40; y++) for (let x = 0; x < 40; x++) {
-        const edge = Math.max(0, 1 - Math.min(x, 39 - x) / 10) * ((y - 26) / 12);
-        if ((B[(y & 3) * 4 + (x & 3)] + 0.5) / 16 < edge) p.erase(x, y);
+        const i = (y * p.w + x) * 4; if (!D[i + 3]) continue;
+        const f = ((y - 28) / 12) * 0.55;
+        D[i] += (G[0] - D[i]) * f; D[i + 1] += (G[1] - D[i + 1]) * f; D[i + 2] += (G[2] - D[i + 2]) * f;
+      }
+      for (let x = 0; x < 40; x++) {
+        const edge = Math.min(x, 39 - x);
+        const cut = edge < 9 ? 33 + Math.round(edge * 0.55) + ((x * 13) % 3) : 38 + ((x * 11) % 3);
+        p.erase(x, cut, 1, 40 - cut);
       }
     },
   },
@@ -541,9 +547,18 @@ defineSprites({
       p.line(15, 16, 15, 21, PAL.spirit); p.px(15, 22, PAL.frost);
       p.path([[8, 12], [6, 22], [7, 32], [5, 39]], weed, 1); p.path([[32, 14], [34, 26], [32, 34], [34, 39]], weed, 1);
       p.path([[11, 20], [9, 28], [10, 36]], PAL.rot, 1); p.px(9, 25, PAL.bile).px(33, 22, PAL.bile);
-      // translucent: dissolve toward the bottom
-      const B = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-      for (let y = 30; y < 40; y++) for (let x = 0; x < 40; x++) if ((B[(y & 3) * 4 + (x & 3)] + 0.5) / 16 < (y - 29) / 13) p.erase(x, y);
+      // translucent: the gown frays into water and wisps at the bottom
+      const D = p.d, G = [127, 209, 196];
+      for (let y = 28; y < 40; y++) for (let x = 0; x < 40; x++) {
+        const i = (y * p.w + x) * 4; if (!D[i + 3]) continue;
+        const f = ((y - 28) / 12) * 0.5;
+        D[i] += (G[0] - D[i]) * f; D[i + 1] += (G[1] - D[i + 1]) * f; D[i + 2] += (G[2] - D[i + 2]) * f;
+      }
+      for (let x = 0; x < 40; x++) {
+        const cut = 35 + ((x * 29 + (x >> 2) * 7) % 6) - ((x >> 1) & 1);
+        p.erase(x, cut, 1, 40 - cut);
+        if (x % 4 === 1) p.px(x, cut + 1 + (x % 3), mix(PAL.spirit, PAL.deep, 0.5));
+      }
     },
   },
   npc_grall: {

@@ -66,6 +66,7 @@ export function icon(id, scale = 1, cls = '', glyph) {
     const s = document.createElement('span');
     s.className = 'glyph ' + cls;
     s.textContent = glyph;
+    s.style.setProperty('--gs', Math.round(scale * 9) + 'px');
     return s;
   }
   return spr(id, scale, cls);

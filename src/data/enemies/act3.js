@@ -11,7 +11,7 @@
 //                      to get the card back.
 //   Chimney Wraith     Soot: Ash and Daze into your piles, little hits in numbers.
 //   Ash Golem          Cinder Skin — every hit hardens it; hit hard, not often.
-//   Lamplighter        Ash-Burn, and Light the Way (all allies gain Might).
+//   Lamplighter        Ash-Burn (killing it snuffs the fire it lit), and Light the Way (all allies gain Might).
 //   Gargoyle           Stone form: takes no more than 5 per hit until it dives.
 //   Gilt Penitent      the Saint's minion: kneels to shield her.
 //   Chorister          the Choir's voices (see below).
@@ -27,7 +27,7 @@
 //                          turns later Rewrites it (HP back to the mark, debuffs gone);
 //                          the Hour Grows Late (+3 Might every 3 turns).
 //   The Choir Immaculate   Hymn: gains Verse each turn per living Chorister; Verse adds
-//                          damage; at 12 it sings the Gloria. Killing a Chorister halves
+//                          damage (1 per 2); at 12 it sings the Gloria. Killing a Chorister halves
 //                          the Verse and can break the Gloria before it lands.
 //   The Crowned Rival      another heir, crowned in another loop:
 //     Iron King (knight)   swears Oaths you must break (shatter his Block / hurt him).
@@ -42,8 +42,9 @@
 //                          down. Unmourned Names in your hand feed it.
 //   The Hollow King (B)    Aldric's corpse; every 4th turn Aldric resists the Crown.
 //                          At 0 HP the corpse falls and THE HOLLOW CROWN rises (phase 2):
-//                          Hold the Hour (your hand is held, then you draw less), Take the
-//                          Hour (Energy), and every third turn: "Again."
+//                          the hour is Held: you may play only 8 cards a turn; Hold the Hour
+//                          cuts that to 4 for a turn (hand Retained); Take the Hour steals
+//                          Energy; every third turn: "Again." (repeats its last move).
 
 import { defineCards, defineStatuses, defineEnemies, defineEncounters, defineTexts, STATUSES } from '../../engine/registry.js';
 import { defineSprites, PAL } from '../../gfx/sprite.js';
@@ -77,6 +78,8 @@ const cleanse = (g, e) => {
 
 const UNMOURNED = 'unmourned_name';
 const GLORIA = 12;
+const HOUR_LIMIT = 8;   // Hollow Crown: cards you may play each turn
+const HELD_LIMIT = 4;   // ... on a turn the hour is Held
 const HERALDS = ['herald_morning', 'herald_mourning'];
 const KEPT = ['kept_wisp', 'kept_warden', 'kept_banshee'];
 const FACES = ['face_wolf', 'face_moth', 'face_owl'];
@@ -139,9 +142,9 @@ defineStatuses([
   // --- Crane
   {
     id: 'a3_late_hour', name: 'The Hour Grows Late', kind: 'buff', icon: 'moon',
-    desc: (n) => n <= 1 ? 'At the end of his turn, gains 3 Might. Then the count begins again.' : `In ${n} turns, gains 3 Might. Then the count begins again.`,
+    desc: (n) => n <= 1 ? 'At the end of his turn, gains 2 Might. Then the count begins again.' : `In ${n} turns, gains 2 Might. Then the count begins again.`,
     turnEnd(g, o, n) {
-      if (n <= 1) { g.apply(o, 'might', 3, o); setStatus(g, o, 'a3_late_hour', 3); } else g.addStatus(o, 'a3_late_hour', -1);
+      if (n <= 1) { g.apply(o, 'might', 2, o); setStatus(g, o, 'a3_late_hour', 3); } else g.addStatus(o, 'a3_late_hour', -1);
     },
   },
   {
@@ -165,8 +168,8 @@ defineStatuses([
   },
   {
     id: 'a3_verse', name: 'Verse', kind: 'buff', icon: 'star',
-    desc: (n) => `Attacks deal ${n} more damage. At ${GLORIA} Verse it sings the Gloria.`,
-    atkAdd: (g, o, n) => n,
+    desc: (n) => `Attacks deal ${Math.floor(n / 2)} more damage (1 per 2 Verse). At ${GLORIA} Verse it sings the Gloria.`,
+    atkAdd: (g, o, n) => Math.floor(n / 2),
   },
   // --- Rival: the Iron King
   {
@@ -196,7 +199,7 @@ defineStatuses([
   },
   {
     id: 'a3_black_draught', name: 'Black Draughts', kind: 'buff', icon: 'brew',
-    desc: (n) => `${n} Black Draught${n > 1 ? 's' : ''} brewed. When she drinks, she heals 6 and gains 2 Might for each.`,
+    desc: (n) => `${n} Black Draught${n > 1 ? 's' : ''} brewed. When she drinks, she heals 5 and gains 1 Might for each.`,
   },
   // --- Rival: the Thousand-Faced
   {
@@ -226,13 +229,20 @@ defineStatuses([
     turnEnd(g, o, n) { if (n > 1) g.addStatus(o, 'a4_aldric', -1); },
   },
   {
-    id: 'a4_stilled', name: 'Held Hour', kind: 'debuff', icon: 'chain',
-    desc: (n) => n >= 2
-      ? 'The hour is held. At the end of your next turn your hand is Retained; the turn after, you draw 2 fewer cards.'
-      : 'At the end of this turn your hand is Retained. Next turn, draw 2 fewer cards.',
-    retainAll: (g, o, n) => (n === 1 ? 1 : 0),
-    turnStart(g, o) { g.addStatus(o, 'a4_stilled', -1); },
-    turnEnd(g, o, n) { if (n === 1) g.addStatus(o, 'dread', 2); },
+    id: 'a4_hourglass', name: 'The Hour, Held', kind: 'debuff', icon: 'moon',
+    desc: (n, g, o) => {
+      const held = g && o ? g.st(o, 'a4_held') : 0;
+      const lim = held ? Math.min(n, HELD_LIMIT) : n;
+      const left = g && g.cnt ? Math.max(0, lim - g.cnt.cards) : lim;
+      return `The Crown holds the hour: you may play at most ${lim} cards each turn (${left} left this turn).`;
+    },
+    canPlay: (g, o, n) => g.cnt.cards < (g.st(o, 'a4_held') ? Math.min(n, HELD_LIMIT) : n),
+  },
+  {
+    id: 'a4_held', name: 'Held Hour', kind: 'debuff', icon: 'chain',
+    desc: () => `The hour is held: this turn you may play at most ${HELD_LIMIT} cards, and your hand is Retained at the end of it.`,
+    retainAll: () => 1,
+    turnStart(g, o, n) { if (n >= 2) setStatus(g, o, 'a4_held', 1, true); else g.removeStatus(o, 'a4_held'); },
   },
   {
     id: 'a4_hour_taken', name: 'Hour Taken', kind: 'debuff', icon: 'crown',
@@ -280,7 +290,7 @@ const prevMove = (e) => e.hist[e.hist.length - 1];
 const CROWN_MOVES = {
   hold: {
     name: 'Hold the Hour', intent: 'strongdebuff',
-    fx(g, e) { if (!g.player.st.a4_stilled) debuff(g, e, 'a4_stilled', 2); block(g, e, 10); },
+    fx(g, e) { g.addStatus(g.player, 'a4_held', 2); block(g, e, 10); },
   },
   take: {
     name: 'Take the Hour', intent: 'strongdebuff',
@@ -311,15 +321,15 @@ const crownMoves = {
 defineEnemies([
   // ================================================================ ACT 3 normals
   {
-    id: 'crown_zealot', name: 'Crown Zealot', kind: 'normal', act: 3, hp: [42, 46], sprite: 'en_crown_zealot',
+    id: 'crown_zealot', name: 'Crown Zealot', kind: 'normal', act: 3, hp: [40, 44], sprite: 'en_crown_zealot',
     desc: 'Branded with the circlet\'s shape. They pray to the empty socket, and the socket is listening.',
     init(g, e) { g.addStatus(e, 'a3_martyrdom', 1, { silent: true }); },
     moves: {
-      scourge: { name: 'Scourge', intent: 'atk', dmg: 5, times: 2 },
-      flagellate: { name: 'Flagellate', intent: 'buff', fx(g, e) { g.loseHp(e, 4, { type: 'hploss' }); buff(g, e, 'might', 3); } },
-      fury: { name: 'Crown-Fury', intent: 'atk', dmg: 11 },
+      scourge: { name: 'Scourge', intent: 'atk', dmg: 4, times: 2 },
+      flagellate: { name: 'Flagellate', intent: 'buff', fx(g, e) { g.loseHp(e, 4, { type: 'hploss' }); buff(g, e, 'might', 2); } },
+      fury: { name: 'Crown-Fury', intent: 'atk', dmg: 10 },
       martyr: {
-        name: 'Martyrdom', intent: 'atk', dmg: 20,
+        name: 'Martyrdom', intent: 'atk', dmg: 16,
         fx(g, e) { g.emit('phase', { e, text: 'The Zealot bursts into ash and gold.' }); g.loseHp(e, e.hp, { type: 'hploss' }); },
       },
     },
@@ -360,7 +370,7 @@ defineEnemies([
   {
     id: 'court_phantom', name: 'Court Phantom', kind: 'normal', act: 3, hp: [30, 34], sprite: 'en_court_phantom',
     desc: 'A courtier still waiting to be announced. The ball ended ninety years ago.',
-    init(g, e) { e.data.off = int(g.crng, 0, 1); },
+    init(g, e) { e.data.off = e.uid % 2; },
     moves: {
       fade: { name: 'Fade', intent: 'buff', fx(g, e) { buff(g, e, 'phantasm', 2); } },
       slander: { name: 'Whispered Slander', intent: 'debuff', fx(g, e) { debuff(g, e, 'weak', 1); debuff(g, e, 'dread', 1); } },
@@ -373,18 +383,18 @@ defineEnemies([
     },
   },
   {
-    id: 'plague_doctor', name: 'Plague Doctor', kind: 'normal', act: 3, hp: [40, 44], sprite: 'en_plague_doctor',
+    id: 'plague_doctor', name: 'Plague Doctor', kind: 'normal', act: 3, hp: [38, 42], sprite: 'en_plague_doctor',
     desc: 'The beak is stuffed with rue and cloves. It does not help. It was never meant to help you.',
     moves: {
-      miasma: { name: 'Miasma', intent: 'debuff', fx(g, e) { debuff(g, e, 'rot', 4); } },
-      lancet: { name: 'Lancet', intent: 'atkdebuff', dmg: 7, fx(g, e) { debuff(g, e, 'rot', 2); } },
-      cane: { name: 'Beaked Cane', intent: 'atk', dmg: 10 },
+      miasma: { name: 'Miasma', intent: 'debuff', fx(g, e) { debuff(g, e, 'rot', 3); } },
+      lancet: { name: 'Lancet', intent: 'atkdebuff', dmg: 6, fx(g, e) { debuff(g, e, 'rot', 1); } },
+      cane: { name: 'Beaked Cane', intent: 'atk', dmg: 9 },
       leech: {
         name: 'Leeching', intent: 'heal',
         fx(g, e) {
           const pool = allies(g, e).length ? allies(g, e) : [e];
           const t = pool.reduce((m, x) => (x.maxHp - x.hp > m.maxHp - m.hp ? x : m), pool[0]);
-          g.heal(t, 14);
+          g.heal(t, 10);
         },
       },
     },
@@ -441,20 +451,20 @@ defineEnemies([
     id: 'chimney_wraith', name: 'Chimney Wraith', kind: 'normal', act: 3, hp: [24, 28], sprite: 'en_chimney_wraith',
     desc: 'Every hearth in Ashgrave burns the same day\'s fire. The smoke has had a century to learn to want things.',
     moves: {
-      smother: { name: 'Smother', intent: 'atkdebuff', dmg: 6, fx(g) { g.addCard('ash', 'discard'); } },
-      billow: { name: 'Billow', intent: 'atk', dmg: 3, times: 3 },
+      smother: { name: 'Smother', intent: 'atkdebuff', dmg: 5, fx(g) { g.addCard('ash', 'discard'); } },
+      billow: { name: 'Billow', intent: 'atk', dmg: 3, times: 2 },
       choke: { name: 'Soot-Choke', intent: 'debuff', fx(g, e) { debuff(g, e, 'weak', 1); g.addCard('daze', 'draw'); } },
     },
     ai(g, e) { return g.aiPick(e, { smother: 35, billow: 40, choke: 25 }, { smother: 1, choke: 1, billow: 2 }); },
   },
   {
-    id: 'ash_golem', name: 'Ash Golem', kind: 'normal', act: 3, hp: [66, 72], sprite: 'en_ash_golem',
+    id: 'ash_golem', name: 'Ash Golem', kind: 'normal', act: 3, hp: [68, 74], sprite: 'en_ash_golem',
     desc: 'Packed from the ash of Ashfall itself, and from the masonry it buried. It still smoulders at the heart.',
     immune: ['burning'],
     init(g, e) { e.data.skin = 3; g.addStatus(e, 'a3_cinder_skin', 3, { silent: true }); },
     moves: {
-      crush: { name: 'Crush', intent: 'atk', dmg: 16 },
-      slag: { name: 'Slag Fist', intent: 'atkdebuff', dmg: 9, fx(g) { g.addCard('ash', 'draw'); } },
+      crush: { name: 'Crush', intent: 'atk', dmg: 14 },
+      slag: { name: 'Slag Fist', intent: 'atkdebuff', dmg: 8, fx(g) { g.addCard('ash', 'draw'); } },
       settle: { name: 'Settle', intent: 'defbuff', fx(g, e) { block(g, e, 12); buff(g, e, 'might', 2); } },
     },
     ai(g, e) {
@@ -465,17 +475,24 @@ defineEnemies([
   {
     id: 'lamplighter', name: 'Lamplighter', kind: 'normal', act: 3, hp: [34, 38], sprite: 'en_lamplighter',
     desc: 'Lights the lamps of Ashgrave at dusk, every dusk, though it has been dusk for months.',
+    init(g, e) { e.data.lit = 0; },
     moves: {
-      kindle: { name: 'Kindle', intent: 'debuff', fx(g, e) { debuff(g, e, 'burning', 2); } },
-      pole: { name: 'Lamp-Pole', intent: 'atk', dmg: 10 },
-      flare: { name: 'Flare', intent: 'atkdebuff', dmg: 6, fx(g, e) { debuff(g, e, 'burning', 1); } },
-      light: { name: 'Light the Way', intent: 'buff', fx(g, e) { for (const a of g.enemies) buff(g, a, 'might', 2); } },
+      kindle: { name: 'Kindle', intent: 'debuff', fx(g, e) { if (debuff(g, e, 'burning', 2)) e.data.lit += 2; } },
+      pole: { name: 'Lamp-Pole', intent: 'atk', dmg: 9 },
+      flare: { name: 'Flare', intent: 'atkdebuff', dmg: 5, fx(g, e) { if (debuff(g, e, 'burning', 1)) e.data.lit += 1; } },
+      light: { name: 'Light the Way', intent: 'buff', fx(g, e) { for (const a of g.enemies) buff(g, a, 'might', 1); } },
     },
     ai(g, e) {
       if (e.turns === 0) return 'kindle';
       const w = { pole: 40, flare: 30, light: 15 };
       if (g.st(g.player, 'burning') < 4) w.kindle = 15;
       return g.aiPick(e, w, { kindle: 1, light: 1, flare: 1, pole: 2 });
+    },
+    on: {
+      death(g, e) {
+        const n = Math.min(e.data.lit || 0, g.st(g.player, 'burning'));
+        if (n > 0) { g.addStatus(g.player, 'burning', -n); toast(g, 'The lamp gutters out. Some of the Ash-Burn dies with it.'); }
+      },
     },
   },
   {
@@ -505,11 +522,11 @@ defineEnemies([
     ai(g, e) { return g.aiPick(e, { flail: 50, kneel: 30, lash: 20 }, { kneel: 1, lash: 1, flail: 2 }); },
   },
   {
-    id: 'choir_singer', name: 'Chorister', kind: 'normal', act: 3, hp: [40, 44], sprite: 'en_choir_singer',
+    id: 'choir_singer', name: 'Chorister', kind: 'normal', act: 3, hp: [34, 38], sprite: 'en_choir_singer',
     desc: 'One voice of forty, not quite separate yet. It sings with its eyes sewn shut.',
     init(g, e) { seen(g, e); asMinionOf(g, e, 'choir_immaculate'); choirSync(g); },
     moves: {
-      note: { name: 'Shrill Note', intent: 'atk', dmg: 6 },
+      note: { name: 'Shrill Note', intent: 'atk', dmg: 5 },
       harmony: { name: 'Harmony', intent: 'def', fx(g, e) { const c = living(g, 'choir_immaculate')[0]; if (c) block(g, c, 8); block(g, e, 4); } },
       descant: { name: 'Descant', intent: 'buff', fx(g, e) { const c = living(g, 'choir_immaculate')[0]; if (c) buff(g, c, 'a3_verse', 1); } },
     },
@@ -518,21 +535,21 @@ defineEnemies([
 
   // ================================================================ ACT 3 elites
   {
-    id: 'kings_executioner', name: 'The King\'s Executioner', kind: 'elite', act: 3, hp: [236, 244], sprite: 'en_kings_executioner',
+    id: 'kings_executioner', name: 'The King\'s Executioner', kind: 'elite', act: 3, hp: [226, 234], sprite: 'en_kings_executioner',
     desc: 'Sixty years of the Long King\'s justice. Not one of his heads ever stopped talking.',
     moves: {
-      whet: { name: 'Whetstone', intent: 'buff', fx(g, e) { buff(g, e, 'might', 3); } },
+      whet: { name: 'Whetstone', intent: 'buff', fx(g, e) { buff(g, e, 'might', 2); } },
       condemn: {
         name: 'Measure the Neck', intent: 'debuff',
         fx(g, e) { g.addStatus(g.player, 'a3_condemned', 2); e.data.countdown = 2; },
       },
       blow: {
-        name: 'Headsman\'s Blow', intent: 'atk', dmg: (g, e) => 34 + 6 * (e.data.blows || 0),
+        name: 'Headsman\'s Blow', intent: 'atk', dmg: (g, e) => 30 + 5 * (e.data.blows || 0),
         fx(g, e) { g.removeStatus(g.player, 'a3_condemned'); e.data.countdown = 0; e.data.blows = (e.data.blows || 0) + 1; },
       },
-      hack: { name: 'Hack', intent: 'atk', dmg: 8, times: 2, fx(g, e) { if (e.data.countdown) { e.data.countdown--; g.addStatus(g.player, 'a3_condemned', -1); } } },
+      hack: { name: 'Hack', intent: 'atk', dmg: 7, times: 2, fx(g, e) { if (e.data.countdown) { e.data.countdown--; g.addStatus(g.player, 'a3_condemned', -1); } } },
       drag: {
-        name: 'Drag to the Block', intent: 'atkdebuff', dmg: 9,
+        name: 'Drag to the Block', intent: 'atkdebuff', dmg: 8,
         fx(g, e) { debuff(g, e, 'frail', 1); if (e.data.countdown) { e.data.countdown--; g.addStatus(g.player, 'a3_condemned', -1); } },
       },
     },
@@ -545,13 +562,13 @@ defineEnemies([
     },
   },
   {
-    id: 'herald_morning', name: 'Herald of Morning', kind: 'elite', act: 3, hp: [108, 114], sprite: 'en_herald_morning',
+    id: 'herald_morning', name: 'Herald of Morning', kind: 'elite', act: 3, hp: [90, 96], sprite: 'en_herald_morning',
     desc: 'It announced the dawn every day for ninety-one years. The same dawn, every day.',
     init(g, e) { seen(g, e); g.addStatus(e, 'a3_twin_bond', 1, { silent: true }); },
     moves: {
-      fanfare: { name: 'Fanfare', intent: 'buff', fx(g, e) { for (const h of g.enemies) if (HERALDS.includes(h.id)) buff(g, h, 'might', 2); } },
-      note: { name: 'Brazen Note', intent: 'atk', dmg: 12 },
-      clarion: { name: 'Clarion', intent: 'atk', dmg: 4, times: 3 },
+      fanfare: { name: 'Fanfare', intent: 'buff', fx(g, e) { for (const h of g.enemies) if (HERALDS.includes(h.id)) buff(g, h, 'might', 1); } },
+      note: { name: 'Brazen Note', intent: 'atk', dmg: 10 },
+      clarion: { name: 'Clarion', intent: 'atk', dmg: 3, times: 3 },
       ret: heraldReturn,
     },
     ai(g, e) {
@@ -562,12 +579,12 @@ defineEnemies([
     on: { death: heraldFalls },
   },
   {
-    id: 'herald_mourning', name: 'Herald of Mourning', kind: 'elite', act: 3, hp: [108, 114], sprite: 'en_herald_mourning',
+    id: 'herald_mourning', name: 'Herald of Mourning', kind: 'elite', act: 3, hp: [90, 96], sprite: 'en_herald_mourning',
     desc: 'It tolled for the dead every evening for ninety-one years. None of them ever came.',
     init(g, e) { seen(g, e); g.addStatus(e, 'a3_twin_bond', 1, { silent: true }); },
     moves: {
       dirge: { name: 'Dirge', intent: 'debuff', fx(g, e) { debuff(g, e, 'weak', 1); debuff(g, e, 'frail', 1); } },
-      toll: { name: 'Funeral Toll', intent: 'atk', dmg: 7, times: 2 },
+      toll: { name: 'Funeral Toll', intent: 'atk', dmg: 6, times: 2 },
       shroud: { name: 'Shroud', intent: 'def', fx(g, e) { for (const h of g.enemies) if (HERALDS.includes(h.id)) block(g, h, 10); } },
       ret: heraldReturn,
     },
@@ -579,7 +596,7 @@ defineEnemies([
     on: { death: heraldFalls },
   },
   {
-    id: 'gilded_saint', name: 'The Gilded Saint', kind: 'elite', act: 3, hp: [176, 184], sprite: 'en_gilded_saint', leader: true,
+    id: 'gilded_saint', name: 'The Gilded Saint', kind: 'elite', act: 3, hp: [164, 172], sprite: 'en_gilded_saint', leader: true,
     desc: 'A reliquary in the shape of a woman. The woman is still inside.',
     init(g, e) { g.addStatus(e, 'a3_saints_grief', 2, { silent: true }); },
     moves: {
@@ -588,36 +605,36 @@ defineEnemies([
         fx(g, e) { for (const a of g.enemies) { buff(g, a, 'ward', a === e ? 2 : 1); block(g, a, 8); } },
       },
       anoint: { name: 'Anoint', intent: 'buff', fx(g, e) { for (const a of g.enemies) buff(g, a, 'might', 2); } },
-      halo: { name: 'Searing Halo', intent: 'atkdebuff', dmg: 13, fx(g, e) { debuff(g, e, 'weak', 1); } },
-      radiance: { name: 'Radiance', intent: 'atk', dmg: 6, times: 2 },
+      halo: { name: 'Searing Halo', intent: 'atkdebuff', dmg: 12, fx(g, e) { debuff(g, e, 'weak', 1); } },
+      radiance: { name: 'Radiance', intent: 'atk', dmg: 5, times: 2 },
       canonize: {
         name: 'Canonize', intent: 'summon',
-        fx(g, e) { e.data.lastCanon = e.turns; if (g.spawn('gilt_penitent', { minion: true, front: true })) toast(g, 'Another penitent kneels and is gilded.'); },
+        fx(g, e) { e.data.lastCanon = e.turns; e.data.canons = (e.data.canons || 0) + 1; if (g.spawn('gilt_penitent', { minion: true, front: true })) toast(g, 'Another penitent kneels and is gilded.'); },
       },
     },
     ai(g, e) {
       if (e.turns === 0) return 'bless';
       const pens = living(g, 'gilt_penitent').length;
-      if (pens < 2 && e.turns - (e.data.lastCanon ?? -9) >= 3 && !g.lastMove(e, 'canonize')) return 'canonize';
+      if (pens < 2 && (e.data.canons || 0) < 2 && e.turns - (e.data.lastCanon ?? -9) >= 3 && !g.lastMove(e, 'canonize')) return 'canonize';
       return g.aiPick(e, { halo: 35, radiance: 25, anoint: 20, bless: 20 }, { halo: 2, radiance: 1, anoint: 1, bless: 1 });
     },
   },
 
   // ================================================================ ACT 3 bosses
   {
-    id: 'severin_crane', name: 'Lord Severin Crane', kind: 'boss', act: 3, hp: 480, sprite: 'en_severin_crane', leader: true,
+    id: 'severin_crane', name: 'Lord Severin Crane', kind: 'boss', act: 3, hp: 460, sprite: 'en_severin_crane', leader: true,
     desc: 'The Regent. He has read every loop like a ledger, and balanced each one in his own favour.',
     init(g, e) { g.addStatus(e, 'a3_late_hour', 3, { silent: true }); },
     moves: {
-      cane: { name: 'Ebony Cane', intent: 'atk', dmg: 15 },
-      rapier: { name: 'Courtier\'s Blade', intent: 'atk', dmg: 5, times: 3 },
-      dismiss: { name: 'Dismissal', intent: 'atkdebuff', dmg: 10, fx(g, e) { debuff(g, e, 'dread', 2); } },
-      decree: { name: 'Decree of Regency', intent: 'strongdebuff', fx(g, e) { debuff(g, e, 'weak', 2); debuff(g, e, 'frail', 2); } },
+      cane: { name: 'Ebony Cane', intent: 'atk', dmg: 14 },
+      rapier: { name: 'Courtier\'s Blade', intent: 'atk', dmg: 4, times: 3 },
+      dismiss: { name: 'Dismissal', intent: 'atkdebuff', dmg: 9, fx(g, e) { debuff(g, e, 'dread', 1); } },
+      decree: { name: 'Decree of Regency', intent: 'strongdebuff', fx(g, e) { debuff(g, e, 'weak', 1); debuff(g, e, 'frail', 1); } },
       guard: {
         name: 'Call the Guard', intent: 'summon',
         fx(g, e) {
           e.data.lastGuard = e.turns;
-          for (let i = living(g, 'gilded_sentinel').length; i < 2; i++) g.spawn('gilded_sentinel', { minion: true, hp: 24 });
+          if (living(g, 'gilded_sentinel').length < 2) g.spawn('gilded_sentinel', { minion: true, hp: 22 });
         },
       },
       mark: {
@@ -648,11 +665,11 @@ defineEnemies([
     },
   },
   {
-    id: 'choir_immaculate', name: 'The Choir Immaculate', kind: 'boss', act: 3, hp: 380, sprite: 'en_choir_immaculate', leader: true,
+    id: 'choir_immaculate', name: 'The Choir Immaculate', kind: 'boss', act: 3, hp: 350, sprite: 'en_choir_immaculate', leader: true,
     desc: 'Forty court singers who would not stop for Ashfall. They have since grown into one throat.',
     init(g, e) { choirSync(g); },
     moves: {
-      psalm: { name: 'Psalm of Ash', intent: 'atk', dmg: 9 },
+      psalm: { name: 'Psalm of Ash', intent: 'atk', dmg: 8 },
       antiphon: { name: 'Antiphon', intent: 'atk', dmg: 4, times: 2 },
       hush: { name: 'Hush', intent: 'debuff', fx(g, e) { debuff(g, e, 'weak', 2); g.addCard('daze', 'draw'); g.addCard('daze', 'draw'); } },
       breath: {
@@ -660,7 +677,7 @@ defineEnemies([
         fx(g, e) { e.data.lastBreath = e.turns; block(g, e, 12); if (g.spawn('choir_singer', { minion: true, front: true })) choirSync(g); },
       },
       gloria: {
-        name: 'Gloria', intent: 'atk', dmg: 10, times: 3,
+        name: 'Gloria', intent: 'atk', dmg: 8, times: 3,
         fx(g, e) { g.removeStatus(e, 'a3_verse'); toast(g, 'The Gloria ends. The Choir draws breath to begin again.'); },
       },
     },
@@ -693,7 +710,7 @@ defineEnemies([
         name: 'Oath of the Wall', intent: 'defbuff',
         fx(g, e) { block(g, e, 22); g.addStatus(e, 'barricade', 1); g.addStatus(e, 'a3_oath_wall', 1); },
       },
-      vengeance: { name: 'Oath of Vengeance', intent: 'atkbuff', dmg: 10, fx(g, e) { setStatus(g, e, 'a3_oath_vengeance', 26); } },
+      vengeance: { name: 'Oath of Vengeance', intent: 'atkbuff', dmg: 10, fx(g, e) { setStatus(g, e, 'a3_oath_vengeance', 24); } },
       sunder: { name: 'Sunder', intent: 'atkdebuff', dmg: 8, times: 2, fx(g, e) { debuff(g, e, 'frail', 2); } },
       kneel: { name: 'Kneel to Your King', intent: 'strongdebuff', fx(g, e) { debuff(g, e, 'weak', 2); debuff(g, e, 'exposed', 1); } },
     },
@@ -716,8 +733,8 @@ defineEnemies([
         fx(g, e) {
           const n = g.st(e, 'a3_black_draught');
           g.removeStatus(e, 'a3_black_draught');
-          g.heal(e, 6 * n);
-          buff(g, e, 'might', 2 * n);
+          g.heal(e, 5 * n);
+          buff(g, e, 'might', n);
         },
       },
       wither: { name: 'Wither', intent: 'strongdebuff', fx(g, e) { e.data.withers++; debuff(g, e, 'might', -1); debuff(g, e, 'weak', 2); } },
@@ -869,7 +886,7 @@ defineEnemies([
     ai(g, e) { return g.aiPick(e, { clutch: 65, drag: 35 }, { drag: 1 }); },
   },
   {
-    id: 'hollow_king', name: 'The Hollow King', kind: 'boss', act: 4, hp: 300, sprite: 'en_hollow_king', leader: true,
+    id: 'hollow_king', name: 'The Hollow King', kind: 'boss', act: 4, hp: 290, sprite: 'en_hollow_king', leader: true,
     desc: 'King Aldric IV: ninety-one years on the throne, and still sitting. The Crown wears him like a glove.',
     init(g, e) { g.addStatus(e, 'a4_aldric', 4, { silent: true }); },
     moves: {
@@ -907,19 +924,20 @@ defineEnemies([
     },
   },
   {
-    id: 'hollow_crown', name: 'The Hollow Crown', kind: 'boss', act: 4, hp: 400, sprite: 'en_hollow_crown',
+    id: 'hollow_crown', name: 'The Hollow Crown', kind: 'boss', act: 4, hp: 390, sprite: 'en_hollow_crown',
     desc: 'An iron circlet with an empty socket. It has held the hour for four hundred years, and it is not finished.',
-    init(g, e) { seen(g, e); },
+    init(g, e) { seen(g, e); g.addStatus(g.player, 'a4_hourglass', HOUR_LIMIT, { silent: true }); },
     moves: crownMoves,
     ai(g, e) {
+      // The Crown re-asserts its hold every round, even if a cleanse tore it off.
+      if (g.st(g.player, 'a4_hourglass') !== HOUR_LIMIT) setStatus(g, g.player, 'a4_hourglass', HOUR_LIMIT, true);
       if (e.turns === 0) return 'hold';
       const last = prevMove(e);
-      if (e.turns % 3 === 2 && CROWN_MOVES[last] && !(last === 'hold' && g.player.st.a4_stilled)) {
+      if (e.turns % 3 === 2 && CROWN_MOVES[last]) {
         const it = CROWN_MOVES[last].intent;
         return it === 'atk' ? 'again_atk' : it === 'atkdebuff' ? 'again_atkdebuff' : 'again_debuff';
       }
-      const w = { crownfall: 30, hunger: 30, take: 20 };
-      if (!g.player.st.a4_stilled) w.hold = 20;
+      const w = { crownfall: 30, hunger: 30, take: 15, hold: 25 };
       return g.aiPick(e, w, { crownfall: 1, hunger: 1, take: 1, hold: 1 });
     },
   },

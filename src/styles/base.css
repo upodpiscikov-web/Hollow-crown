@@ -43,7 +43,7 @@ p { margin: 0; }
 .px { image-rendering: pixelated; image-rendering: crisp-edges; image-rendering: pixelated; display: block; }
 .silhouette { filter: brightness(0) opacity(.6); }
 .grow { flex: 1; }
-.glyph { display: inline-block; font-family: var(--f-num); line-height: 1; text-align: center; }
+.glyph { display: inline-block; font-family: var(--f-num); font-size: var(--gs, 12px); line-height: 1; text-align: center; }
 .pressable { transition: transform .08s ease-out, filter .08s; }
 .pressable:active { transform: scale(.95); filter: brightness(1.2); }
 .disabled { opacity: .5; filter: grayscale(.5); }
@@ -118,7 +118,8 @@ body.portrait #stage { visibility: hidden; }
 
 /* choose modal */
 .m-choose .m-body { display: flex; flex-direction: column; justify-content: center; }
-.m-choose.big { max-height: 100%; }
+.m-choose.big { height: auto; }
+
 .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); gap: 12px 8px; justify-items: center; align-content: start; padding: 6px 2px 14px; }
 .card-grid.big { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; align-items: center; }
 .cg-cell { position: relative; border-radius: 8px; transition: transform .12s; }
@@ -144,7 +145,7 @@ body.portrait #stage { visibility: hidden; }
 .toast { max-width: 520px; display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; background: rgba(16,13,20,.94); border: 1px solid var(--edge); border-left: 3px solid var(--gold); border-radius: 3px; font-size: 14px; box-shadow: 0 4px 14px rgba(0,0,0,.6); color: var(--bone); }
 .toast b { color: var(--candle); }
 .toast.warn { border-left-color: var(--blood2); } .toast.heal { border-left-color: var(--rot); } .toast.gold, .toast.relic { border-left-color: var(--candle); }
-.toast.lore { border-left-color: var(--lilac); } .toast.potion { border-left-color: var(--spirit); } .toast.card { border-left-color: var(--steel); }
+.toast.lore { border-left-color: var(--lilac); } .toast.potion { border-left-color: var(--spirit); } .toast.cardadd { border-left-color: var(--steel); }
 .toast-ic { display: flex; }
 
 /* ------------------------------------------------------------ banners, floats, flashes */

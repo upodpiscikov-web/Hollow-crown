@@ -79,11 +79,12 @@ const blessing = simple('blessing', (g, self) => {
 
 // ------------------------------------------------------------------ rewards
 function rewardItemEl(g, it, i) {
-  if (it.type === 'gold') return h('button.reward-item.gold', icon('ui_gold', 2, 'ri-ic', '●'), h('span.ri-label', `${it.n} Gold`));
-  if (it.type === 'potion') { const d = POTIONS[it.id]; return h('button.reward-item.potion', potionIcon(d, 2, 'ri-ic'), h('span.ri-label', d ? d.name : it.id)); }
-  if (it.type === 'relic') { const d = RELICS[it.id]; return h('button.reward-item.relic', relicIcon(d, 2, 'ri-ic'), h('span.ri-label', d ? d.name : it.id), d ? h('span.ri-sub', { html: inline(d.desc, true) }) : null); }
-  if (it.type === 'card') return h('button.reward-item.card', h('span.ri-cardback'), h('span.ri-label', 'Add a card to your deck'));
-  return h('button.reward-item', h('span.ri-label', it.type));
+  const txt = (label, sub) => h('div.ri-text', h('span.ri-label', label), sub ? h('span.ri-sub', { html: sub }) : null);
+  if (it.type === 'gold') return h('button.reward-item.gold', icon('ui_gold', 2, 'ri-ic', '\u25CF'), txt(`${it.n} Gold`));
+  if (it.type === 'potion') { const d = POTIONS[it.id]; return h('button.reward-item.potion', potionIcon(d, 2, 'ri-ic'), txt(d ? d.name : it.id, d ? inline(d.desc, true) : '')); }
+  if (it.type === 'relic') { const d = RELICS[it.id]; return h('button.reward-item.relic', relicIcon(d, 2, 'ri-ic'), txt(d ? d.name : it.id, d ? inline(d.desc, true) : '')); }
+  if (it.type === 'card') return h('button.reward-item.rw-card', h('span.ri-cardback'), txt('Add a card to your deck', 'Choose one of ' + (it.options ? it.options.length : 3) + ', or none.'));
+  return h('button.reward-item', txt(it.type));
 }
 
 async function openCardReward(g, i) {
@@ -347,9 +348,9 @@ const event = {
       return scr;
     }
     const artId = page.art && hasSprite(page.art) ? page.art : (def && def.art && hasSprite(def.art) ? def.art : null);
-    const art = h('div.ev-art', artId ? sprFit(artId, 232, 168, 'ev-img') : h('div.ev-noart', icon('map_event', 4, '', '?')));
+    const art = h('div.ev-art', artId ? sprFit(artId, 184, 124, 'ev-img') : h('div.ev-noart', icon('map_event', 4, '', '?')));
     const textEl = h('div.ev-text.prose', { html: prose(page.text) });
-    if (fresh || true) [...textEl.children].forEach((p, i) => { p.classList.add('fade-p'); p.style.animationDelay = (i * 0.28) + 's'; });
+    [...textEl.children].forEach((p, i) => { p.classList.add('fade-p'); p.style.animationDelay = (i * 0.28) + 's'; });
     const speaker = page.speaker ? portraitOf(page.speaker) : null;
     const choices = h('div.ev-choices', page.choices.map((c, j) => {
       const { verb, rest } = splitChoice(c.label);
@@ -357,7 +358,7 @@ const event = {
         verb ? h('span.ch-verb', verb) : null,
         h('span.ch-text', { html: inline(rest, true) }),
         c.disabled && c.why ? h('span.ch-why', c.why) : null);
-      b.style.animationDelay = (textEl.children.length * 0.28 + j * 0.08) + 's';
+      b.style.animationDelay = (Math.min(textEl.children.length, 4) * 0.28 + j * 0.08) + 's';
       tap(b, async () => {
         if (this.busy) return;
         this.busy = true;
@@ -370,10 +371,9 @@ const event = {
       return b;
     }));
     body.appendChild(h('div.ev-wrap',
-      h('div.ev-left', h('div.ev-frame', art)),
-      h('div.ev-page',
-        h('div.ev-head', speaker ? h('div.ev-speaker', sprFit(speaker, 40, 40)) : null, h('div.ev-title', page.title || (def && def.title) || 'Event')),
-        h('div.ev-scroll', textEl, choices))));
+      h('div.ev-left', h('div.ev-frame', art),
+        h('div.ev-head', speaker ? h('div.ev-speaker', sprFit(speaker, 36, 36)) : null, h('div.ev-title', page.title || (def && def.title) || 'Event'))),
+      h('div.ev-page', h('div.ev-scroll', textEl), choices)));
     return scr;
   },
 };

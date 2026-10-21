@@ -132,14 +132,14 @@ g.onEmit = (type, d) => {
         break;
       case 'relicObtained': { const r = RELICS[d.id]; toast(`Obtained <b>${r ? r.name : d.id}</b>`, 'relic', relicIcon(r, 1.25)); sfx('relic'); break; }
       case 'potionObtained': { const p = POTIONS[d.id]; toast(`Obtained <b>${p ? p.name : d.id}</b>`, 'potion', potionIcon(p, 1.25)); sfx('potion'); break; }
-      case 'cardObtained': { const c = d.card && CARDS[d.card.id]; toast(`<b>${c ? c.name + (d.card.up ? '+' : '') : 'A card'}</b> added to your deck`, 'card'); break; }
+      case 'cardObtained': { const c = d.card && CARDS[d.card.id]; toast(`<b>${c ? c.name + (d.card.up ? '+' : '') : 'A card'}</b> added to your deck`, 'cardadd'); break; }
       case 'lore': { const l = LORE[d.id]; toast(`New lore in the Chronicle: <b>${l ? l.title : 'a fragment'}</b>`, 'lore long'); sfx('page'); break; }
       case 'toast': if (d.text) toast(String(d.text), 'long'); break;
       case 'hurt': if (!g.cb) { toast(`-${d.n} HP`, 'warn'); screenFlash('#8a1c1c', 350); sfx('hurt'); updateTopbarStats(g); } break;
       case 'heal': if (!g.cb) { toast(`+${d.n} HP`, 'heal'); sfx('heal'); updateTopbarStats(g); } break;
       case 'maxhp': if (!g.cb) toast(`${d.n > 0 ? '+' : ''}${d.n} Max HP`, d.n > 0 ? 'heal' : 'warn'); updateTopbarStats(g); break;
       case 'enterNode': sfx('mapStep'); break;
-      case 'runOver': UI.hubShown = false; break;
+      case 'runOver': UI.hubShown = false; requestRender(); break;
       default: break;
     }
   } catch (e) { console.warn('emit handler', type, e); }

@@ -50,6 +50,15 @@ function surf(p) {
       const q = Math.floor(a * steps + by(x, y)) / steps;
       if (q > 0) S.blend(x, y, c, Math.min(1, q));
     },
+    // remember the backdrop so shapes can be 'cut out' of later layers (broken roofs, gaps)
+    snap() { S._snap = new Uint8ClampedArray(d); },
+    cut(x, y, w, h) {
+      const sn = S._snap;
+      for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) {
+        if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+        const i = (yy * W + xx) * 4; d[i] = sn[i]; d[i + 1] = sn[i + 1]; d[i + 2] = sn[i + 2]; d[i + 3] = 255;
+      }
+    },
     // vertical gradient through colour stops with ordered dither
     sky(y0, y1, stops, x0 = 0, x1 = W) {
       const cs = stops.map(C), n = cs.length - 1;
@@ -335,6 +344,7 @@ defineSprites({
     draw(p) {
       const S = surf(p);
       S.sky(0, 100, [PAL.void, mix(PAL.deep, PAL.ink, 0.4), mix(PAL.water, PAL.deep, 0.45), mix(PAL.water, PAL.ghost, 0.2)]);
+      S.sky(100, 144, [mix(PAL.water, PAL.deep, 0.5), PAL.deep]); // water body (reflection overwrites it)
       S.glow(196, 30, 44, PAL.ghost, 0.22);
       p.circle(196, 30, 5, mix(PAL.ghost, PAL.water, 0.35));
       S.fog(32, 8, PAL.ghost, 0.16, 31, 34);
@@ -343,11 +353,12 @@ defineSprites({
       S.fillBelow(tl, farC, 100);
       for (let x = 2; x < 256; x += 5 + ((x * 7) % 4)) pine(p, x, tl(x) + 3, 12 + hash2(x, 1, 5) * 12, 4.5, farC);
       S.fog(88, 7, PAL.ghost, 0.28, 32, 24);
+      S.snap();
       // the drowned abbey, half-sunk in the mere
       const yW = 100, ab = mix(PAL.ink, PAL.deep, 0.5), win = mix(PAL.spirit, PAL.deep, 0.4);
       p.rect(86, yW - 24, 62, 24, ab);                                  // nave
       p.poly([[84, yW - 24], [117, yW - 40], [150, yW - 24]], ab);        // roof, holed
-      p.erase(104, yW - 33, 9, 6); p.erase(118, yW - 30, 5, 5);
+      S.cut(104, yW - 33, 9, 6); S.cut(118, yW - 30, 5, 5);
       p.rect(150, yW - 48, 13, 48, ab);                                  // tower
       p.poly([[149, yW - 48], [152, yW - 55], [155, yW - 50], [158, yW - 58], [161, yW - 51], [164, yW - 48]], ab); // broken top
       p.rect(70, yW - 15, 17, 15, ab); p.poly([[69, yW - 15], [78, yW - 24], [88, yW - 15]], ab); // transept
@@ -381,6 +392,7 @@ defineSprites({
     draw(p) {
       const S = surf(p);
       S.sky(0, 100, [mix(PAL.ink, PAL.wine, 0.35), mix(PAL.dusk, PAL.wine, 0.4), mix(PAL.bruise, PAL.ember, 0.3), mix(PAL.ember, PAL.ash, 0.45), mix(PAL.flame, PAL.ash, 0.55)]);
+      S.sky(100, 110, [mix(PAL.ember, PAL.wine, 0.3), mix(PAL.ink, PAL.wine, 0.25)]);
       S.glow(150, 92, 70, PAL.flame, 0.28, 46);
       S.fog(40, 10, PAL.wine, 0.3, 61, 36);
       // smoke columns drifting right
@@ -398,6 +410,7 @@ defineSprites({
         spire(p, x, 106, w, h, mid, { ph: r() < 0.55 ? 10 + r() * 16 : 3, roof: mid, gild: r() < 0.5 ? PAL.gold : null, win: r() < 0.5 ? mix(PAL.flame, PAL.wine, 0.3) : null, winGap: 7 });
         x += w + ((r() * 2) | 0);
       }
+      S.snap();
       // cathedral / palace, gilded and decaying
       const cat = mid;
       p.rect(112, 58, 74, 48, cat);
@@ -406,7 +419,7 @@ defineSprites({
       spire(p, 182, 106, 8, 70, cat, { ph: 24, roof: cat, gild: PAL.gold });
       spire(p, 128, 106, 6, 54, cat, { ph: 18, roof: cat, gild: PAL.gold });
       spire(p, 166, 106, 6, 60, cat, { ph: 18, roof: cat, gild: PAL.gold });
-      p.erase(182, 36, 3, 4); p.erase(130, 52, 2, 3); // broken stone
+      S.cut(182, 36, 3, 4); S.cut(130, 52, 2, 3); // broken stone
       const lit = mix(PAL.flame, PAL.ember, 0.45), unlit = mix(PAL.night, PAL.wine, 0.25);
       for (const [x, y] of [[118, 84], [126, 84], [172, 84], [180, 84], [118, 72], [180, 70], [128, 70], [170, 70]]) { p.rect(x, y, 2, 5, hash2(x, y, 4) < 0.55 ? lit : unlit); }
       opening(S, 149, 106, 5, 8, 7, () => mix(PAL.ember, PAL.wine, 0.35));
@@ -746,12 +759,12 @@ defineSprites({
       p.rect(42, 49, 7, 9, PAL.void); p.rect(42, 49, 7, 1, dk(near, 0.6));
       p.line(43, 51, 47, 56, PAL.blood, 1); p.line(47, 51, 43, 56, PAL.blood, 1); p.px(45, 50, PAL.blood);
       p.rect(35, 45, 4, 4, mix(PAL.void, PAL.bark, 0.3)); p.rect(53, 45, 3, 4, mix(PAL.flame, PAL.ember, 0.45)); S.glow(54.5, 47, 8, PAL.flame, 0.3);
-      // plague cart
+      // plague cart, heaped with shrouds
       const bk = mix(PAL.bark, PAL.void, 0.25);
-      p.poly([[2, 54], [26, 54], [24, 61], [4, 61]], bk, { shade: 0.2 });
-      p.ellipse(10, 53, 6, 3, mix(PAL.bone, PAL.ash, 0.4), { shade: 0.3 }); p.ellipse(19, 52, 5, 3, mix(PAL.fog, PAL.ash, 0.4), { shade: 0.3 });
-      p.px(8, 51, PAL.dusk); p.line(22, 51, 27, 49, PAL.fog); p.line(16, 50, 14, 46, bk, 1);
-      p.ring(8, 63, 5, PAL.iron, 1); p.ring(22, 63, 5, PAL.iron, 1); p.line(8, 59, 8, 64, PAL.iron); p.line(22, 59, 22, 64, PAL.iron); p.line(0, 58, 3, 56, bk, 1);
+      p.poly([[2, 50], [27, 50], [25, 57], [4, 57]], bk, { shade: 0.2 });
+      p.ellipse(10, 49, 6, 3, mix(PAL.bone, PAL.ash, 0.4), { shade: 0.3 }); p.ellipse(20, 48, 5, 3.4, mix(PAL.fog, PAL.ash, 0.4), { shade: 0.3 });
+      p.line(7, 47, 12, 49, dk(PAL.bone, 0.4)); p.line(28, 46, 33, 44, bk, 1); p.line(26, 51, 33, 49, bk, 1);
+      p.ring(9, 59, 4.5, PAL.iron, 1); p.ring(21, 59, 4.5, PAL.iron, 1); p.line(9, 55, 9, 63, PAL.iron); p.line(5, 59, 13, 59, PAL.iron); p.line(21, 55, 21, 63, PAL.iron); p.line(17, 59, 25, 59, PAL.iron);
       p.rect(64, 58, 20, 1, dk(near, 0.3)); crow(p, 72, 38, PAL.void);
       S.texture(0, 58, 96, 64, mix(PAL.bark, PAL.ash, 0.3), 0.4, 3, 8);
       S.fog(58, 5, PAL.fog, 0.3, 5, 16);
@@ -765,14 +778,15 @@ defineSprites({
     ...SC,
     draw(p) {
       const S = surf(p);
-      S.sky(0, 50, [mix(PAL.night, PAL.bruise, 0.4), mix(PAL.dusk, PAL.ash, 0.35), mix(PAL.ash, PAL.stone, 0.3)]);
+      S.sky(0, 58, [mix(PAL.night, PAL.bruise, 0.4), mix(PAL.dusk, PAL.ash, 0.4), mix(PAL.ash, PAL.stone, 0.4), mix(PAL.stone, PAL.fog, 0.35)]);
       moonAt(S, p, 78, 16, 5, mix(PAL.fog, PAL.bone, 0.3));
       S.fog(30, 5, PAL.bruise, 0.3, 11, 14);
-      const hill = mix(PAL.night, PAL.moss, 0.2), wall = mix(PAL.dusk, PAL.stone, 0.3), roof = mix(PAL.ink, PAL.bruise, 0.4);
+      const hill = mix(PAL.night, PAL.moss, 0.2), wall = mix(PAL.night, PAL.dusk, 0.4), roof = mix(PAL.void, PAL.night, 0.5);
       S.fillBelow((x) => 54 - Math.max(0, 12 - Math.abs(x - 40) * 0.25), hill, 64);
+      S.snap();
       // nave + belltower
       p.rect(20, 32, 36, 20, wall, { shade: 0.25 });
-      p.poly([[17, 33], [38, 18], [59, 33]], roof, { shade: 0.2 }); p.erase(44, 25, 5, 5);
+      p.poly([[17, 33], [38, 18], [59, 33]], roof, { shade: 0.2 }); S.cut(44, 25, 5, 5);
       p.rect(54, 14, 13, 38, wall, { shade: 0.3 });
       p.poly([[52, 15], [60.5, 2], [69, 15]], roof, { shade: 0.2 });
       opening(S, 60.5, 28, 3.5, 4, 3, () => PAL.void);
@@ -781,7 +795,7 @@ defineSprites({
       S.glow(36, 50, 22, PAL.candle, 0.4, 14);
       p.poly([[31, 52], [41, 52], [48, 64], [24, 64]], mix(PAL.flame, PAL.bark, 0.55));
       opening(S, 25, 44, 2, 4, 3, () => PAL.void); opening(S, 48, 42, 2, 4, 3, () => mix(PAL.spirit, PAL.deep, 0.5));
-      p.line(20, 32, 20, 52, dk(wall, 0.4));
+      p.line(20, 32, 20, 52, dk(wall, 0.4)); p.line(55, 34, 55, 52, mix(wall, PAL.fog, 0.28)); p.line(66, 15, 66, 52, mix(wall, PAL.fog, 0.3)); p.line(17, 33, 38, 19, mix(roof, PAL.fog, 0.25));
       // graves and a dead tree
       const dark = mix(PAL.night, PAL.ash, 0.25);
       for (const [x, y, t] of [[6, 58, 0], [14, 60, 1], [74, 58, 1], [84, 61, 0], [88, 56, 1]]) t ? headstone(p, x, y, 4, 8, dark) : graveCross(p, x, y, 8, dark);
@@ -831,18 +845,20 @@ defineSprites({
     ...SC,
     draw(p) {
       const S = surf(p);
-      S.sky(0, 50, [mix(PAL.night, PAL.ash, 0.2), mix(PAL.dusk, PAL.ash, 0.4), mix(PAL.ash, PAL.stone, 0.35)]);
+      S.sky(0, 56, [mix(PAL.night, PAL.ash, 0.2), mix(PAL.dusk, PAL.ash, 0.4), mix(PAL.ash, PAL.stone, 0.35)]);
       moonAt(S, p, 74, 15, 6, mix(PAL.fog, PAL.bone, 0.3));
       S.fog(34, 5, PAL.fog, 0.25, 31, 14);
-      const st = mix(PAL.dusk, PAL.stone, 0.25), stD = mix(PAL.night, PAL.dusk, 0.5);
+      const st = mix(PAL.night, PAL.dusk, 0.4), stD = mix(PAL.ink, PAL.night, 0.5);
       S.fillBelow((x) => 50 - fbm(x / 20, 12) * 4, mix(PAL.night, PAL.moss, 0.25), 64);
+      S.snap();
       // twin towers, the left one broken
       p.rect(14, 20, 20, 34, st, { shade: 0.3 });
       p.poly([[14, 20], [17, 15], [20, 19], [24, 13], [27, 18], [31, 16], [34, 20]], st, { shade: 0.3 });
       p.rect(62, 12, 20, 42, st, { shade: 0.3 });
       p.rect(60, 10, 24, 4, mix(st, PAL.ash, 0.2)); for (const x of [60, 66, 72, 78]) p.rect(x, 7, 4, 4, st);
       p.rect(32, 28, 32, 26, st, { shade: 0.2 });
-      p.erase(36, 28, 5, 2); p.erase(50, 28, 4, 3); p.erase(14, 32, 3, 5);
+      S.cut(36, 28, 5, 2); S.cut(50, 28, 4, 3); S.cut(14, 32, 3, 5);
+      p.line(33, 20, 33, 54, mix(st, PAL.fog, 0.3)); p.line(81, 12, 81, 54, mix(st, PAL.fog, 0.3)); p.line(14, 20, 14, 54, dk(st, 0.4));
       opening(S, 48, 54, 11, 18, 9, () => PAL.void);
       p.rect(37, 28, 22, 3, stD);
       // portcullis, half-raised
@@ -854,7 +870,6 @@ defineSprites({
       p.ellipse(48, 48, 3.5, 7, spook); p.circle(48, 39, 2.6, spook); p.rect(45, 37, 7, 2, '#c7ddd8bb');
       p.line(54, 35, 54, 54, '#a9c6c299', 1); p.tri(53, 35, 55, 35, 54, 31, '#c7ddd8cc');
       p.px(47, 40, PAL.spirit); p.px(49, 40, PAL.spirit);
-      p.erase(45, 53, 7, 1);
       // windows, ivy, rubble
       opening(S, 24, 40, 2, 4, 3, () => PAL.void); opening(S, 72, 36, 2, 5, 3, () => PAL.void);
       p.path([[62, 12], [62, 24], [64, 36]], PAL.moss, 1); p.path([[34, 24], [34, 38]], PAL.moss, 1); p.px(63, 26, PAL.rot).px(35, 30, PAL.rot);
@@ -876,11 +891,12 @@ defineSprites({
       const far = mix(PAL.deep, PAL.moss, 0.3), mid = mix(PAL.ink, PAL.moss, 0.2), nearC = mix(PAL.void, PAL.deep, 0.4);
       for (let x = 2; x < 96; x += 6) { p.rect(x, 4, 2, 50, far); }
       S.fog(30, 10, PAL.ghost, 0.2, 41, 14);
+      S.glow(49, 22, 18, PAL.ghost, 0.5, 16);
       // the antlered one, glimpsed between trunks
       const el = mix(PAL.void, PAL.night, 0.3);
       p.poly([[44, 54], [44, 36], [47, 31], [51, 31], [54, 36], [54, 54]], el); p.ellipse(49, 28, 3, 3.6, el);
-      p.path([[46, 26], [43, 19], [40, 15], [37, 14]], el, 1); p.path([[43, 19], [42, 13], [43, 10]], el, 1); p.path([[41, 16], [38, 17]], el, 1);
-      p.path([[52, 26], [55, 19], [58, 15], [61, 14]], el, 1); p.path([[55, 19], [56, 13], [55, 10]], el, 1); p.path([[57, 16], [60, 17]], el, 1);
+      p.path([[46, 26], [43, 19], [40, 15], [37, 14]], el, 2); p.path([[43, 19], [42, 13], [43, 10]], el, 1); p.path([[41, 16], [38, 17]], el, 1);
+      p.path([[52, 26], [55, 19], [58, 15], [61, 14]], el, 2); p.path([[55, 19], [56, 13], [55, 10]], el, 1); p.path([[57, 16], [60, 17]], el, 1);
       p.px(48, 28, PAL.venom).px(50, 28, PAL.venom); p.glow(48, 28, PAL.venom, 1); p.glow(50, 28, PAL.venom, 1);
       S.fog(44, 6, PAL.ghost, 0.28, 42, 14);
       for (const [x, w] of [[16, 6], [78, 7]]) { p.rect(x, 0, w, 62, mid, { shade: 0.2 }); }
@@ -904,20 +920,20 @@ defineSprites({
     ...SC,
     draw(p) {
       const S = surf(p);
-      S.sky(0, 40, [PAL.void, mix(PAL.deep, PAL.ink, 0.4), mix(PAL.water, PAL.deep, 0.4), mix(PAL.water, PAL.ghost, 0.25)]);
+      S.sky(0, 44, [PAL.void, mix(PAL.deep, PAL.ink, 0.4), mix(PAL.water, PAL.deep, 0.4), mix(PAL.water, PAL.ghost, 0.25)]);
       moonAt(S, p, 78, 12, 4, mix(PAL.ghost, PAL.frost, 0.3), PAL.ghost);
       S.fillBelow((x) => 36 - fbm(x / 12, 41) * 5, mix(PAL.water, PAL.deep, 0.45), 42);
       for (let x = 2; x < 96; x += 5) pine(p, x, 38, 7 + hash2(x, 1, 5) * 7, 3.5, mix(PAL.water, PAL.deep, 0.45));
       S.fog(36, 4, PAL.ghost, 0.3, 32, 14);
+      S.snap();
       const ab = mix(PAL.ink, PAL.deep, 0.5), win = mix(PAL.spirit, PAL.deep, 0.25), yW = 42;
-      p.rect(14, yW - 16, 40, 16, ab); p.poly([[12, yW - 16], [34, yW - 28], [56, yW - 16]], ab); p.erase(26, yW - 22, 6, 4);
+      p.rect(14, yW - 16, 40, 16, ab); p.poly([[12, yW - 16], [34, yW - 28], [56, yW - 16]], ab); S.cut(26, yW - 22, 6, 4);
       p.rect(56, yW - 34, 11, 34, ab); p.poly([[55, yW - 34], [58, yW - 40], [60, yW - 36], [63, yW - 43], [66, yW - 35], [68, yW - 34]], ab);
       p.rect(2, yW - 9, 12, 9, ab); p.poly([[1, yW - 9], [8, yW - 15], [15, yW - 9]], ab);
       for (const x of [18, 25, 32, 40, 47]) opening(S, x, yW - 3, 2, 5, 3, grad(PAL.deep, win));
       opening(S, 61.5, yW - 20, 2, 4, 3, grad(PAL.deep, win)); opening(S, 61.5, yW - 7, 1.5, 3, 2, grad(PAL.deep, win));
       S.glow(34, yW - 8, 22, PAL.spirit, 0.16);
       S.fog(yW - 2, 3, PAL.ghost, 0.5, 33, 14);
-      S.fillBelow(() => yW + 1, mix(PAL.deep, PAL.ink, 0.4), yW + 2);
       S.reflect(yW + 2, 64, PAL.deep, 0.45, 5);
       for (let i = 0; i < 18; i++) { const y = 45 + hash2(i, 1, 3) * 18, x = hash2(i, 2, 3) * 90; for (let k = 0; k < 5; k++) S.blend(x + k, y, C(PAL.ghost), 0.2); }
       reeds(p, 0, 22, 64, mix(PAL.void, PAL.deep, 0.4), 6, 8); reeds(p, 76, 96, 64, mix(PAL.void, PAL.deep, 0.4), 7, 7);
@@ -932,22 +948,25 @@ defineSprites({
     draw(p) {
       const S = surf(p);
       S.sky(0, 30, [PAL.void, mix(PAL.deep, PAL.ink, 0.5), mix(PAL.water, PAL.deep, 0.5)]);
-      moonAt(S, p, 62, 14, 6, mix(PAL.ghost, PAL.frost, 0.35), PAL.ghost);
+      S.glow(66, 12, 30, PAL.ghost, 0.2);
       S.fog(26, 4, PAL.ghost, 0.22, 51, 14);
       S.fillBelow((x) => 29 - fbm(x / 10, 52) * 4, mix(PAL.deep, PAL.ink, 0.5), 32);
       for (let x = 0; x < 96; x += 6) if (hash2(x, 3, 3) < 0.6) deadTree(p, x + 2, 30, 8 + hash2(x, 4, 3) * 8, mix(PAL.void, PAL.deep, 0.4), x, 0);
       S.fog(31, 3, PAL.ghost, 0.4, 53, 14);
-      S.reflect(32, 64, PAL.deep, 0.5, 8);
-      // moon road on the water
-      for (let y = 33; y < 64; y++) { const w = 1 + (y - 33) * 0.12; for (let x = 62 - w; x < 62 + w; x++) if (by(Math.floor(x), y) < 0.45 && ((y + Math.floor(x)) & 1) === 0) S.blend(Math.floor(x), y, C(PAL.frost), 0.4); }
-      // the lady in the mere
-      const r = rng(61);
-      for (let i = 0; i < 22; i++) { const a = r() * Math.PI * 2, l = 5 + r() * 14; p.path([[30, 50], [30 + Math.cos(a) * l * 0.6, 50 + Math.sin(a) * l * 0.25], [30 + Math.cos(a) * l, 50 + Math.sin(a) * l * 0.35]], i % 3 ? mix(PAL.deep, PAL.moss, 0.4) : mix(PAL.moss, PAL.rot, 0.2), 1); }
-      p.ellipse(30, 49, 4, 5, mix(PAL.ghost, PAL.frost, 0.25), { shade: 0.3 });
-      p.rect(27, 50, 6, 1, PAL.deep); p.px(28, 47, PAL.deep).px(32, 47, PAL.deep); p.px(30, 49, mix(PAL.ghost, PAL.deep, 0.5)); // closed eyes + lips
-      p.rect(24, 52, 13, 2, mix(PAL.water, PAL.ghost, 0.2)); // waterline over the shoulders
-      p.ellipse(30, 54, 12, 1.2, mix(PAL.ghost, PAL.deep, 0.5)); p.ellipse(30, 56, 20, 1.2, mix(PAL.ghost, PAL.deep, 0.65));
-      S.glow(30, 50, 14, PAL.spirit, 0.2);
+      S.reflect(32, 64, PAL.deep, 0.55, 8);
+      // moon above, its road broken across the water
+      p.circle(66, 12, 6, mix(PAL.ghost, PAL.frost, 0.35)); p.px(64, 10, PAL.frost);
+      for (let y = 33; y < 64; y++) { const w = 1 + (y - 33) * 0.1; for (let x = Math.floor(66 - w); x < 66 + w; x++) if (hash2(x, y, 5) < 0.42) S.blend(x, y, C(PAL.frost), 0.45); }
+      // the lady in the mere: face, closed eyes, hair drifting like weed
+      S.glow(30, 48, 18, PAL.spirit, 0.25, 12);
+      const weed = mix(PAL.deep, PAL.moss, 0.45), weed2 = mix(PAL.moss, PAL.rot, 0.2), r = rng(61);
+      for (let i = 0; i < 26; i++) { const side = i % 2 ? 1 : -1, l = 6 + r() * 20; p.path([[30 + side * 4, 46], [30 + side * (6 + l * 0.35), 50 + r() * 3], [30 + side * (5 + l), 53 + r() * 5]], i % 3 ? weed : weed2, 1); }
+      p.ellipse(30, 48, 5, 6.2, mix(PAL.ghost, PAL.frost, 0.3), { shade: 0.3 });
+      p.poly([[25, 44], [30, 40], [35, 44], [34, 42], [30, 41], [26, 42]], weed);
+      p.line(27, 47, 29, 47, PAL.deep); p.line(31, 47, 33, 47, PAL.deep); p.line(29, 51, 31, 51, mix(PAL.rose, PAL.deep, 0.5)); p.px(30, 49, mix(PAL.ghost, PAL.deep, 0.3));
+      p.rect(22, 53, 17, 12, mix(PAL.deep, PAL.ink, 0.35)); // the water closes over her shoulders
+      S.reflect(53, 64, PAL.deep, 0.6, 9, 22, 39);
+      for (const [rx, ry, a] of [[8, 1.6, 0.5], [13, 2.4, 0.4], [20, 3.4, 0.3]]) for (let t = 0; t < 60; t++) { const an = (t / 60) * Math.PI * 2; S.blend(Math.round(30 + Math.cos(an) * rx * 1.5), Math.round(54 + Math.sin(an) * ry), C(PAL.frost), a); }
       reeds(p, 0, 14, 64, mix(PAL.void, PAL.deep, 0.4), 9, 9); reeds(p, 78, 96, 64, mix(PAL.void, PAL.deep, 0.4), 10, 8);
       S.vignette(1.0);
     },
@@ -999,6 +1018,11 @@ defineSprites({
         const g = 1 - m * 1.8; if (g > 0) mixTo(c, c, glowc, g * g * 0.8);
         const i = (y * 96 + x) * 4; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
       }
+      // stair risers descending toward the light
+      for (let k = 0; k < 9; k++) {
+        const y = Math.round(vy + 2 + 28 * Math.pow(0.62, k)), w = Math.min(40, 6 + (y - vy) * 1.15);
+        p.line(vx - w, y, vx + w, y, mix(PAL.stone, PAL.bone, 0.15)); p.line(vx - w, y + 1, vx + w, y + 1, mix(PAL.void, PAL.dusk, 0.3));
+      }
       // heavy door-frame and sarcophagi
       const fr_ = mix(PAL.ash, PAL.dusk, 0.35);
       p.rect(0, 0, 8, 64, fr_, { shade: 0.3 }); p.rect(88, 0, 8, 64, fr_, { shade: 0.3 }); p.rect(0, 0, 96, 6, fr_, { shade: 0.3 });
@@ -1019,7 +1043,7 @@ defineSprites({
     ...SC,
     draw(p) {
       const S = surf(p);
-      S.sky(0, 50, [mix(PAL.ink, PAL.wine, 0.35), mix(PAL.bruise, PAL.ember, 0.3), mix(PAL.ember, PAL.ash, 0.45), mix(PAL.flame, PAL.ash, 0.55)]);
+      S.sky(0, 58, [mix(PAL.ink, PAL.wine, 0.35), mix(PAL.bruise, PAL.ember, 0.3), mix(PAL.ember, PAL.ash, 0.45), mix(PAL.flame, PAL.ash, 0.55)]);
       S.glow(48, 44, 34, PAL.flame, 0.3, 20);
       plume(S, 22, 44, 36, 14, mix(PAL.ink, PAL.ash, 0.4), 0.5, 5); plume(S, 74, 44, 32, 12, mix(PAL.ink, PAL.ash, 0.4), 0.5, 6);
       const far = mix(PAL.dusk, PAL.ember, 0.2), mid = mix(PAL.night, PAL.wine, 0.45), near = mix(PAL.ink, PAL.void, 0.4);

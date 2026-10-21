@@ -35,6 +35,7 @@ const BASE = {
   p: '#9a735c', P: '#c9a48a',
   a: '#16242e', A: '#2a4556', B: '#4c7890',
   n: '#5e1f3d', N: '#b5536b',
+  C: '#7fb0c8', D: '#bfe0ec',
 };
 const hexOf = (c) => '#' + rgba(c).slice(0, 3).map((v) => (v | 0).toString(16).padStart(2, '0')).join('');
 const sh = (c, f) => hexOf(shadeColor(c, f));
@@ -54,7 +55,7 @@ const DARKER = {
   S: 's', s: 'R', R: 'r', r: 'q', O: 'o', w: 'c', c: 'Y', Y: 'j', j: 'y',
   v: 'b', b: 'G', G: 'M', M: 'm', F: 'f', f: 'e', e: 'I', I: 'i',
   H: 'h', h: 'T', T: 't', L: 'l', l: 'U', U: 'u', k: 'Z', Z: 'z', z: 'X', X: 'x',
-  P: 'p', B: 'A', A: 'a', N: 'n', '*': '+', '+': '#', '#': '-', '-': '=',
+  P: 'p', B: 'A', A: 'a', D: 'C', C: 'B', N: 'n', '*': '+', '+': '#', '#': '-', '-': '=',
 };
 
 // NOTE: the engine's sprite proxy does not pad `circle()` for the outline border
@@ -91,6 +92,10 @@ function sym(half, odd = true, from = 2) {
 // Plain map sprite (engine adds outline). rim:false — maps are hand-shaded.
 function M(w, h, rows, pal, extra) {
   return { w, h, rim: false, rows, draw(p) { pix(p, rows, pal); if (extra) extra(p); } };
+}
+// Plain map sprite WITH the engine's rim light (flat-colour glyphs).
+function MR(w, h, rows, pal, extra) {
+  return { w, h, rows, draw(p) { pix(p, rows, pal); if (extra) extra(p); } };
 }
 // Tinted map sprite: tint ramp symbols take opts.c (or the default).
 function MT(w, h, rows, def, pal, extra) {
@@ -1243,12 +1248,12 @@ S.pt_flask_round = MT(12, 16, [
 const C = (w, h, fn) => ({ w, h, rim: false, draw: fn });
 S.st_might = M(10, 10, [
   '..PPPPPP..',
-  '.PPpPPpPP.',
-  '.PPPpPPpPp',
+  '.PPpPPpPPp',
+  '.PPpPPpPPp',
   '.PPPPPPPPp',
-  '.PPPPPPPPp',
-  '..pPPPPPp.',
-  '..pPPPPpp.',
+  'PPPPPPPPPp',
+  'PpPPPPPPp.',
+  '.pPPPPPpp.',
   '..RRRRRR..',
   '..RsRsRR..',
   '..rrrrrr..',
@@ -1274,13 +1279,10 @@ S.st_weak = C(10, 10, (p) => {
   d([[2, 7], [1, 8]], '#977049'); d([[3, 7]], '#6e5039'); d([[0, 9], [1, 9]], '#c9a227');
 });
 S.st_frail = C(10, 10, (p) => {
-  p.line(2, 7, 7, 2, '#a19c9c', 1); p.line(3, 7, 8, 2, '#cfc6b0', 1); p.line(2, 6, 7, 1, '#e8dcc0', 1);
-  for (const [x, y] of [[0, 6], [1, 8], [1, 5], [3, 9]]) p.px(x, y, '#cfc6b0');
-  for (const [x, y] of [[0, 7], [2, 9], [2, 4]]) p.px(x, y, '#e8dcc0');
-  for (const [x, y] of [[8, 0], [9, 3], [6, 0], [9, 1]]) p.px(x, y, '#cfc6b0');
-  p.px(8, 1, '#e8dcc0'); p.px(7, 0, '#e8dcc0');
-  for (const [x, y] of [[4, 4], [5, 5], [4, 5], [5, 3], [6, 4]]) p.px(x, y, '#5e1212');
-  p.px(4, 4, '#b8302a'); p.px(5, 5, '#b8302a');
+  const pts = []; for (let t = 0; t <= 1.001; t += 0.08) pts.push([2.6 + t * 4.8, 7.4 - t * 4.8, 1.15]);
+  tube(p, pts, ['#57535c', '#a19c9c', '#cfc6b0', '#fbf3df'], { d: 0.2 });
+  for (const [x, y] of [[3.5, 8.5], [1.5, 6.5], [8.5, 3.5], [6.5, 1.5]]) ball(p, x, y, 1.25, ['#79747a', '#cfc6b0', '#e8dcc0', '#fbf3df']);
+  for (const [x, y, c] of [[4, 4, '#8a1c1c'], [5, 5, '#e0644c'], [5, 6, '#8a1c1c'], [6, 6, '#5e1212'], [3, 3, '#5e1212'], [4, 5, '#3a0b10']]) p.px(x, y, c);
 });
 S.st_ward = C(10, 10, (p) => {
   p.ring(5, 5, 5, '#3f8a80', 1); p.ring(5, 5, 4, '#24504c', 1);
@@ -1289,12 +1291,12 @@ S.st_ward = C(10, 10, (p) => {
   p.line(5, 2, 5, 7, '#cff5ec', 1); p.line(5, 4, 3, 2, '#7fd1c4', 1); p.line(5, 4, 7, 2, '#7fd1c4', 1); p.line(5, 6, 3, 7, '#7fd1c4', 1); p.line(5, 6, 7, 7, '#7fd1c4', 1);
 });
 S.st_thorns = C(10, 10, (p) => {
-  p.path([[0, 8], [2, 7], [4, 6], [6, 4], [8, 3]], '#3d5226', 1);
-  p.path([[0, 9], [2, 8], [4, 7], [6, 5], [8, 4]], '#5c7a2a', 1);
-  for (const [x, y, dx, dy] of [[2, 7, -1, -2], [4, 6, 0, -3], [6, 4, 1, -3], [3, 8, 0, 1], [5, 7, 1, 2], [7, 5, 2, 1], [8, 3, 2, -1]]) {
-    p.px(x + dx, y + dy, '#e8dcc0'); if (Math.abs(dx) + Math.abs(dy) > 2) p.px(x + Math.sign(dx), y + Math.sign(dy), '#a19c9c');
+  for (let k = 0; k < 8; k++) {
+    const a = (k / 8) * Math.PI * 2 + Math.PI / 8;
+    p.line(Math.floor(5 + Math.cos(a) * 2.6), Math.floor(5 + Math.sin(a) * 2.6), Math.floor(5 + Math.cos(a) * 4.8), Math.floor(5 + Math.sin(a) * 4.8), k % 2 ? '#a19c9c' : '#e8dcc0', 1);
   }
-  p.px(9, 2, '#e8dcc0');
+  ball(p, 5, 5, 3, ['#16210f', '#3d5226', '#5c7a2a', '#8fae3a']);
+  p.px(4, 4, '#c4dc68'); p.px(5, 7, '#253318');
 });
 S.st_plating = M(10, 10, [
   '.ffffffff.',
@@ -1355,29 +1357,23 @@ S.st_vigor = C(10, 10, (p) => {
   p.poly([[6.6, 1], [3.2, 5.2], [5.6, 5.2], [4.2, 8.3], [7.2, 3.4], [4.6, 3.4], [7, 1]], '#f0d27a');
   p.px(6, 1, '#fff3c4'); p.px(5, 3, '#fff3c4');
 });
-S.st_shackled = M(10, 10, [
-  '..ffffff..',
-  '.fe....eI.',
-  'fe......eI',
-  'fe......eI',
-  '.fe....eI.',
-  '..eeeeII..',
-  '....fe....',
-  '....fI....',
-  '...feeI...',
-  '...eIIi...',
-]);
+S.st_shackled = C(10, 10, (p) => {
+  p.ring(3, 3, 3.1, '#545a63', 2); p.ring(3, 3, 3.1, '#bccfd9', 1);
+  p.ring(7, 7, 3.1, '#33373e', 2); p.ring(7, 7, 3.1, '#8e98a3', 1);
+  p.px(5, 5, '#eef6f6'); p.px(4, 4, '#8e98a3'); p.px(5, 4, '#545a63'); p.px(4, 5, '#545a63'); p.px(6, 6, '#545a63');
+  p.px(0, 9, '#8a1c1c'); p.px(9, 0, '#8a1c1c');
+});
 S.st_dread = M(10, 10, [
   '..........',
   '..666666..',
   '.68888886.',
-  '688RRRR886',
+  '6888RR8886',
   '688R00R886',
-  '.68RRRR86.',
+  '.688RR886.',
   '..666666..',
-  '..B....B..',
-  '..B....B..',
-  '..f....f..',
+  '...B...B..',
+  '...B...B..',
+  '...f...f..',
 ]);
 S.st_burning = C(10, 10, (p) => {
   p.poly([[5, 0], [7, 3], [8.5, 5.5], [8, 8], [5, 9], [2, 8], [1.5, 5.5], [3, 3.5], [3.8, 4.8]], '#8a1c1c');
@@ -1485,16 +1481,16 @@ S.st_oath = C(10, 10, (p) => {
   ball(p, 5.5, 6.2, 2.1, ['#5e1212', '#8a1c1c', '#b8302a', '#e0644c']);
 });
 S.st_mask = M(10, 10, [
-  '..........',
-  '.LLLLLLLL.',
+  '..LLLLLL..',
+  '.LLLLLLLLl',
   'LLLLLLLLLl',
+  'LL0LLLL0Ll',
+  'L000LL000l',
   'LL00LL00Ll',
-  'LL00LL00Ll',
-  'LLLLLLLLll',
+  '.LLLLLLLll',
   '.LLLLLLll.',
   '..LLLLll..',
   '...llll...',
-  '..........',
 ]);
 S.st_spirit = C(10, 10, (p) => {
   p.ring(5, 5, 4.8, '#24504c', 1);
@@ -1582,12 +1578,9 @@ S.st_flame = C(10, 10, (p) => {
   p.poly([[5, 5], [6.2, 7], [5, 8.4], [3.8, 7]], '#fff3c4');
 });
 S.st_chain = C(10, 10, (p) => {
-  for (const [cx, cy, v] of [[2.8, 7.2, 0], [5, 5, 1], [7.2, 2.8, 0]]) {
-    if (!v) { p.ring(cx, cy, 2.9, '#545a63', 1); p.ring(cx, cy, 2.9, '#bccfd9', 1); p.ring(cx + 0.1, cy + 0.1, 2.9, '#8e98a3', 1); }
-  }
-  p.line(3, 6, 7, 3, '#eef6f6', 1); p.line(4, 7, 8, 4, '#8e98a3', 1);
-  p.ring(2.8, 7.2, 2.9, '#8e98a3', 1); p.ring(7.2, 2.8, 2.9, '#bccfd9', 1);
-  p.px(0, 8, '#545a63'); p.px(9, 1, '#eef6f6');
+  for (const [x, y, c] of [[2.4, 7.6, '#8e98a3'], [7.6, 2.4, '#8e98a3'], [5, 5, '#eef6f6']]) { p.ring(x, y, 2.5, c, 1); }
+  p.ring(5, 5, 2.5, '#bccfd9', 1);
+  p.px(0, 8, '#545a63'); p.px(9, 1, '#545a63'); p.px(4, 3, '#33373e'); p.px(6, 7, '#33373e');
 });
 S.st_feather = C(10, 10, (p) => {
   p.poly([[1, 9], [2, 5], [5, 1], [9, 0], [8, 4], [5, 7], [2, 9]], '#cfc6b0');
@@ -1889,8 +1882,7 @@ S.rl_rope = RL('#b8905a', (p, T) => {
   p.path([[13, 11], [14, 14], [12, 15]], T[2], 2); p.px(12, 15, T[0]);
 });
 S.rl_nail = RL('#8e98a3', (p, T) => {
-  ball(p, 8, 2.4, 4.3, T, 1.9);
-  p.rect(4, 2, 8, 1, T[4]);
+  p.ellipse(8, 2.6, 4.6, 2.1, T[1]); p.ellipse(8, 2.2, 4.3, 1.8, T[2]); p.ellipse(7.4, 1.8, 2.8, 0.9, T[3]); p.rect(5, 1, 3, 1, T[4]);
   cyl(p, 7, 3, 2, 10, T);
   fillLit(p, [[7, 12.5], [9, 12.5], [8.2, 15.8], [7.8, 15.8]], T);
   p.px(8, 6, '#7a3a1a'); p.px(8, 7, '#a0522d'); p.px(7, 10, '#7a3a1a'); p.px(8, 9, T[0]);
@@ -1929,7 +1921,7 @@ S.rl_sun = RL('#e8a33a', (p, T) => {
     const a = (k / 12) * Math.PI * 2, w = 0.2, r0 = 4.8, r1 = k % 2 ? 6.8 : 8;
     p.tri(8 + Math.cos(a - w) * r0, 8 + Math.sin(a - w) * r0, 8 + Math.cos(a) * r1, 8 + Math.sin(a) * r1, 8 + Math.cos(a + w) * r0, 8 + Math.sin(a + w) * r0, k % 2 ? T[1] : T[3]);
   }
-  ball(p, 8, 8, 4.8, [T[1], T[2], T[3], T[4], '#ffffff']);
+  ball(p, 8, 8, 4.8, [T[1], T[2], T[3], T[4], T[4]]);
   p.px(7, 8, T[1]); p.px(9, 8, T[1]); p.px(8, 10, T[1]); p.px(7, 10, T[1]); p.px(9, 10, T[1]);
 });
 S.rl_chain = RL('#8e98a3', (p, T) => {
@@ -2034,11 +2026,14 @@ S.rl_thimble = RL('#c9a227', (p, T) => {
   p.px(5, 8, T[4]);
 });
 S.rl_locket = RL('#c9a227', (p, T) => {
-  p.ring(8, 3, 3.2, '#8e98a3', 1); p.ring(8, 3, 2.2, '#545a63', 1);
-  ball(p, 8, 10, 5.6, T, 5.8);
-  p.ring(8, 10, 5.4, T[0], 1); p.ring(8, 10, 3.8, T[1], 1);
-  shader(p, 5, 7, 11, 13, (x, y) => { const X = (x + 0.5 - 8) / 2.5, Y = -(y + 0.5 - 9.6) / 2.5 + 0.1; return Math.pow(X * X + Y * Y - 0.62, 3) - X * X * Y * Y * Y <= 0 ? '#8a1c1c' : null; });
-  p.px(7, 9, '#e0644c'); p.px(5, 7, T[4]); p.px(6, 6, T[4]); p.px(12, 10, T[0]);
+  for (let i = 0; i <= 6; i++) {
+    p.px(Math.round(3 + (4.5 * i) / 6), i, i % 2 ? '#8e98a3' : '#eef6f6'); p.px(Math.round(12 - (4.5 * i) / 6), i, i % 2 ? '#545a63' : '#bccfd9');
+  }
+  p.px(7, 7, '#8e98a3'); p.px(8, 7, '#545a63'); p.rect(7, 6, 2, 1, T[1]);
+  ball(p, 8, 11, 4.8, T, 5.4);
+  p.ring(8, 11, 5, T[0], 1); p.ring(8, 11, 3.5, T[1], 1);
+  shader(p, 5, 8, 11, 14, (x, y) => { const X = (x + 0.5 - 8) / 2.3, Y = -(y + 0.5 - 10.7) / 2.3 + 0.1; return Math.pow(X * X + Y * Y - 0.62, 3) - X * X * Y * Y * Y <= 0 ? '#8a1c1c' : null; });
+  p.px(7, 10, '#e0644c'); p.px(5, 8, T[4]); p.px(6, 7, T[4]); p.px(12, 11, T[0]); p.px(8, 15, T[0]);
 });
 S.rl_map = RL('#d8c9a0', (p, T) => {
   fillLit(p, [[1.5, 3], [5.5, 2], [10.5, 3.2], [14.5, 2.2], [14.5, 13], [10.5, 14], [5.5, 12.8], [1.5, 14]], T, { lx: 0.3, ly: 0.3, bias: 0.05 });
@@ -2064,6 +2059,442 @@ S.rl_mortar = RL('#8e98a3', (p, T) => {
   const pe = []; for (let t = 0; t <= 1; t += 0.05) pe.push([8.5 + t * 5.5, 8 - t * 6.5, 1.6 - t * 0.2]);
   tube(p, pe, T);
   ball(p, 14, 1.8, 1.9, T); p.px(3, 9, T[4]); p.px(3, 10, T[4]);
+});
+
+// =================================================================== POTION ICONS (12×16)
+// opts.c = liquid colour. Glass is neutral grey-bone; cork/lid fixed.
+const GLASS = ['#363040', '#57535c', '#8a8590', '#cfc6b0'];
+function glassBody(p, inside, level, T) {
+  // inside(x,y) -> {d, nx, ny} or null; d>0.62 is the glass wall.
+  for (let y = 0; y < 16; y++) for (let x = 0; x < 12; x++) {
+    const r = inside(x + 0.5, y + 0.5);
+    if (!r) continue;
+    if (r.d > 0.66) p.px(x, y, lit(GLASS, 0.62 - r.nx * 0.42 - r.ny * 0.4, x, y, 0.2));
+    else if (y + 0.5 < level) p.px(x, y, (x + y) % 5 === 0 ? '#2d2a35' : '#241f2b');
+    else if (y + 0.5 < level + 1) p.px(x, y, T[4]);
+    else p.px(x, y, lit([T[0], T[1], T[2], T[3]], 0.55 - r.nx * 0.35 - r.ny * 0.3 + 0.12, x, y, 0.35));
+  }
+}
+const PT = (def, fn) => ({
+  w: 12, h: 16,
+  draw(p, o) {
+    const c = (o && o.c) || def, t = ramp(c);
+    fn(p, [t['='], t['-'], t['#'], t['+'], t['*']], c);
+  },
+});
+S.pt_flask_tall = PT('#8a1c1c', (p, T) => {
+  glassBody(p, (x, y) => { const nx = (x - 6) / 4.1, ny = (y - 10.2) / 5.6; const d = nx * nx + ny * ny; return d <= 1 ? { d, nx, ny } : null; }, 9, T);
+  p.rect(5, 2, 2, 3, GLASS[2]); p.rect(5, 2, 1, 3, GLASS[3]); p.rect(6, 3, 1, 2, GLASS[1]);
+  p.rect(4, 4, 4, 1, GLASS[2]);
+  p.rect(4, 1, 4, 1, GLASS[3]); p.rect(5, 0, 2, 2, '#6e5039'); p.px(5, 0, '#977049');
+  p.px(3, 8, '#fbf3df'); p.px(3, 9, '#fbf3df'); p.px(4, 7, '#cfc6b0');
+});
+S.pt_vial = PT('#5c7a2a', (p, T) => {
+  glassBody(p, (x, y) => {
+    const nx = (x - 6) / 3.3;
+    if (Math.abs(nx) > 1 || y < 3 || y > 15) return null;
+    if (y > 12) { const ny = (y - 12) / 3, d = nx * nx + ny * ny; return d <= 1 ? { d: Math.max(d, 0.5 + Math.abs(nx) * 0.2), nx, ny } : null; }
+    return { d: Math.abs(nx) * Math.abs(nx), nx, ny: 0 };
+  }, 7, T);
+  p.rect(3, 2, 6, 2, GLASS[2]); p.rect(3, 2, 6, 1, GLASS[3]); p.rect(9, 3, 1, 1, GLASS[1]);
+  p.rect(4, 0, 4, 3, '#6e5039'); p.rect(4, 0, 2, 3, '#977049'); p.rect(7, 1, 1, 2, '#4a3527');
+  p.px(4, 8, '#fbf3df'); p.px(4, 9, '#fbf3df'); p.px(4, 10, '#cfc6b0');
+  p.px(7, 10, T[4]); p.px(6, 12, T[4]);
+});
+S.pt_jar = PT('#8a1c1c', (p, T) => {
+  glassBody(p, (x, y) => {
+    const nx = (x - 6) / 5.3, ny = (y - 9.4) / 5.6;
+    if (Math.abs(nx) > 1 || Math.abs(ny) > 1) return null;
+    const cx = Math.max(0, Math.abs(nx) - 0.6) / 0.4, cy = Math.max(0, Math.abs(ny) - 0.6) / 0.4;
+    const r = cx * cx + cy * cy;
+    if (r > 1) return null;
+    return { d: Math.max(Math.abs(nx), Math.abs(ny), Math.sqrt(r) * 0.9) * 0.95 + 0.05, nx, ny };
+  }, 7, T);
+  p.rect(2, 2, 8, 3, '#6e5039'); p.rect(2, 2, 8, 1, '#977049'); p.rect(2, 4, 8, 1, '#4a3527'); p.rect(3, 1, 6, 1, '#6e5039');
+  p.rect(3, 4, 6, 1, '#4a3527');
+  p.px(3, 8, '#fbf3df'); p.px(3, 9, '#fbf3df');
+  circ(p, 7, 11, 1.3, T[3]); p.px(6, 10, T[4]); p.px(5, 13, T[4]); p.px(8, 8, T[4]);
+});
+S.pt_skull_flask = PT('#5c7a2a', (p, T) => {
+  glassBody(p, (x, y) => {
+    const nx = (x - 6) / 5.4, ny = (y - 8.8) / 4.9;
+    const cran = nx * nx + ny * ny, d1 = cran <= 1 ? cran : 9;
+    let r = null;
+    if (d1 <= 1) r = { d: d1, nx, ny };
+    if (y >= 11 && y <= 15 && Math.abs(x - 6) <= 3.3) r = { d: Math.max(0.2, Math.abs(x - 6) / 3.3 - 0.1, (y - 11) / 5), nx: (x - 6) / 3.3, ny: (y - 13) / 2 };
+    return r;
+  }, 6, T);
+  p.rect(5, 2, 2, 3, GLASS[2]); p.rect(4, 4, 4, 1, GLASS[2]);
+  p.rect(4, 0, 4, 3, '#6e5039'); p.rect(4, 0, 2, 3, '#977049');
+  p.ellipse(3.8, 8.2, 1.6, 1.9, '#0b0a0d'); p.ellipse(8.2, 8.2, 1.6, 1.9, '#0b0a0d');
+  p.px(6, 10, '#0b0a0d'); p.px(5, 11, '#0b0a0d'); p.px(7, 11, '#0b0a0d');
+  p.px(5, 13, '#16131a'); p.px(7, 13, '#16131a'); p.px(6, 14, '#16131a');
+  p.px(2, 6, '#fbf3df'); p.px(3, 5, '#cfc6b0'); p.px(2, 7, '#cfc6b0');
+});
+S.pt_horn_cup = PT('#c4501e', (p, T) => {
+  const pts = [];
+  for (let t = 0; t <= 1; t += 0.03) pts.push([1.8 + t * 6.8, 14.6 - t * 9.4 - Math.sin(t * Math.PI) * 1.4, 0.8 + Math.pow(t, 1.3) * 3.2]);
+  tube(p, pts, ['#2c1e16', '#4a3527', '#6e5039', '#977049', '#c29a68'], { d: 0.15 });
+  const [ox, oy] = pts[pts.length - 1];
+  const ca = Math.cos(0.66), sa = Math.sin(0.66); // opening faces up-right
+  const ell = (rA, rB, f) => { for (let y = 0; y < 16; y++) for (let x = 0; x < 12; x++) { const dx = x + 0.5 - ox, dy = y + 0.5 - oy; const u = (dx * ca + dy * sa) / rA, v = (-dx * sa + dy * ca) / rB; if (u * u + v * v <= 1) { const c = f(x, y, u, v); if (c) p.px(x, y, c); } } };
+  ell(4.4, 2.5, () => '#c9a227');
+  ell(3.8, 2, (x, y, u, v) => '#5e4612');
+  ell(3.4, 1.7, (x, y, u, v) => lit([T[1], T[2], T[3]], 0.55 - u * 0.2 - v * 0.3, x, y, 0.3));
+  p.px(Math.round(ox - 1.6), Math.round(oy - 0.4), T[4]);
+  const [bx, by] = pts[Math.floor(pts.length * 0.5)];
+  p.line(Math.round(bx - 1.6), Math.round(by + 1.4), Math.round(bx + 1.6), Math.round(by - 1.4), '#c9a227', 2); p.px(Math.round(bx - 1), Math.round(by + 1), '#f0d27a');
+  p.px(1, 15, '#c9a227'); p.px(2, 15, '#8f6f1a');
+});
+// =================================================================== INTENT ICONS (14×14)
+// Colour code: attack red, defend blue, buff gold, debuff green, special violet, neutral bone.
+S.in_atk = C(14, 14, (p) => {
+  p.line(3, 10, 11, 2, '#8a1c1c', 3); p.line(3, 9, 11, 1, '#e0644c', 1); p.line(4, 10, 12, 2, '#b8302a', 1);
+  p.px(13, 0, '#fbf3df'); p.px(12, 1, '#fbf3df'); p.px(13, 1, '#e0644c'); p.px(12, 0, '#e0644c');
+  p.line(2, 6, 7, 11, '#c9a227', 2); p.line(2, 5, 6, 9, '#f0d27a', 1); p.px(1, 6, '#8f6f1a'); p.px(8, 12, '#8f6f1a');
+  p.line(1, 12, 4, 9, '#4a3527', 2); p.px(0, 13, '#c9a227'); p.px(1, 13, '#8f6f1a');
+});
+S.in_atk_heavy = C(14, 14, (p) => {
+  p.line(2, 13, 9, 5, '#4a3527', 2); p.line(1, 13, 8, 5, '#977049', 1);
+  shader(p, 4, 0, 13, 10, (x, y) => {
+    const dx = x + 0.5 - 9.5, dy = y + 0.5 - 4.6, d = Math.hypot(dx, dy * 0.9);
+    if (d > 5.1) return null;
+    if (Math.hypot((x + 0.5 - 5.4) / 3.4, (y + 0.5 - 4.6) / 5) < 1) return null;
+    if (d > 4.2) return '#e0644c';
+    return lit(['#8a1c1c', '#b8302a', '#e0644c'], 0.5 - dx * 0.06 - dy * 0.08, x, y, 0.3);
+  });
+  p.rect(7, 3, 2, 4, '#5e1212'); p.px(7, 4, '#c9a227');
+  p.px(11, 1, '#fbf3df'); p.px(12, 2, '#fbf3df');
+});
+S.in_def = MR(14, 14, sym([
+  '.eeeeee',
+  'eCCCCCC',
+  'eCDDCCC',
+  'eCDCBBB',
+  'eCCBBBB',
+  'eCCBBBB',
+  'eCBBBBB',
+  '.eCBBBB',
+  '.eCBBBB',
+  '..eCBBB',
+  '...eCBB',
+  '....eCB',
+  '.....ee',
+  '......e',
+], false, 3), null);
+S.in_buff = C(14, 14, (p) => {
+  fillLit(p, [[7, 0], [13.5, 7], [9, 7], [9, 13.5], [5, 13.5], [5, 7], [0.5, 7]], ['#8f6f1a', '#c9a227', '#f0d27a', '#fff3c4'], { lx: 0.45, ly: 0.4 });
+  p.line(7, 1, 2, 6, '#fff3c4'); p.line(6, 8, 6, 12, '#f0d27a');
+  p.px(11, 12, '#e8a33a'); p.px(12, 10, '#c4501e'); p.px(2, 11, '#e8a33a');
+});
+S.in_debuff = C(14, 14, (p) => {
+  fillLit(p, [[5, 0.5], [9, 0.5], [9, 7], [13.5, 7], [7, 13.5], [0.5, 7], [5, 7]], ['#253318', '#3d5226', '#5c7a2a', '#8fae3a', '#c4dc68'], { lx: 0.45, ly: 0.4 });
+  p.line(6, 1, 6, 6, '#c4dc68'); p.px(2, 7, '#8fae3a'); p.px(12, 3, '#5c7a2a'); p.px(1, 11, '#3d5226'); p.px(12, 11, '#5c7a2a');
+  p.px(7, 12, '#253318');
+});
+S.in_strongdebuff = MR(14, 14, [
+  '....bbbbbb....',
+  '..bbvvvvvvbb..',
+  '.bvvvvvvvvvvG.',
+  '.bvvvvvvvvvvG.',
+  'bvvv000vv000vG',
+  'bvvv0S0vv0S0vG',
+  'bvvv000vv000vG',
+  '.bvvvvv00vvvG.',
+  '..bvvvvvvvvG..',
+  '...bvbvbvbvG..',
+  '...G.G.G.G.G..',
+  '..............',
+  '..............',
+  '..............',
+], null);
+S.in_unknown = MR(14, 14, [
+  '....888888....',
+  '...88888888...',
+  '..888....888..',
+  '..88......88..',
+  '..........88..',
+  '.........888..',
+  '........888...',
+  '.......888....',
+  '......88......',
+  '......88......',
+  '..............',
+  '......88......',
+  '......88......',
+  '..............',
+], { 8: '#cfc6b0' });
+S.in_sleep = C(14, 14, (p) => {
+  const Z = (x, y, w, h, t, c1, c2) => {
+    p.rect(x, y, w, t, c1); p.rect(x, y + h - t, w, t, c2);
+    p.line(x + w - 1, y + t - 1, x, y + h - t, c1, t);
+  };
+  Z(1, 6, 8, 7, 2, '#b49ad6', '#7b5aa6');
+  Z(8, 0, 5, 5, 1, '#e2d6f2', '#b49ad6');
+  p.px(12, 10, '#7b5aa6'); p.px(12, 11, '#4b3b5e');
+});
+S.in_summon = C(14, 14, (p) => {
+  p.ellipse(7, 11, 6.4, 2.6, '#4b3b5e'); p.ellipse(7, 11, 5.4, 1.8, '#1a1423'); p.ring(7, 11, 6.4, '#9a78c8', 1);
+  p.ellipse(7, 11, 6.4, 2.6, [154, 120, 200, 0]);
+  for (const [x, y] of [[2, 11], [12, 11], [7, 9], [7, 13]]) p.px(x, y, '#b49ad6');
+  p.ellipse(7, 5, 3.2, 3, '#cfc6b0'); p.rect(5, 7, 4, 3, '#cfc6b0');
+  p.ellipse(5.7, 5, 0.9, 1.1, '#0b0a0d'); p.ellipse(8.3, 5, 0.9, 1.1, '#0b0a0d'); p.px(7, 7, '#0b0a0d');
+  p.px(6, 9, '#57535c'); p.px(8, 9, '#57535c');
+  p.px(3, 3, '#b49ad6'); p.px(11, 2, '#e2d6f2'); p.px(12, 5, '#b49ad6'); p.px(2, 7, '#7b5aa6');
+});
+S.in_flee = C(14, 14, (p) => {
+  fillLit(p, [[13.5, 7], [7, 1.5], [7, 4.8], [4, 4.8], [4, 9.2], [7, 9.2], [7, 12.5]], ['#545a63', '#8e98a3', '#bccfd9', '#eef6f6'], { lx: 0.4, ly: 0.4 });
+  p.line(0, 5, 2, 5, '#8e98a3'); p.line(0, 7, 3, 7, '#545a63'); p.line(1, 9, 3, 9, '#8e98a3');
+  p.px(8, 3, '#eef6f6');
+});
+S.in_heal = C(14, 14, (p) => {
+  fillLit(p, [[5, 0.5], [9, 0.5], [9, 5], [13.5, 5], [13.5, 9], [9, 9], [9, 13.5], [5, 13.5], [5, 9], [0.5, 9], [0.5, 5], [5, 5]], ['#253318', '#3d5226', '#5c7a2a', '#8fae3a', '#c4dc68'], { lx: 0.4, ly: 0.4, bias: 0.05 });
+  p.line(6, 1, 6, 4, '#c4dc68'); p.line(1, 6, 4, 6, '#c4dc68'); p.px(6, 6, '#eaf5b0');
+  p.px(12, 1, '#c4dc68'); p.px(1, 12, '#8fae3a');
+});
+S.in_special = MR(14, 14, [
+  '..............',
+  '....666666....',
+  '..6688888866..',
+  '.668888888866.',
+  '6688NNNNNN8866',
+  '688NNN00NNN886',
+  '688NN0w00NN886',
+  '688NN0000NN886',
+  '6688NN00NN8866',
+  '.668NNNNNN866.',
+  '..6688888866..',
+  '....666666....',
+  '..............',
+  '..............',
+], { 6: '#4b3b5e', 8: '#cfc6b0', N: '#b5536b', w: '#fbf3df', 0: '#0b0a0d' });
+
+// =================================================================== MAP ICONS (16×16)
+S.map_fight = C(16, 16, (p) => {
+  const blade = (tx, ty, gx, gy, hx, hy, hi) => {
+    p.line(tx, ty, gx, gy, '#545a63', 3); p.line(tx, ty, gx, gy, '#8e98a3', 2); p.line(tx + hi, ty - 1, gx + hi, gy - 1, '#eef6f6', 1);
+    p.px(tx - Math.sign(gx - tx), ty - 1, '#eef6f6');
+    const gdx = -(hy - gy), gdy = hx - gx; // perpendicular
+    const L = Math.hypot(gdx, gdy) || 1;
+    p.line(Math.round(gx - (gdx / L) * 3), Math.round(gy - (gdy / L) * 3), Math.round(gx + (gdx / L) * 3), Math.round(gy + (gdy / L) * 3), '#c9a227', 2);
+    p.line(Math.round(gx - (gdx / L) * 3), Math.round(gy - (gdy / L) * 3 - 1), Math.round(gx + (gdx / L) * 3), Math.round(gy + (gdy / L) * 3 - 1), '#f0d27a', 1);
+    p.line(gx + Math.sign(hx - gx), gy + Math.sign(hy - gy), hx, hy, '#6e5039', 2);
+    p.px(hx + Math.sign(hx - gx), hy + Math.sign(hy - gy), '#c9a227'); p.px(hx, hy, '#8f6f1a');
+  };
+  blade(14, 1, 5, 10, 1, 13, -1);
+  blade(1, 1, 10, 10, 14, 13, 1);
+});
+S.map_elite = C(16, 16, (p) => {
+  const R = ['#3a0b10', '#8a1c1c', '#b8302a', '#e0644c'];
+  const horn = (s) => { const pts = []; for (let t = 0; t <= 1; t += 0.06) pts.push([8 + s * (4.2 + Math.sin(t * 2.2) * 2.8 + t * 0.2), 7 - t * 6.4 + (t * t) * 0.2, 1.7 * (1 - t) + 0.6]); tube(p, pts, s < 0 ? R : R.map((c) => c), { k: 1 }); };
+  horn(-1); horn(1);
+  ball(p, 8, 9.2, 5.1, ['#57535c', '#79747a', '#a19c9c', '#cfc6b0', '#e8dcc0'], 4.7);
+  p.rect(5, 12, 6, 3, '#a19c9c'); p.rect(5, 12, 1, 3, '#cfc6b0'); p.rect(10, 12, 1, 3, '#79747a');
+  p.ellipse(6, 9.4, 1.5, 1.7, '#0b0a0d'); p.ellipse(10, 9.4, 1.5, 1.7, '#0b0a0d');
+  p.px(6, 9, '#e8a33a'); p.px(10, 9, '#e8a33a'); p.px(6, 10, '#c4501e'); p.px(10, 10, '#c4501e');
+  p.px(8, 11, '#0b0a0d'); p.px(7, 12, '#16131a'); p.px(9, 12, '#16131a');
+  p.px(7, 14, '#16131a'); p.px(9, 14, '#16131a');
+});
+S.map_event = C(16, 16, (p) => {
+  fillLit(p, [[2, 1.6], [5, 1.2], [9, 2], [14, 1.4], [14.4, 6], [13.6, 10], [14.4, 14.4], [9, 13.8], [5, 14.6], [1.6, 14], [2.4, 9], [1.6, 5]], ['#6e5039', '#977049', '#c29a68', '#e8dcc0', '#fbf3df'], { lx: 0.3, ly: 0.35, bias: 0.12 });
+  pix(p, [
+    '.####.',
+    '##..##',
+    '....##',
+    '...##.',
+    '..##..',
+    '..##..',
+    '......',
+    '..##..',
+    '..##..',
+  ], { '#': '#5e1212' }, 5, 3);
+  p.px(5, 4, '#8a1c1c'); p.px(6, 3, '#8a1c1c');
+});
+S.map_rest = C(16, 16, (p) => {
+  p.ellipse(8, 14.4, 7, 1.4, '#2c1e16');
+  p.line(2, 14, 13, 11, '#2c1e16', 3); p.line(2, 13, 13, 10, '#6e5039', 2); p.line(2, 12, 12, 10, '#977049', 1);
+  p.line(3, 11, 14, 14, '#4a3527', 3); p.line(3, 10, 14, 13, '#6e5039', 2); p.line(4, 10, 13, 12, '#977049', 1);
+  p.ellipse(2.2, 12.8, 1.2, 1.5, '#4a3527'); p.ellipse(13.8, 12.8, 1.2, 1.5, '#2c1e16');
+  p.poly([[8, 0.5], [10.6, 4], [12, 7.5], [11, 11], [8, 12], [5, 11], [4, 7.5], [5.4, 5], [6.4, 6.4], [7, 3]], '#c4501e');
+  p.poly([[8, 4], [10, 7.5], [9.6, 10.6], [8, 11.4], [6.4, 10.4], [6, 7.6], [7.2, 6.4]], '#e8a33a');
+  p.poly([[8, 7], [9, 9.4], [8, 11], [7, 9.4]], '#fff3c4');
+  p.px(12, 3, '#e8a33a'); p.px(3, 5, '#c4501e'); p.px(13, 6, '#f0d27a'); p.px(4, 2, '#e8a33a');
+});
+S.map_shop = C(16, 16, (p) => {
+  S.rl_pouch.draw(p, { c: '#8a5a34' });
+  const coin = (x, y) => { p.ellipse(x, y + 0.5, 2.8, 1.5, '#8f6f1a'); p.ellipse(x, y, 2.8, 1.5, '#c9a227'); p.ellipse(x - 0.3, y - 0.2, 1.6, 0.7, '#f0d27a'); };
+  coin(12.6, 14.3); coin(13.2, 12.6); coin(3.2, 14.6);
+  p.px(2, 11, '#c9a227');
+});
+S.map_treasure = C(16, 16, (p) => {
+  const W = ['#2c1e16', '#4a3527', '#6e5039', '#977049', '#c29a68'];
+  fillLit(p, [[1.5, 8], [14.5, 8], [14.5, 14.5], [1.5, 14.5]], W, { lx: 0.3, ly: 0.4, bias: -0.1 });
+  fillLit(p, [[1.5, 8.6], [1.5, 5.5], [3.6, 2.6], [8, 1.6], [12.4, 2.6], [14.5, 5.5], [14.5, 8.6]], W, { lx: 0.35, ly: 0.45, bias: 0.12 });
+  for (const x of [4, 10]) { cyl(p, x, 2, 2, 13, ['#8f6f1a', '#c9a227', '#f0d27a']); }
+  p.rect(1, 8, 14, 1, '#16131a'); p.rect(1, 14, 14, 1, '#16131a');
+  p.rect(6, 7, 4, 4, '#8f6f1a'); p.rect(6, 7, 4, 1, '#f0d27a'); p.rect(7, 8, 2, 2, '#c9a227'); p.px(8, 9, '#0b0a0d'); p.px(8, 10, '#0b0a0d');
+  p.px(3, 4, '#fbf3df'); p.px(2, 5, '#f0d27a'); p.px(12, 3, '#f0d27a');
+});
+S.map_boss = C(16, 16, (p) => {
+  const G = ['#5e4612', '#8f6f1a', '#c9a227', '#f0d27a', '#fff3c4'];
+  fillLit(p, [[1, 10], [1.4, 2.2], [4.6, 6.4], [6, 4.4], [8, 0.8], [10, 4.4], [11.4, 6.4], [14.6, 2.2], [15, 10]], G, { bias: 0.05 });
+  cyl(p, 1, 9, 14, 6, G, false); p.rect(1, 9, 14, 1, G[4]); p.rect(1, 14, 14, 1, G[0]);
+  ball(p, 8, 7.4, 3.9, ['#57535c', '#79747a', '#a19c9c', '#cfc6b0', '#e8dcc0'], 3.6);
+  p.rect(6, 9, 4, 3, '#a19c9c'); p.rect(6, 9, 1, 3, '#cfc6b0');
+  p.rect(5, 6, 2, 2, '#0b0a0d'); p.rect(9, 6, 2, 2, '#0b0a0d'); p.px(5, 6, '#e0644c'); p.px(10, 6, '#e0644c');
+  p.px(8, 9, '#0b0a0d'); p.px(7, 11, '#16131a'); p.px(9, 11, '#16131a');
+  for (const [x, y] of [[3, 11], [8, 12.4], [13, 11]]) circ(p, x, y, 0.9, '#8a1c1c');
+});
+// =================================================================== UI ICONS
+S.ui_energy = C(14, 14, (p) => {
+  ball(p, 7, 7, 5.9, ['#5e4612', '#8f6f1a', '#c9a227', '#f0d27a', '#fff3c4']);
+  p.ring(7, 7, 6, '#3a2a0a', 1);
+  p.poly([[8.6, 2.2], [3.8, 7.6], [6.6, 7.6], [5.4, 11.8], [10.2, 6.2], [7.4, 6.2]], '#5e4612');
+  p.poly([[8.2, 2.8], [4.6, 7], [7, 7], [6, 10.6], [9.4, 6.8], [7.2, 6.8]], '#fff3c4');
+  p.px(2, 2, '#fbf3df'); p.px(12, 12, '#f0d27a'); p.px(0, 7, '#c9a227'); p.px(13, 6, '#c9a227');
+});
+S.ui_gold = C(12, 12, (p) => {
+  circ(p, 6, 6, 5.5, '#8f6f1a'); circ(p, 6, 6, 4.8, '#c9a227');
+  fillLit(p, [[1.6, 6], [3, 3], [6, 1.4], [9, 3], [10.4, 6], [9, 9], [6, 10.6], [3, 9]], ['#c9a227', '#f0d27a', '#fff3c4'], { bias: -0.1 });
+  p.ring(6, 6, 5.5, '#5e4612', 1); p.ring(6, 6, 3.4, '#8f6f1a', 1);
+  p.rect(5, 4, 2, 4, '#8f6f1a'); p.px(5, 4, '#fff3c4'); p.px(3, 3, '#fff3c4');
+});
+S.ui_hp = C(12, 12, (p) => {
+  shader(p, 0, 0, 11, 11, (x, y) => {
+    const X = (x + 0.5 - 6) / 5.4, Y = -(y + 0.5 - 6) / 5.4 + 0.1;
+    if (Math.pow(X * X + Y * Y - 0.62, 3) - X * X * Y * Y * Y > 0) return null;
+    return lit(['#3a0b10', '#5e1212', '#8a1c1c', '#b8302a', '#e0644c'], sphere(X * 0.9, -Y * 0.9 - 0.05), x, y, 0.25);
+  });
+  p.px(3, 2, '#fbf3df'); p.px(2, 3, '#f0a090');
+});
+S.ui_block = MR(12, 12, sym([
+  '.eeeee',
+  'eCCCCC',
+  'eCDCCB',
+  'eCCCBB',
+  'eCCBBB',
+  'eCBBBB',
+  '.eCBBB',
+  '.eCBBB',
+  '..eCBB',
+  '...eCB',
+  '....ee',
+  '......',
+], false, 2), null);
+const CARD = (p, x, y, w, h, border = '#c9a227', face = '#3a2f4a', gem) => {
+  p.rect(x, y, w, h, '#0b0a0d'); p.rect(x, y, w, h, border); p.rect(x + 1, y + 1, w - 2, h - 2, face);
+  p.rect(x + 1, y + 1, w - 2, 1, '#4b3b5e'); p.rect(x, y, w, 1, '#f0d27a');
+  if (gem) { p.rect(x + (w >> 1) - 1, y + (h >> 1) - 1, 2, 2, gem); }
+};
+S.ui_deck = C(14, 14, (p) => {
+  CARD(p, 5, 0, 8, 11, '#8f6f1a', '#2b2135');
+  CARD(p, 3, 1, 8, 11, '#a98820', '#33283f');
+  CARD(p, 1, 3, 8, 11, '#c9a227', '#3a2f4a', '#e0644c');
+  p.px(2, 4, '#fff3c4');
+});
+S.ui_draw = C(14, 14, (p) => {
+  CARD(p, 0, 5, 8, 9, '#8f6f1a', '#2b2135'); CARD(p, 1, 4, 8, 9, '#c9a227', '#3a2f4a', '#7fd1c4');
+  p.poly([[11.5, 0], [14, 4.4], [9, 4.4]], '#cff5ec'); p.rect(10.5, 4, 2, 7, '#7fd1c4'); p.rect(10.5, 4, 1, 7, '#cff5ec'); p.rect(12, 5, 1, 6, '#3f8a80');
+});
+S.ui_discard = C(14, 14, (p) => {
+  CARD(p, 0, 0, 8, 9, '#8f6f1a', '#2b2135'); CARD(p, 1, 1, 8, 9, '#c9a227', '#3a2f4a');
+  p.poly([[11.5, 13.6], [14, 9.2], [9, 9.2]], '#e0644c'); p.rect(10.5, 2, 2, 7.4, '#b8302a'); p.rect(10.5, 2, 1, 7.4, '#e0644c'); p.rect(12, 2, 1, 7, '#8a1c1c');
+  p.rect(0, 12, 8, 2, '#57535c'); p.rect(0, 12, 8, 1, '#a19c9c');
+});
+S.ui_exhaust = C(14, 14, (p) => {
+  CARD(p, 2, 4, 9, 10, '#5e4612', '#241f2b');
+  p.poly([[2, 7], [4, 5.6], [5, 8], [7, 5], [8.6, 7.4], [10, 5.4], [11, 7.5], [11, 9], [2, 9]], '#0b0a0d');
+  p.poly([[6.5, 0], [9, 3.6], [10.4, 6.4], [9.4, 9.4], [6.5, 10.4], [3.6, 9.2], [3, 6.4], [4.4, 4], [5.2, 5.2]], '#c4501e');
+  p.poly([[6.5, 3.6], [8.4, 6.6], [8, 9], [6.5, 9.6], [5, 8.6], [4.8, 6.6], [5.8, 5.6]], '#e8a33a');
+  p.poly([[6.5, 6.4], [7.4, 8.2], [6.5, 9.2], [5.6, 8.2]], '#fff3c4');
+  p.px(11, 2, '#79747a'); p.px(12, 0, '#57535c'); p.px(1, 3, '#79747a');
+});
+S.ui_map = C(16, 16, (p) => { S.rl_map.draw(p, { c: '#d8c9a0' }); });
+S.ui_settings = C(14, 14, (p) => {
+  for (let k = 0; k < 8; k++) {
+    const a = (k / 8) * Math.PI * 2 + Math.PI / 8, w = 0.28;
+    p.poly([[7 + Math.cos(a - w) * 4.2, 7 + Math.sin(a - w) * 4.2], [7 + Math.cos(a - w * 0.75) * 6.7, 7 + Math.sin(a - w * 0.75) * 6.7], [7 + Math.cos(a + w * 0.75) * 6.7, 7 + Math.sin(a + w * 0.75) * 6.7], [7 + Math.cos(a + w) * 4.2, 7 + Math.sin(a + w) * 4.2]], '#8e98a3');
+  }
+  ball(p, 7, 7, 5, ['#33373e', '#545a63', '#8e98a3', '#bccfd9', '#eef6f6']);
+  p.eraseEllipse(7, 7, 2, 2);
+  p.ring(7, 7, 2.4, '#33373e', 1);
+});
+S.ui_potion_empty = {
+  w: 12, h: 16, outline: false, rim: false,
+  draw(p) {
+    const m = [];
+    for (let y = 0; y < 16; y++) { m[y] = []; for (let x = 0; x < 12; x++) { const body = Math.hypot(x + 0.5 - 6, y + 0.5 - 10.4) <= 5.2; const neck = x >= 4 && x <= 7 && y >= 2 && y <= 6; const lip = x >= 3 && x <= 8 && y === 1; const cork = x >= 4 && x <= 7 && y === 0; m[y][x] = body || neck || lip || cork; } }
+    for (let y = 0; y < 16; y++) for (let x = 0; x < 12; x++) {
+      if (!m[y][x]) continue;
+      const edge = !(m[y - 1] && m[y - 1][x]) || !(m[y + 1] && m[y + 1][x]) || !m[y][x - 1] || !m[y][x + 1];
+      if (edge) { if ((x + y) % 3 !== 2) p.px(x, y, '#7a757f'); }
+      else p.px(x, y, [150, 144, 160, 34]);
+    }
+    p.px(3, 9, [200, 195, 210, 90]); p.px(3, 10, [200, 195, 210, 90]);
+  },
+};
+S.ui_chronicle = C(14, 14, (p) => {
+  p.rect(3, 1, 10, 12, '#e8dcc0'); p.rect(12, 2, 1, 10, '#a19c9c');
+  cyl(p, 1, 0, 11, 13, ['#2c0a14', '#5e1f3d', '#7a2a4a', '#9a3a5a'], false);
+  p.rect(1, 0, 3, 13, '#3a0b20'); p.rect(1, 0, 1, 13, '#5e1f3d'); p.line(4, 0, 4, 12, '#16131a');
+  p.rect(6, 3, 5, 5, '#3a0b20'); p.rect(7, 4, 3, 3, '#c9a227'); p.px(8, 5, '#3a0b20'); p.px(7, 4, '#fff3c4');
+  p.rect(1, 0, 3, 2, '#c9a227'); p.rect(1, 11, 3, 2, '#8f6f1a'); p.rect(9, 0, 2, 2, '#c9a227'); p.rect(9, 11, 2, 2, '#8f6f1a');
+  p.path([[10, 13], [10, 14]], '#8a1c1c', 1);
+});
+S.ui_back = C(12, 12, (p) => {
+  fillLit(p, [[0.5, 6], [5.6, 0.8], [5.6, 4], [11.5, 4], [11.5, 8], [5.6, 8], [5.6, 11.2]], ['#79747a', '#a19c9c', '#cfc6b0', '#fbf3df'], { lx: 0.4, ly: 0.4 });
+  p.line(5, 2, 2, 5, '#fbf3df');
+});
+S.ui_lock = C(12, 14, (p) => {
+  p.ring(6, 5.4, 3.7, '#33373e', 2); p.ring(6, 5.4, 3.7, '#8e98a3', 1); p.rect(2, 5, 8, 3, '#0b0a0d');
+  p.rect(2, 5, 1, 4, '#8e98a3'); p.rect(9, 5, 1, 4, '#545a63');
+  fillLit(p, [[1, 7], [11, 7], [11, 13.5], [1, 13.5]], ['#5e4612', '#8f6f1a', '#c9a227', '#f0d27a'], { lx: 0.4, ly: 0.4 });
+  p.rect(1, 7, 10, 1, '#f0d27a');
+  circ(p, 6, 9.8, 1.3, '#16131a'); p.rect(5, 10, 2, 2, '#16131a');
+});
+S.ui_star = C(14, 14, (p) => {
+  const pts = [];
+  for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + (k * Math.PI) / 5, r = k % 2 ? 3 : 6.9; pts.push([7 + Math.cos(a) * r, 7.5 + Math.sin(a) * r]); }
+  fillLit(p, pts, ['#5e4612', '#8f6f1a', '#c9a227', '#f0d27a', '#fff3c4'], { lx: 0.35, ly: 0.4, bias: 0.12 });
+  p.px(5, 5, '#fff3c4'); p.px(6, 3, '#fff3c4'); p.px(7, 1, '#fffbe0');
+});
+// =================================================================== SPIRITS (14×14) & MASKS
+S.sp_wisp = C(14, 14, (p) => {
+  const cols = ['#24504c', '#3f8a80', '#7fd1c4', '#cff5ec', '#ffffff'];
+  shader(p, 0, 0, 13, 13, (x, y) => {
+    const cx = 6.6, cy = 8.6, r = 4.7, dx = x + 0.5 - cx, dy = y + 0.5 - cy;
+    let ins, nx = dx / r, ny = dy / r;
+    if (dy >= 0) ins = dx * dx + dy * dy <= r * r;
+    else { const hw = r * Math.pow(Math.max(0, 1 + dy / 9), 1.55); ins = Math.abs(dx + dy * 0.3) <= hw; nx = hw ? (dx + dy * 0.3) / hw * 0.8 : 0; ny = dy / 9; }
+    if (!ins) return null;
+    return lit(cols, sphere(nx, ny) * 0.92 + 0.08, x, y, 0.35);
+  });
+  p.px(5, 8, '#0b0a0d'); p.px(5, 9, '#16131a'); p.px(9, 8, '#0b0a0d'); p.px(9, 9, '#16131a');
+  p.px(11, 1, '#cff5ec'); p.px(12, 3, '#7fd1c4'); p.px(1, 11, '#3f8a80'); p.px(0, 13, '#24504c'); p.px(2, 13, '#24504c');
+});
+S.sp_warden = C(14, 14, (p) => {
+  ball(p, 7, 7, 6.2, ['#16242e', '#2a4556', '#4c7890', '#7fb0c8', '#bfe0ec']);
+  p.ring(7, 7, 6.4, '#0f1a22', 1);
+  pix(p, ['ffffff', 'feeeeI', 'feeeeI', 'feeeeI', '.feeI.', '..fI..', '......'], null, 4, 3);
+  p.rect(6, 4, 2, 5, '#4c7890'); p.rect(5, 5, 4, 1, '#4c7890');
+  p.px(3, 3, '#ffffff'); p.px(11, 3, '#bfe0ec');
+});
+S.sp_lantern = C(14, 14, (p) => {
+  p.ring(7, 1.6, 1.6, '#8e98a3', 1);
+  fillLit(p, [[4.4, 3.4], [9.6, 3.4], [11, 4.8], [3, 4.8]], ['#33373e', '#545a63', '#8e98a3', '#bccfd9']);
+  p.rect(3, 4, 8, 7, '#e8a33a'); p.rect(4, 5, 6, 5, '#f0d27a'); p.rect(5, 6, 4, 3, '#fff3c4');
+  p.poly([[7, 5], [8.6, 7.4], [7, 9.6], [5.4, 7.4]], '#fffbe0');
+  cyl(p, 3, 4, 1, 7, ['#33373e', '#545a63', '#8e98a3']); cyl(p, 10, 4, 1, 7, ['#33373e', '#545a63', '#8e98a3']);
+  fillLit(p, [[2, 11], [12, 11], [11, 13.5], [3, 13.5]], ['#33373e', '#545a63', '#8e98a3', '#bccfd9']);
+  p.px(1, 3, '#f0d27a'); p.px(12, 2, '#e8a33a'); p.px(13, 7, '#f0d27a'); p.px(0, 8, '#e8a33a');
+});
+S.sp_banshee = C(14, 14, (p) => {
+  p.poly([[1.4, 3.4], [7, 0.4], [12.6, 3.4], [13.6, 13.6], [11, 10.4], [9.6, 13.6], [7, 11], [4.4, 13.6], [3, 10.4], [0.4, 13.6]], '#4b3b5e');
+  p.poly([[2.6, 4], [7, 1.4], [11.4, 4], [12, 10], [10.6, 8], [9.4, 11], [7, 8.4], [4.6, 11], [3.4, 8], [2, 10]], '#7b5aa6');
+  ball(p, 7, 6.4, 3.9, ['#7b5aa6', '#b49ad6', '#e2d6f2', '#fbf3df'], 4.5);
+  p.poly([[4.4, 4.8], [6.4, 5.8], [6, 7], [4.4, 6.4]], '#0b0a0d'); p.poly([[9.6, 4.8], [7.6, 5.8], [8, 7], [9.6, 6.4]], '#0b0a0d');
+  p.ellipse(7, 9, 1.5, 1.9, '#0b0a0d'); p.px(7, 8, '#3a0b20');
+  p.px(5, 4, '#fbf3df'); p.px(0, 5, '#7b5aa6'); p.px(13, 6, '#7b5aa6');
 });
 
 defineSprites(S);
