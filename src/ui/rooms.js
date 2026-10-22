@@ -318,6 +318,17 @@ const treasure = simple('treasure', (g) => {
   return scr;
 }, { sig: () => 't' });
 
+// Scrollable event text with a "more below" hint.
+function evScroll(textEl) {
+  const sc = h('div.ev-scroll', textEl);
+  const hint = h('div.more-hint', '\u25BC more');
+  const wrap = h('div.ev-scrollwrap', sc, hint);
+  const check = () => hint.classList.toggle('on', sc.scrollHeight > sc.clientHeight + 6 && sc.scrollTop + sc.clientHeight < sc.scrollHeight - 12);
+  sc.addEventListener('scroll', check, { passive: true });
+  setTimeout(check, 60); setTimeout(check, 700); setTimeout(check, 1800);
+  return wrap;
+}
+
 // ------------------------------------------------------------------ event
 const event = {
   name: 'event',
@@ -374,7 +385,7 @@ const event = {
     body.appendChild(h('div.ev-wrap',
       h('div.ev-left', h('div.ev-frame', art),
         h('div.ev-head', speaker ? h('div.ev-speaker', sprFit(speaker, 36, 36)) : null, h('div.ev-title', page.title || (def && def.title) || 'Event'))),
-      h('div.ev-page', h('div.ev-scroll', textEl), choices)));
+      h('div.ev-page', evScroll(textEl), choices)));
     return scr;
   },
 };

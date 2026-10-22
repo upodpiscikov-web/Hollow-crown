@@ -271,6 +271,8 @@ Boss encounters need `name` (shown on the map). An act needs ≥4 easy, ≥8 har
 }
 ```
 - `fx` returns the next page id, or nothing (then `next:` or `end:` on the choice applies).
+  A returned page id of `'end'` (or `null`) leaves the event, so never name a page `end`.
+  `acts: 'any'` means Acts 1-3; list `4` explicitly for Act 4 events.
 - To start a fight: `await g.eventCombat(['ghoul','ghoul'], { resume: 'after', reward: { relic: 'random' } })`
   and return nothing — after the fight + rewards the event resumes at page `after`
   (omit `resume` to go straight back to the map).

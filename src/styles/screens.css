@@ -204,7 +204,7 @@
 
 /* ---------------------------------------------------------------- event */
 .ev-wrap { display: flex; gap: 14px; width: 100%; height: 100%; max-width: 860px; }
-.ev-left { width: 206px; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+.ev-left { width: 196px; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
 .ev-frame { padding: 6px; background: linear-gradient(180deg, #4a4250, #2a232f); border: 2px solid #0b0a0d; box-shadow: 0 0 0 2px var(--gold), 0 10px 26px rgba(0,0,0,.7); }
 .ev-art { background: #0b0a0d; display: flex; align-items: center; justify-content: center; min-width: 150px; min-height: 100px; } .ev-noart { opacity: .4; }
 .ev-head { display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -212,9 +212,13 @@
 .ev-speaker { width: 42px; height: 42px; flex: none; display: flex; align-items: center; justify-content: center; border: 2px solid #4d4553; background: #17131c; }
 .ev-page { flex: 1; min-width: 0; display: flex; flex-direction: column; background: rgba(12,9,14,.8); border: 1px solid #4d4553; border-radius: 4px; padding: 10px 12px 8px; }
 .ev-scroll { flex: 1 1 auto; overflow-y: auto; min-height: 60px; padding: 0 6px 14px 2px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 16px), transparent); mask-image: linear-gradient(180deg, #000 calc(100% - 16px), transparent); }
-.ev-text { font-size: 15px; line-height: 1.34; }
-.ev-choices { flex: none; display: flex; flex-direction: column; gap: 5px; margin-top: 6px; max-height: 58%; overflow-y: auto; }
-.ev-choices .choice { min-height: 40px; padding: 6px 12px; font-size: 14px; }
+.ev-text { font-size: 14.5px; line-height: 1.32; }
+.ev-scrollwrap { position: relative; flex: 1 1 auto; min-height: 60px; display: flex; flex-direction: column; }
+.ev-scrollwrap .ev-scroll { flex: 1 1 auto; }
+.more-hint { position: absolute; right: 10px; bottom: 2px; padding: 1px 10px; font: 9px var(--f-num); letter-spacing: .1em; color: var(--candle); background: rgba(10,8,12,.9); border: 1px solid var(--gold); border-radius: 10px; opacity: 0; transition: opacity .2s; pointer-events: none; text-transform: uppercase; }
+.more-hint.on { opacity: 1; animation: bob 1.2s ease-in-out infinite; }
+.ev-choices { flex: none; display: flex; flex-direction: column; gap: 4px; margin-top: 6px; max-height: 60%; overflow-y: auto; }
+.ev-choices .choice { min-height: 40px; padding: 5px 12px; font-size: 14px; }
 .ev-missing { text-align: center; max-width: 360px; }
 
 /* ---------------------------------------------------------------- act intro / throne / ending / death */

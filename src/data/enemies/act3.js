@@ -76,6 +76,14 @@ const cleanse = (g, e) => {
   }
 };
 
+// No fight may stall forever: after `from` turns an elite/boss gains 1 Might every round.
+const escalate = (g, e, from) => {
+  if (e.turns < from || e.data.escAt === e.turns) return;
+  e.data.escAt = e.turns;
+  buff(g, e, 'might', 1);
+  if (e.turns === from) toast(g, `${e.name} grows impatient.`);
+};
+
 const UNMOURNED = 'unmourned_name';
 const GLORIA = 12;
 const HOUR_LIMIT = 8;   // Hollow Crown: cards you may play each turn
@@ -562,6 +570,7 @@ defineEnemies([
       },
     },
     ai(g, e) {
+      escalate(g, e, 14);
       if (e.turns === 0) return 'whet';
       if (e.data.countdown === 1) return 'blow';
       if (e.data.countdown > 1) return g.lastMove(e, 'hack') ? 'drag' : 'hack';
@@ -580,6 +589,7 @@ defineEnemies([
       ret: heraldReturn,
     },
     ai(g, e) {
+      escalate(g, e, 14);
       if (e.data.revive) return 'ret';
       if (e.turns === 0) return 'fanfare';
       return g.aiPick(e, { note: 40, clarion: 35, fanfare: 25 }, { fanfare: 1, note: 2, clarion: 1 });
@@ -597,6 +607,7 @@ defineEnemies([
       ret: heraldReturn,
     },
     ai(g, e) {
+      escalate(g, e, 14);
       if (e.data.revive) return 'ret';
       if (e.turns === 0) return 'dirge';
       return g.aiPick(e, { toll: 45, dirge: 25, shroud: 30 }, { dirge: 1, shroud: 1, toll: 2 });
@@ -621,6 +632,7 @@ defineEnemies([
       },
     },
     ai(g, e) {
+      escalate(g, e, 14);
       if (e.turns === 0) return 'bless';
       const pens = living(g, 'gilt_penitent').length;
       if (pens < 2 && (e.data.canons || 0) < 2 && e.turns - (e.data.lastCanon ?? -9) >= 3 && !g.lastMove(e, 'canonize')) return 'canonize';
@@ -641,7 +653,7 @@ defineEnemies([
       guard: {
         name: 'Call the Guard', intent: 'summon',
         fx(g, e) {
-          e.data.lastGuard = e.turns;
+          e.data.lastGuard = e.turns; e.data.guards = (e.data.guards || 0) + 1;
           if (living(g, 'gilded_sentinel').length < 2) g.spawn('gilded_sentinel', { minion: true, hp: 22 });
         },
       },
@@ -664,11 +676,12 @@ defineEnemies([
       },
     },
     ai(g, e) {
+      escalate(g, e, 16);
       if (g.st(e, 'a3_hour_mark') === 1 && !e.data.markFresh) return 'rewrite';
       if (e.turns === 0) return 'guard';
       if (!e.data.marked && e.hp <= e.maxHp * 0.6) return 'mark';
       const w = { cane: 30, rapier: 25, dismiss: 20, decree: 15 };
-      if (living(g, 'gilded_sentinel').length < 2 && e.turns - (e.data.lastGuard ?? 0) >= 4) w.guard = 35;
+      if (living(g, 'gilded_sentinel').length < 2 && (e.data.guards || 0) < 4 && e.turns - (e.data.lastGuard ?? 0) >= 4) w.guard = 35;
       return g.aiPick(e, w, { cane: 1, rapier: 1, dismiss: 1, decree: 1, guard: 1 });
     },
   },
@@ -690,6 +703,7 @@ defineEnemies([
       },
     },
     ai(g, e) {
+      escalate(g, e, 16);
       if (g.st(e, 'a3_verse') >= GLORIA) return 'gloria';
       if (living(g, 'choir_singer').length < 3 && (e.data.breaths || 0) < 2 && e.turns - (e.data.lastBreath ?? -1) >= 3 && !g.lastMove(e, 'breath')) return 'breath';
       return g.aiPick(e, { psalm: 40, antiphon: 35, hush: 25 }, { psalm: 2, antiphon: 1, hush: 1 });
@@ -723,6 +737,7 @@ defineEnemies([
       kneel: { name: 'Kneel to Your King', intent: 'strongdebuff', fx(g, e) { debuff(g, e, 'weak', 2); debuff(g, e, 'exposed', 1); } },
     },
     ai(g, e) {
+      escalate(g, e, 16);
       if (e.turns % 3 === 0) return (e.turns / 3) % 2 === 0 ? 'wall' : 'vengeance';
       return g.aiPick(e, { blade: 45, sunder: 35, kneel: 20 }, { blade: 1, sunder: 1, kneel: 1 });
     },
@@ -748,6 +763,7 @@ defineEnemies([
       wither: { name: 'Wither', intent: 'strongdebuff', fx(g, e) { e.data.withers++; debuff(g, e, 'might', -1); debuff(g, e, 'weak', 2); } },
     },
     ai(g, e) {
+      escalate(g, e, 16);
       if (e.turns === 0) return 'bloom';
       const br = g.st(e, 'a3_black_draught');
       if (br >= 3 || (br >= 2 && rnd(g.crng) < 0.4)) return 'drink';
@@ -772,6 +788,7 @@ defineEnemies([
       },
     },
     ai(g, e) {
+      escalate(g, e, 16);
       let face;
       if (e.turns === 0) face = 'face_moth';
       else face = pick(g.crng, FACES.filter((f) => f !== faceOf(e)));
@@ -792,6 +809,7 @@ defineEnemies([
       channel: {
         name: 'Channel the Kept', intent: 'summon',
         fx(g, e) {
+          e.data.channels = (e.data.channels || 0) + 1;
           const n = e.turns === 0 ? 2 : 1;
           for (let i = 0; i < n; i++) {
             if (KEPT.reduce((t, id) => t + living(g, id).length, 0) >= 3) break;
@@ -816,11 +834,12 @@ defineEnemies([
       rites: { name: 'Last Rites', intent: 'strongdebuff', fx(g, e) { debuff(g, e, 'weak', 2); debuff(g, e, 'frail', 2); } },
     },
     ai(g, e) {
+      escalate(g, e, 16);
       if (e.turns === 0) return 'channel';
       const k = KEPT.reduce((t, id) => t + living(g, id).length, 0);
       if (k >= 3 && !g.lastMove(e, 'requiem')) return 'requiem';
       const w = { censer: 35, bleed: 15, rites: 20 };
-      if (k < 3) w.channel = 35;
+      if (k < 3 && (e.data.channels || 0) < 4) w.channel = 35;
       if (k >= 2) w.requiem = 15;
       return g.aiPick(e, w, { channel: 1, bleed: 1, rites: 1, censer: 2, requiem: 1 });
     },
@@ -868,6 +887,7 @@ defineEnemies([
       },
     },
     ai(g, e) {
+      escalate(g, e, 16);
       if (e.turns === 0) return 'names';
       const w = { grasp: 40, heave: 25, swell: 15 };
       if (sinceLast(e, 'names') >= 2) w.names = 20;
@@ -903,7 +923,7 @@ defineEnemies([
       decree: { name: 'Last Decree', intent: 'strongdebuff', fx(g, e) { debuff(g, e, 'weak', 2); debuff(g, e, 'frail', 2); } },
       held: {
         name: 'Call the Held', intent: 'summon',
-        fx(g, e) { for (let i = living(g, 'held_hand').length; i < 2; i++) g.spawn('held_hand', { minion: true }); },
+        fx(g, e) { e.data.calls = (e.data.calls || 0) + 1; for (let i = living(g, 'held_hand').length; i < 2; i++) g.spawn('held_hand', { minion: true }); },
       },
       resist: {
         name: 'Aldric Resists', intent: 'sleep',
@@ -914,10 +934,11 @@ defineEnemies([
       },
     },
     ai(g, e) {
+      escalate(g, e, 14);
       if (g.st(e, 'a4_aldric') === 1) return 'resist';
       if (e.turns === 0) return 'held';
       const w = { scepter: 35, reign: 30, decree: 20 };
-      if (!living(g, 'held_hand').length && !g.lastMove(e, 'held')) w.held = 30;
+      if (!living(g, 'held_hand').length && !g.lastMove(e, 'held') && (e.data.calls || 0) < 3) w.held = 30;
       return g.aiPick(e, w, { scepter: 1, reign: 1, decree: 1, held: 1 });
     },
     on: {
@@ -937,6 +958,7 @@ defineEnemies([
     init(g, e) { seen(g, e); g.addStatus(g.player, 'a4_hourglass', HOUR_LIMIT, { silent: true }); },
     moves: crownMoves,
     ai(g, e) {
+      escalate(g, e, 12);
       // The Crown re-asserts its hold every round, even if a cleanse tore it off.
       if (g.st(g.player, 'a4_hourglass') !== HOUR_LIMIT) setStatus(g, g.player, 'a4_hourglass', HOUR_LIMIT, true);
       if (e.turns === 0) return 'hold';

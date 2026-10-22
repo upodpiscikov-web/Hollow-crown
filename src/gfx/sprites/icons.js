@@ -202,7 +202,7 @@ function art(mood, obj, o = {}) {
       if (o.back) o.back(p, m);
       const L = new Painter(32, 24);
       obj(L, m);
-      finishLayer(L, o.rim ?? 0.8);
+      finishLayer(L, o.rim ?? 0.8, o.oc === undefined ? '#0b0a0d' : o.oc);
       if (o.shadow !== false) blit(p, L, 1, 1, [0, 0, 0, 110]);
       blit(p, L);
       if (o.fx) o.fx(p, m);
@@ -921,18 +921,14 @@ S.art_grave = art('night', (p) => {
   p.line(19, 3, 21, 7, '#363040');
 }, { gy: 10, fx: (p) => { p.px(8, 20, '#5c7a2a'); p.px(23, 20, '#5c7a2a'); p.px(24, 19, '#3d5226'); } });
 S.art_wing = art('night', (p) => {
-  const cols = ['#363040', '#57535c', '#79747a', '#a19c9c', '#cfc6b0'];
-  const jx = 26, jy = 4;
-  for (let k = 0; k < 7; k++) {
-    const a = Math.PI * (0.58 + k * 0.1), L = 12 + (6 - k) * 1.4 + 3;
-    const pts = [];
-    for (let t = 0; t <= 1; t += 0.06) pts.push([jx + Math.cos(a - t * 0.12) * L * t, jy + Math.sin(a - t * 0.12) * L * t, 2.6 - t * 1.5]);
-    tube(p, pts, cols.map((c, i) => cols[Math.max(0, i - (k % 2 ? 1 : 0))]), { d: 0.2 });
-  }
-  const arm = []; for (let t = 0; t <= 1; t += 0.06) arm.push([27 - t * 13, 3 + t * 3 - Math.sin(t * Math.PI) * 1.4, 1.8 - t * 0.5]);
-  tube(p, arm, ['#57535c', '#a19c9c', '#cfc6b0', '#fbf3df', '#ffffff']);
-  circ(p, 27, 3.6, 2, '#a19c9c'); p.px(26, 3, '#fbf3df');
-}, { gx: 18 });
+  const tips = [[2, 9], [5, 19], [12, 22], [20, 17]];
+  p.poly([[27, 2], [14, 4], [2, 9], [3.6, 14.4], [5, 19], [8.4, 18], [12, 22], [16.2, 19], [20, 17], [22.4, 11], [27.5, 9]], '#3a3047', { shade: 0.35 });
+  const bone = (x1, y1, x2, y2) => { p.line(x1, y1, x2, y2, '#16131a', 2); p.line(x1, y1 - 1, x2, y2 - 1, '#a19c9c', 1); };
+  bone(27, 3, 14, 5); for (const [x, y] of tips) { p.line(14, 5, x, y, '#16131a', 2); p.line(14, 4, x, y - 1, '#a19c9c', 1); }
+  p.line(27, 3, 20, 17, '#16131a', 1);
+  circ(p, 14, 5, 1.8, '#cfc6b0'); circ(p, 27, 3, 2.2, '#a19c9c'); p.px(26, 2, '#fbf3df'); p.px(13, 4, '#fbf3df');
+  for (const [x, y] of tips) p.px(x, y, '#fbf3df');
+}, { gx: 15, rim: 0.4 });
 S.art_web = art('night', (p) => {
   const cx = 16, cy = 10, N = 8, cols = '#a19c9c';
   const sp = [];
@@ -1027,7 +1023,7 @@ S.art_wolf = art('night', (p) => {
   p.px(2, 17, '#1f1b27'); p.px(1, 16, '#1f1b27');
   p.px(24, 3, '#e0644c');
   p.rect(0, 20, 32, 4, '#16131a'); p.rect(2, 19, 5, 1, '#16131a'); p.rect(17, 19, 6, 1, '#16131a'); p.rect(27, 19, 4, 1, '#16131a');
-}, { rim: 0.35, shadow: false, gy: 8, gx: 22, back: (p) => { ball(p, 21.5, 8.5, 8.6, ['#57535c', '#79747a', '#a19c9c', '#cfc6b0', '#e8dcc0']); p.px(18, 6, '#a19c9c'); p.px(24, 12, '#79747a'); p.px(19, 11, '#a19c9c'); } });
+}, { rim: 0, oc: null, shadow: false, gy: 8, gx: 22, back: (p) => { p.ellipse(21.5, 8.5, 8.8, 8.8, '#e8dcc0'); p.ellipse(20.5, 7.5, 7.6, 7.6, '#f2e8d0'); for (const [x, y, r] of [[18, 6, 1.3], [24, 12, 1.6], [19, 12, 1]]) p.ellipse(x, y, r, r, '#cfc6b0'); } });
 S.art_raven = art('night', (p) => {
   pix(p, [
     '.....1222.........',
@@ -1090,12 +1086,12 @@ S.art_tree = art('night', (p) => {
   const br = (x, y, a, L, w, d) => {
     const ex = x + Math.cos(a) * L, ey = y + Math.sin(a) * L;
     p.line(x, y, ex, ey, '#16131a', w);
-    if (d > 0) { br(ex, ey, a - 0.62 - d * 0.04, L * 0.74, Math.max(1, w - 1), d - 1); br(ex, ey, a + 0.52, L * 0.7, Math.max(1, w - 1), d - 1); if (d > 2) br(ex, ey, a - 0.05, L * 0.6, 1, d - 2); }
+    if (d > 0) { br(ex, ey, a - 0.7 - d * 0.05, L * 0.78, 1, d - 1); br(ex, ey, a + 0.62, L * 0.74, 1, d - 1); if (d > 2) br(ex, ey, a - 0.04, L * 0.7, 1, d - 2); }
   };
-  br(16, 23, -Math.PI / 2 - 0.04, 6.2, 3, 4);
-  p.poly([[11, 23], [13.4, 20.4], [18.6, 20.4], [21, 23]], '#16131a');
-  p.px(10, 23, '#16131a'); p.px(22, 23, '#16131a');
-}, { rim: 0, gy: 10, shadow: false, back: (p) => { ball(p, 16, 10.5, 9, ['#57535c', '#79747a', '#a19c9c', '#cfc6b0', '#e8dcc0']); p.px(12, 6, '#a19c9c'); p.px(20, 14, '#79747a'); p.px(14, 14, '#a19c9c'); },
+  br(16, 23, -Math.PI / 2 - 0.05, 6, 2, 4);
+  p.line(16, 23, 16, 15, '#16131a', 3);
+  p.poly([[11, 23.5], [13.6, 20.6], [18.4, 20.6], [21, 23.5]], '#16131a');
+}, { rim: 0, oc: null, gy: 10, shadow: false, back: (p) => { p.ellipse(16, 10, 9.4, 9.4, '#e8dcc0'); p.ellipse(15, 9, 8, 8, '#f2e8d0'); for (const [x, y, r] of [[12, 6, 1.4], [20, 14, 1.8], [11, 13, 1], [19, 5, 0.9]]) p.ellipse(x, y, r, r, '#cfc6b0'); },
   fx: (p) => { p.px(4, 18, '#363040'); p.px(27, 19, '#363040'); } });
 S.art_sigil = art('blood', (p) => {
   p.ring(16, 11.5, 10, '#b8302a', 1); p.ring(16, 11.5, 8.5, '#8a1c1c', 1);
@@ -1105,29 +1101,19 @@ S.art_sigil = art('blood', (p) => {
   circ(p, 16, 11.5, 1.5, '#fbf3df');
 }, { shadow: false, rim: 0, fx: (p) => bloom(p, 16, 11.5, 10, '#e0644c', 35) });
 S.art_prayer = art('gold', (p) => {
-  pix(p, sym([
-    '....PP.',
-    '...PPP.',
-    '...PPPp',
-    '..PPPPp',
-    '..PP8Pp',
-    '..PPPPp',
-    '.PPPPPp',
-    '.PP8PPp',
-    '.PPPPPp',
-    'PPPPPPp',
-    'PP8PPPp',
-    'PPPPPPp',
-    'PPPPPpp',
-    'PPPPppU',
-    'UUUUUUU',
-    'UUUUUUU',
-  ], false, 3), { 8: '#f0e2d0', P: '#c9a48a', p: '#8a6450', U: '#4b3b5e' }, 9, 4);
-  p.px(15, 4, '#0b0a0d'); p.px(16, 4, '#0b0a0d'); p.px(15, 5, '#5a3a30'); p.px(16, 5, '#5a3a30');
-  p.rect(9, 18, 14, 1, '#2b2135');
-}, { gy: 10, back: (p) => {
-  for (let k = 0; k < 11; k++) { const a = -Math.PI / 2 + (k - 5) * 0.28; p.line(16, 6, Math.round(16 + Math.cos(a) * 15), Math.round(6 + Math.sin(a) * 15), [240, 210, 122, 50]); }
-}, fx: (p) => bloom(p, 16, 4, 6, '#fff3c4', 50) });
+  // gothic window: pointed arch, glowing glass, a dark cross
+  const arch = (pts, c) => p.poly(pts, c);
+  arch([[8, 23], [8, 9], [10, 5], [16, 0.5], [22, 5], [24, 9], [24, 23]], '#57535c');
+  arch([[9, 23], [9, 9.4], [10.8, 5.8], [16, 2], [21.2, 5.8], [23, 9.4], [23, 23]], '#363040');
+  arch([[11, 22], [11, 9.6], [12.4, 6.8], [16, 4], [19.6, 6.8], [21, 9.6], [21, 22]], '#c9a227');
+  arch([[12, 22], [12, 10], [13.2, 7.6], [16, 5.2], [18.8, 7.6], [20, 10], [20, 22]], '#f0d27a');
+  p.rect(12, 14, 8, 8, '#fff3c4');
+  p.rect(15, 6, 2, 15, '#2b2135'); p.rect(12, 10, 8, 2, '#2b2135');
+  p.px(8, 8, '#a19c9c'); p.px(9, 6, '#a19c9c'); p.px(11, 4, '#a19c9c'); p.px(14, 2, '#cfc6b0'); p.px(16, 1, '#cfc6b0');
+  p.rect(6, 22, 20, 2, '#363040'); p.rect(6, 22, 20, 1, '#79747a');
+}, { gy: 10, rim: 0.5, back: (p) => {
+  for (let k = 0; k < 11; k++) { const a = -Math.PI / 2 + (k - 5) * 0.3; p.line(16, 12, Math.round(16 + Math.cos(a) * 17), Math.round(12 + Math.sin(a) * 17), [240, 210, 122, 38]); }
+}, fx: (p) => bloom(p, 16, 14, 7, '#fff3c4', 30) });
 S.art_cloak = art('violet', (p) => {
   pix(p, sym([
     '.....444',

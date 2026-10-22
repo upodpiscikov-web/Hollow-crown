@@ -668,7 +668,9 @@ export const runMethods = {
     const run = this.run;
     return Object.values(EVENTS).filter((e) => {
       if (!!e.story !== !!storyOnly) return false;
-      if (e.acts && e.acts !== 'any' && !e.acts.includes(run.act)) return false;
+      // 'any' means Acts 1-3; Act 4 (the descent) only shows events that list it explicitly.
+      if (e.acts === 'any') { if (run.act > 3) return false; }
+      else if (e.acts && !e.acts.includes(run.act)) return false;
       if (e.hero && e.hero !== run.hero) return false;
       if (run.seenEvents.includes(e.id)) return false;
       if ((e.story || e.unique) && this.meta.seenEvents[e.id]) return false;
