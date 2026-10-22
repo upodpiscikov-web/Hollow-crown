@@ -830,13 +830,13 @@ export const runMethods = {
       meta.flags['won_' + run.hero] = true;
     } else {
       meta.deaths++;
-      const killer = run.combat ? run.combat.encounter : run.event ? 'event:' + run.event.id : 'unknown';
+      const killer = (run.combat && run.combat.encounter) || (run.combat && run.combat.fromEvent ? 'event:' + run.combat.fromEvent.id : run.event ? 'event:' + run.event.id : 'unknown');
       meta.deathsBy[killer] = (meta.deathsBy[killer] || 0) + 1;
     }
     H.bestAct = Math.max(H.bestAct || 0, run.act);
     meta.lastRun = {
       hero: run.hero, won, ending: ending || null, act: run.act, floor: run.floor, asc: run.asc,
-      killer: won ? null : (run.combat ? run.combat.encounter : run.event ? run.event.id : null),
+      killer: won ? null : ((run.combat && run.combat.encounter) || (run.combat && run.combat.fromEvent ? run.combat.fromEvent.id : run.event ? run.event.id : null)),
       renown, levelUp: H.level > before ? H.level : 0, stats: { ...s, time: Date.now() - s.start },
       seen: false,
     };
