@@ -487,9 +487,9 @@ defineEvents([
         choices: [
           { label: `[Bet him he can't guess your next words] Even odds: gain 100 gold, or lose 60 gold.`,
             fx(g) { return roll(g, 0.5) ? 'bet_won' : 'bet_lost'; } },
-          { label: () => `[Accept the Regent's courtesy] Obtain ${relicFull(g0(), 'regents_seal')}. Become Cursed — ${curseName('doubt')} (you will be watched).`,
+          { label: (g) => `[Accept the Regent's courtesy] Obtain ${relicFull(g, 'regents_seal')}. Become Cursed — ${curseName('doubt')} (you will be watched).`,
             fx(g) { giveRelic(g, 'regents_seal', 'uncommon'); addCurse(g, 'doubt'); g.setFlag('a3_took_seal'); g.unlockLore('lore_a3_third_bureau'); return 'courtesy'; } },
-          { label: () => `[Upend the table] Fight the Bureau's watchers. Reward: ${relicFull(g0(), 'regents_seal')}.`,
+          { label: (g) => `[Upend the table] Fight the Bureau's watchers. Reward: ${relicFull(g, 'regents_seal')}.`,
             async fx(g) { g.unlockLore('lore_a3_third_bureau'); await g.eventCombat(foes(g, 3, ['crown_zealot', 'regents_inquisitor']), { resume: 'after_bureau', reward: { relic: rewardRelic(g, 'regents_seal') } }); } },
           { label: `[Decline the tea and walk away]`, end: true },
         ],
@@ -735,7 +735,7 @@ defineEvents([
             cantor: `The cassock puppet is the only one not hit. He kneels at the bedside, the King whispers in his ear, and he sits in the corner for the rest of the play while the others are mallet-ed. "He knows too much," a small girl tells you gravely. "He's just supposed to *know.*"`,
           })),
         choices: [
-          { label: `[Watch to the end] Lose 40 gold (the hat comes round, and stops at you). Obtain ${relicFull(g0(), 'pells_bell')}.`, req: goldReq(40),
+          { label: (g) => `[Watch to the end] Lose 40 gold (the hat comes round, and stops at you). Obtain ${relicFull(g, 'pells_bell')}.`, req: goldReq(40),
             fx(g) { g.loseGold(40); giveRelic(g, 'pells_bell', 'uncommon'); g.unlockLore('lore_a3_four_heirs'); return 'watched'; } },
           { label: `[Pick the grey men's pockets] Even odds: gain 70 gold, or lose 8 HP when they catch your wrist.`, req: hpReq(8),
             fx(g) { g.unlockLore('lore_a3_four_heirs'); if (roll(g, 0.5)) { g.gainGold(70); return 'picked'; } g.hurt(8); return 'caught'; } },
@@ -777,11 +777,6 @@ defineEvents([
 ]);
 
 // ------------------------------------------------------------------ shared page pieces
-// g0() stands in for "the current game" inside static labels that need a relic's real text:
-// labels given as functions receive (g, data), so use that where possible. Static pages keep a
-// module-level handle that is refreshed by each label call.
-function g0() { return g0.current; }
-
 function expectedLine(g) {
   const bits = [];
   if (g.flag('crane_knows')) bits.push(`"No pretence between us, now that his lordship has spoken to you," he adds comfortably.`);
