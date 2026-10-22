@@ -86,11 +86,13 @@ const title = {
       menu));
     scr.appendChild(h('div.title-foot', 'Tap anywhere to wake the hour'));
     root.appendChild(scr);
-    // Drifting ash
-    this.ash = setInterval(() => { if (!document.hidden && !UI.reduced) particles(Math.random() * innerWidth, -4, 'ash', { n: 2, sp: 14, g: 40, life: 5200, wob: 20, drag: 1 }); }, 1500);
+    // Drifting ash: compositor-only CSS (no JS loop while idle).
+    const ash = h('div.ash-layer');
+    for (let i = 0; i < 14; i++) ash.appendChild(h('i', { style: { left: (i * 7.3 + (i % 3) * 2) % 100 + '%', animationDuration: 9 + (i * 1.7) % 7 + 's', animationDelay: -((i * 2.3) % 12) + 's', width: (2 + (i % 3)) + 'px', height: (2 + (i % 3)) + 'px', opacity: 0.35 + (i % 4) * 0.12 } }));
+    scr.insertBefore(ash, scr.querySelector('.title-wrap'));
     if (UI.dev) scr.appendChild(h('div.dev-tag', 'DEV'));
   },
-  unmount() { clearInterval(this.ash); },
+  unmount() {},
 };
 
 // ------------------------------------------------------------------ hub
@@ -178,7 +180,7 @@ const hub = {
     const [who, text] = this.lines[this.idx];
     const pid = speakerPortrait(who);
     const last = this.idx === this.lines.length - 1;
-    const box = h('div.dialog' + (who === 'crown' ? '.crown' : ''),
+    const box = h('div.dialog' + (who === 'crown' ? '.crown' : who === 'narrator' ? '.narrator' : ''),
       pid ? h('div.dlg-portrait', sprFit(pid, 64, 64)) : null,
       h('div.dlg-body', h('div.dlg-name', speakerName(who)), h('div.dlg-text', { html: inline(text) }), h('div.dlg-next', last ? '✦' : '▼')));
     scr.appendChild(box);

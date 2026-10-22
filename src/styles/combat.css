@@ -60,7 +60,7 @@
 .blk::before { inset: 0; background: #0b0a0d; }
 .blk::after { inset: 2px; background: linear-gradient(180deg, #8fc4ec, #3a6a90); }
 .blk-n { position: relative; z-index: 1; font: 11px var(--f-num); color: #fff; text-shadow: 1px 1px 0 #0b0a0d, -1px -1px 0 #0b0a0d, 1px -1px 0 #0b0a0d, -1px 1px 0 #0b0a0d; }
-.ent-st { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; min-height: 24px; margin-top: 4px; max-width: 150px; }
+.ent-st { position: relative; display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start; gap: 3px; height: 24px; margin-top: 4px; max-width: 150px; }
 .st-ic { position: relative; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: rgba(10,8,12,.78); border: 1px solid #8a7a3a; border-radius: 4px; }
 .st-ic.debuff { border-color: #9a4a5a; background: rgba(40,10,20,.8); }
 .st-ic .glyph { font-size: 11px; }
@@ -77,7 +77,7 @@
 .sp-slot { width: 26px; height: 26px; border: 2px dashed #5a5f66; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(10,8,12,.6); }
 .sp-slot.full { border: 2px solid var(--spirit); background: rgba(127,209,196,.16); box-shadow: 0 0 6px rgba(127,209,196,.5); }
 .sp-slot.full:first-child { border-color: var(--candle); }
-.oaths { display: flex; flex-direction: column; gap: 3px; margin-top: 3px; align-items: stretch; }
+.oaths { position: absolute; left: calc(100% - 6px); top: 34px; width: 150px; display: flex; flex-direction: column; gap: 3px; align-items: stretch; z-index: 3; }
 .oath { display: flex; align-items: center; gap: 4px; padding: 1px 7px 1px 3px; background: rgba(70,14,14,.85); border: 1px solid var(--gold); border-radius: 3px; font-size: 10.5px; max-width: 150px; }
 .oath-n { font: 11px var(--f-num); color: var(--candle); } .oath-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 

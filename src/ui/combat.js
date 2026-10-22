@@ -1005,7 +1005,7 @@ export const combatScreen = {
       flash(rec.fl, 200);
       shake(rec.body, d.e.isPlayer ? 7 : 5, 300);
       particlesOn(rec.body, d.type === 'burn' ? 'ember' : d.type === 'spirit' ? 'spirit' : 'blood', { at: 0.45 });
-      sfx(d.e.isPlayer ? 'hurt' : d.type === 'attack' ? 'hit' : 'hitMagic');
+      sfx(d.e.isPlayer ? 'hurt' : d.unblocked >= 16 ? 'crit' : d.type === 'attack' ? 'hit' : 'hitMagic');
       if (d.unblocked >= 18 || (d.e.isPlayer && d.unblocked >= 12)) screenShake(d.unblocked >= 30 ? 12 : 7);
     } else if (!d.blocked && d.amount === 0) floatText(rec.body, '0', 'blocked');
     this.markEnt(d.e);
@@ -1100,8 +1100,8 @@ export const combatScreen = {
     sfx(done ? 'oathDone' : 'oath');
     const seal = h('div.oath-stamp' + (done ? '.done' : ''), icon('st_' + ((def && def.icon) || 'oath'), 4, '', '✦'), h('span', done ? 'Oath Fulfilled' : 'Oath Sworn'), h('small', def ? def.name : ''));
     const r = stageRect(rec.body);
-    seal.style.left = (r.cx + 40) + 'px';
-    seal.style.top = (r.y + 10) + 'px';
+    seal.style.left = (r.cx + 150) + 'px';
+    seal.style.top = (r.y + r.h * 0.35) + 'px';
     document.getElementById('fx').appendChild(seal);
     anim(seal, [
       { opacity: 0, transform: 'translate(-50%,-50%) scale(2.2) rotate(-12deg)' },
