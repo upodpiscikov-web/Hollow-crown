@@ -9,6 +9,7 @@
 //                             [--enc]             per-encounter table (Act 1)
 //                             [--acts]            fight tables for every act, not only Act 1
 //                             [--brace 0.6]       model the timed Brace window: the human taps in time 60% of the time (default 0 = off)
+//                             [--scale-dmg 1.3]   multiply all enemy attack damage (Acts 1-3) by 1.3, for what-if runs
 //                             [--legacy]          the pre-revamp game: no Strike/Guard/Special, Act 1 = 15 floors, HP x1
 //                             [--meta fresh]      level-0 profile (default: everything unlocked, like tools/sim.mjs)
 //                             [--turn-sec 20] [--node-sec 25] [--reward-sec 0]   minutes model
@@ -28,6 +29,7 @@ import { pathToFileURL } from 'node:url';
 
 // ------------------------------------------------------------------ small helpers
 const pct = (a, b) => (b ? (100 * a) / b : 0);
+const sum = (xs) => xs.reduce((s, x) => s + x, 0);
 const avg = (xs) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0);
 const f1 = (x) => (Number.isFinite(x) ? x.toFixed(1) : '-');
 
@@ -52,6 +54,19 @@ export function applyOverride(spec) {
   const roots = { pace: PACE, hero: HEROES, enemy: ENEMIES };
   if (!roots[head]) throw new Error('bad --set root ' + head);
   setPath(roots[head], rest.join('.'), value);
+}
+
+// Sim-only: multiply every enemy attack in Acts 1-3 by k (Act 1 via its move numbers, Acts 2-3 via PACE[act].dmg).
+// Used to answer "how much harder would everything have to hit if the human braces well?".
+export function scaleEnemyDamage(k) {
+  for (const e of Object.values(ENEMIES)) {
+    if (e.act !== 1) continue;
+    for (const m of Object.values(e.moves || {})) {
+      if (typeof m.dmg === 'number') m.dmg = Math.max(1, Math.round(m.dmg * k));
+      else if (typeof m.dmg === 'function') { const f = m.dmg; m.dmg = (g, en) => Math.round(f(g, en) * k); }
+    }
+  }
+  for (const a of [2, 3]) PACE[a].dmg = (PACE[a].dmg ?? 1) * k;
 }
 
 // ------------------------------------------------------------------ card valuation for reward / shop / UI picks
@@ -102,7 +117,8 @@ async function playRun(hero, seed, cfg) {
     // no ui.brace by default: the timed Brace window is skipped in headless play (--brace P models a human
     // who taps in time with probability P)
   };
-  if (cfg.brace > 0) ui.brace = async () => rnd(rng) < cfg.brace;
+  let windows = 0;
+  if (cfg.brace > 0) ui.brace = async () => { windows++; return rnd(rng) < cfg.brace; };
   const g = new Game({ ui });
   g.meta = freshMeta();
   if (cfg.meta !== 'fresh') {
@@ -124,6 +140,7 @@ async function playRun(hero, seed, cfg) {
     const P = g.player;
     const hp0 = P.hp, maxHp = P.maxHp, act = g.run.act, floor = g.run.floor;
     let guard = 0;
+    windows = 0;
     while (g.run && g.run.combat === cb && cb.phase === 'player' && guard++ < 400) {
       if (P.hp < P.maxHp * 0.4) {
         const slot = g.run.potions.findIndex((p) => p && POTIONS[p] && !POTIONS[p].revive);
@@ -145,7 +162,7 @@ async function playRun(hero, seed, cfg) {
     const rec = {
       act, floor, enc: cb.encounter || (cb.fromEvent ? 'event:' + cb.fromEvent.id : '?'), pool: enc ? pool : 'event',
       turns: cb.turn, hpLost: Math.max(0, cb.tot.hpLost), maxHp, hp0, won: cb.result === 'won',
-      specials: cb.tot.specials || 0, cards: cb.tot.cards,
+      specials: cb.tot.specials || 0, cards: cb.tot.cards, windows,
     };
     out.fights.push(rec);
     if (act === 1) out.act1.turns += cb.turn;
@@ -356,6 +373,10 @@ function report(result, cfg) {
     lines.push(`Act 1 time (cleared runs) ${f1(s.act1MinCleared)} min  = ${f1(s.act1Turns)} turns x ${cfg.turnSec}s + ${f1(s.act1Nodes)} non-combat nodes x ${cfg.nodeSec}s${cfg.rewardSec ? ` + rewards x ${cfg.rewardSec}s` : ''}   (all runs, deaths included: ${f1(s.act1MinAll)} min; ${f1(s.act1Fights)} fights/run; potions used ${f1(s.potions)}/run)`);
     lines.push('Act 1 fights (map fights; "event" = fights started from events):');
     lines.push(fightTable(s.a1Fights, 'pool'));
+    if (cfg.brace) {
+      const w = (act) => { const fs = s.fights.filter((f) => f.act === act); return `${f1(avg(fs.map((f) => f.windows)))}/fight, ${f1(sum(fs.map((f) => f.windows)) / Math.max(1, sum(fs.map((f) => f.turns))))}/turn`; };
+      lines.push(`Brace windows opened: Act 1 ${w(1)}   Act 2 ${w(2)}   Act 3 ${w(3)}`);
+    }
     if (cfg.acts && !cfg.act1Only) for (const a of [2, 3, 4]) {
       const fs = s.fights.filter((f) => f.act === a);
       if (fs.length) { lines.push(`Act ${a} fights:`); lines.push(fightTable(fs, 'pool')); }
@@ -408,6 +429,7 @@ if (isMain) {
     meta: one('meta', 'full'), turnSec: +one('turn-sec', 20), nodeSec: +one('node-sec', 25), rewardSec: +one('reward-sec', 0), brace: +one('brace', 0),
   };
   if (cfg.legacy) { PACE[1] = { floors: 15, paths: 6, hp: 1 }; for (const a of [2, 3]) delete PACE[a]; }
+  if (one('scale-dmg', false)) scaleEnemyDamage(+one('scale-dmg', 1));
   for (const s of many('set')) applyOverride(s);
   const result = await simulate(cfg);
   console.log(report(result, cfg));

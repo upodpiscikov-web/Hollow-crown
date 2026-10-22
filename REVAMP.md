@@ -12,7 +12,7 @@ buttons + speed & auto buttons + timed Brace; an act should take about **15 minu
 
 | Feature | Where | Notes |
 |---|---|---|
-| Hero actions Strike / Guard / Special | `src/engine/actions.js`, hero entries in `src/data/heroes.js` | Strike & Guard: free, once per turn (4 dmg / 4 Block). Special: hero move, usable when the **Momentum meter** is full (max 6). |
+| Hero actions Strike / Guard / Special | `src/engine/actions.js`, hero entries in `src/data/heroes.js` | Strike & Guard: free, once per turn (per-hero values, e.g. Knight 5 dmg / 3 Block). Special: hero move, usable when the **Momentum meter** is full (per-hero max 7–12, see BALANCE_NOTES.md). |
 | Momentum meter | `cb.act.meter` | +1 per card played, +1 per Strike/Guard, +1 per enemy hit taken, +2 per successful Brace. Resets per combat; Special resets it to 0. |
 | Timed Brace | `braceWindow()` in `combat.js` | Before a heavy enemy attack the engine awaits `g.ui.brace(...)`. Success → that attack deals 60% damage and +2 meter. At most 2 windows per enemy phase; light hits never trigger it. |
 | Auto suggestions | `g.suggestPlay()` | Heuristic "next sensible move" for the Auto button. |

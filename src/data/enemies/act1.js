@@ -23,6 +23,12 @@ import { defineStatuses, defineEnemies, defineEncounters, defineTexts, defineCar
 import { defineSprites, PAL } from '../../gfx/sprite.js';
 import { int } from '../../engine/rng.js';
 
+// PACING: the numbers below are tuned together with src/engine/pace.js and the hero actions (see
+// BALANCE_NOTES.md; measure with `node tools/act1-stats.mjs --act1 --enc`). Fights are meant to end in
+// 2-3 turns (elites 3-4, bosses 5-7), so enemy HP is low (elites x0.6, bosses x0.5 in pace.js) and attacks
+// hit about twice as hard as the first draft: every enemy gets one or two telegraphed hits you have to
+// answer (kill it, Block it, Brace it). Mother of Rats' Teeming step and the Sheriff's Noose scale with that.
+
 // ------------------------------------------------------------------ helpers
 const count = (g, id) => g.enemies.filter((x) => x.id === id).length;
 const flee = (g, e) => {
@@ -193,7 +199,7 @@ defineEnemies([
     },
   },
   {
-    id: 'gibbet_crow', name: 'Gibbet Crow', kind: 'normal', act: 1, hp: [9, 12], sprite: 'en_gibbet_crow',
+    id: 'gibbet_crow', name: 'Gibbet Crow', kind: 'normal', act: 1, hp: [12, 15], sprite: 'en_gibbet_crow',
     desc: 'Fat on the hanged. It has learned that wherever you walk, there will be more to eat.',
     init(g, e) { g.addStatus(e, 'carrion', 4, { silent: true }); },
     moves: {
@@ -233,7 +239,7 @@ defineEnemies([
     desc: 'They smear their faces with the ash of Ashfall and call it sacrament. Every prayer makes the next blow heavier.',
     moves: {
       rite: { name: 'Ashen Rite', intent: 'buff', fx(g, e) { g.apply(e, 'rite', 3, e); } },
-      lash: { name: 'Cinder Lash', intent: 'atk', dmg: 11 },
+      lash: { name: 'Cinder Lash', intent: 'atk', dmg: 13 },
       scatter: { name: 'Scatter Ash', intent: 'atkdebuff', dmg: 6, fx(g) { g.addCard('ash', 'discard'); } },
     },
     ai(g, e) {
@@ -263,7 +269,7 @@ defineEnemies([
       loose: { name: 'Loose', intent: 'atk', dmg: 22 },
       pin: { name: 'Pinning Shot', intent: 'atkdebuff', dmg: 7, fx(g, e) { g.apply(g.player, 'dread', 1, e); } },
     },
-    ai(g, e) { return step(e, ['pavise', 'loose', 'pin']); },
+    ai(g, e) { return step(e, ['loose', 'pavise', 'pin']); }, // opens with the big shot: kill him, block it, or Brace
   },
   {
     id: 'bog_leech', name: 'Bog Leech', kind: 'normal', act: 1, hp: [15, 18], sprite: 'en_bog_leech',

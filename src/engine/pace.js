@@ -9,8 +9,8 @@
 //   hpElite / hpBoss / dmgElite / dmgBoss: optional extra multipliers (on top of hp / dmg) for elites / bosses
 export const PACE = {
   1: { floors: 9, paths: 4, hp: 1, hpElite: 0.6, hpBoss: 0.5, dmg: 1 },
-  2: { hp: 1, hpElite: 0.85, hpBoss: 0.65, dmg: 1.5 },
-  3: { hp: 1, hpElite: 0.85, hpBoss: 0.75, dmg: 1.85, dmgBoss: 1.5 },
+  2: { hp: 1, hpElite: 0.7, hpBoss: 0.65, dmg: 1.6, dmgElite: 1.15 },
+  3: { hp: 1, hpElite: 0.7, hpBoss: 0.75, dmg: 1.95, dmgElite: 1.15, dmgBoss: 1.5 },
 };
 const DEFAULT = { floors: 15, paths: 6, hp: 1, dmg: 1, hpElite: 1, hpBoss: 1, dmgElite: 1, dmgBoss: 1 };
 export const paceOf = (act) => {

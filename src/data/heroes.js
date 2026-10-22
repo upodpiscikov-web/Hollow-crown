@@ -51,7 +51,7 @@ Object.assign(HEROES.knight, {
   special: {
     name: 'Shield Bash', icon: 'act_special_knight', target: 'enemy',
     v: { dmg: 12, blk: 8 },
-    desc: 'Deal 12 damage and gain 8 Block.',
+    get desc() { return `Deal ${this.v.dmg} damage and gain ${this.v.blk} Block.`; },
     use(g, t) { g.attack(t, this.v.dmg); g.block(this.v.blk); },
   },
 });
@@ -59,8 +59,8 @@ Object.assign(HEROES.witch, {
   actions: { strike: { dmg: 4 }, guard: { blk: 5 }, meterMax: 10 },
   special: {
     name: 'Plague Burst', icon: 'act_special_witch', target: 'none',
-    v: { rot: 6, brew: 1 },
-    desc: 'Apply 6 Rot to ALL enemies. Brew 1.',
+    v: { rot: 7, brew: 1 },
+    get desc() { return `Apply ${this.v.rot} Rot to ALL enemies. Brew ${this.v.brew}.`; },
     use(g) { g.applyAll('rot', this.v.rot); g.brew(this.v.brew); },
   },
 });
@@ -69,7 +69,7 @@ Object.assign(HEROES.wren, {
   special: {
     name: 'Shift & Slash', icon: 'act_special_wren', target: 'none',
     v: { knives: 2 },
-    desc: 'Shift to your next Mask. Add 2 Knives to your hand.',
+    get desc() { return `Shift to your next Mask. Add ${this.v.knives} Knives to your hand.`; },
     use(g) {
       const i = MASKS.indexOf(g.cb.mask);
       g.setMask(MASKS[(i + 1) % MASKS.length]);
@@ -78,11 +78,11 @@ Object.assign(HEROES.wren, {
   },
 });
 Object.assign(HEROES.cantor, {
-  actions: { strike: { dmg: 4 }, guard: { blk: 4 }, meterMax: 8 },
+  actions: { strike: { dmg: 4 }, guard: { blk: 4 }, meterMax: 7 },
   special: {
     name: 'Toll the Bell', icon: 'act_special_cantor', target: 'none',
-    v: { blk: 16 },
-    desc: 'Release all Spirits, Channel a Wisp, and gain 16 Block.',
+    v: { blk: 11 },
+    get desc() { return `Release all Spirits, Channel a Wisp, and gain ${this.v.blk} Block.`; },
     use(g) { g.releaseAll(); g.channel('wisp'); g.block(this.v.blk); },
   },
 });
