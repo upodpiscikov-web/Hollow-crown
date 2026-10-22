@@ -260,7 +260,7 @@ defineEnemies([
     desc: 'A longbowman of the old levy, unpaid since Ashfall. Patient behind his pavise. Very accurate.',
     moves: {
       pavise: { name: 'Behind the Pavise', intent: 'def', fx(g, e) { g.gainBlock(e, 6, { raw: true }); } },
-      loose: { name: 'Loose', intent: 'atk', dmg: 24 },
+      loose: { name: 'Loose', intent: 'atk', dmg: 22 },
       pin: { name: 'Pinning Shot', intent: 'atkdebuff', dmg: 7, fx(g, e) { g.apply(g.player, 'dread', 1, e); } },
     },
     ai(g, e) { return step(e, ['pavise', 'loose', 'pin']); },
@@ -459,7 +459,7 @@ defineEnemies([
     init(g, e) { g.addStatus(e, 'hound_lord', 1, { silent: true }); },
     moves: {
       loose: { name: 'Loose the Hounds', intent: 'summon', fx(g, e) { summonHounds(g, e, 2); } },
-      cleaver: { name: 'Butcher\'s Cleaver', intent: 'atk', dmg: 28 },
+      cleaver: { name: 'Butcher\'s Cleaver', intent: 'atk', dmg: 26 },
       sic: {
         name: 'Sic \'Em!', intent: 'atkbuff', dmg: 14,
         fx(g, e) { for (const h of g.enemies) if (h.id === 'war_hound') g.apply(h, 'might', 2, e); },
@@ -496,7 +496,7 @@ defineEnemies([
     },
   },
   {
-    id: 'hanged_sheriff', name: 'The Hanged Sheriff', kind: 'boss', act: 1, hp: 280, sprite: 'en_hanged_sheriff',
+    id: 'hanged_sheriff', name: 'The Hanged Sheriff', kind: 'boss', act: 1, hp: 320, sprite: 'en_hanged_sheriff',
     desc: 'He hanged three hundred men at the Marcher crossroads, all by the King\'s law. When the King died, the Sheriff\'s heart stopped. He did not.',
     init(g, e) { e.data.per = 5; g.addStatus(e, 'hanging_judge', 5, { silent: true }); },
     moves: {
@@ -505,7 +505,7 @@ defineEnemies([
         fx(g, e) { const n = e.data.day ? 3 : 2; for (let i = 0; i < n; i++) g.addCard('sheriffs_warrant', 'draw'); },
       },
       manacles: { name: 'Iron Manacles', intent: 'atkdebuff', dmg: 22, fx(g, e) { shackle(g, e, 2); } },
-      cudgel: { name: 'Reeve\'s Cudgel', intent: 'atk', dmg: 34 },
+      cudgel: { name: 'Reeve\'s Cudgel', intent: 'atk', dmg: 32 },
       noose: {
         name: 'The Noose', intent: 'atk',
         dmg: (g, e) => 5 + (e.data.per || 5) * (g.cb ? g.cb.cnt.cards : 0),
@@ -550,7 +550,7 @@ defineEnemies([
     moves: {
       birth: { name: 'Birth the Swarm', intent: 'summon', fx(g) { spawnRats(g, 2); } },
       kiss: { name: 'Plague Kiss', intent: 'atkdebuff', dmg: 20, fx(g, e) { g.apply(g.player, 'rot', 3, e); } },
-      wallow: { name: 'Wallow', intent: 'atk', dmg: 34 },
+      wallow: { name: 'Wallow', intent: 'atk', dmg: 30 },
       tide: { name: 'Tide of Teeth', intent: 'atkdebuff', dmg: 8, times: 4 },
       boil: {
         name: 'The Pit Boils', intent: 'summon',
