@@ -1,6 +1,6 @@
 // Visual effects: a single particle canvas that only runs while particles are
 // alive, floating numbers, flashes and shakes (transform/opacity only).
-import { h, UI, anim } from './core.js';
+import { h, UI, anim, timeMul } from './core.js';
 import { S, stageRect } from './scale.js';
 
 // ------------------------------------------------------------------ particles
@@ -102,7 +102,7 @@ export function floatText(el, text, kind = 'dmg', opts = {}) {
   let k = 0;
   if (rec && now - rec.t < 450) k = rec.n + 1;
   recent.set(el, { t: now, n: k });
-  const delay = Math.min(k, 5) * (UI.g && UI.g.meta.settings.fast ? 70 : 120);
+  const delay = Math.min(k, 5) * 120 * timeMul();
   const big = opts.big || (kind === 'dmg' && +text >= 20);
   const d = h('div.float.' + kind + (big ? '.big' : ''), String(text));
   const jitter = ((k % 3) - 1) * 14;

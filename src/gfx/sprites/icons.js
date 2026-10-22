@@ -2471,5 +2471,177 @@ S.sp_banshee = C(14, 14, (p) => {
   p.px(5, 4, '#fbf3df'); p.px(0, 5, '#7b5aa6'); p.px(13, 6, '#7b5aa6');
 });
 
+// =================================================================== ACTION ICONS (24×24)
+// Hero action buttons are shown ~44-56px tall: chunky silhouettes, bright rims,
+// strong light/dark contrast against the dark combat background.
+const A = (w, h, fn) => ({ w, h, draw: fn });
+const STEEL = ['#33373e', '#545a63', '#8e98a3', '#bccfd9', '#eef6f6'];
+const GOLD = ['#5e4612', '#8f6f1a', '#c9a227', '#f0d27a', '#fff3c4'];
+S.act_strike = A(24, 24, (p) => {
+  // thin white-hot slash trail (crescent) swept below-right of the blade
+  shader(p, 0, 0, 23, 23, (x, y) => {
+    const dO = Math.hypot(x + 0.5 - 5.2, y + 0.5 - 6.2), dI = Math.hypot(x + 0.5 - 3.6, y + 0.5 - 4.4);
+    if (dO > 17.6 || dI < 16.3 || x < 12 || y > 15) return null;
+    const v = Math.min(1, (dI - 16.3) / 2.2);
+    return lit(['#ffffff', '#fff3c4', '#f0d27a', '#e8a33a', '#c4501e'], v * 0.95, x, y, 0.2);
+  });
+  // blade
+  const blade = []; for (let t = 0; t <= 1.001; t += 0.04) blade.push([7.4 + t * 12.2, 15 - t * 12.4, 2.3 - t * 1.6]);
+  tube(p, blade, STEEL, { d: 0.2 });
+  for (let t = 0.08; t <= 0.8; t += 0.1) p.px(Math.round(7.8 + t * 12), Math.round(14.6 - t * 12), '#545a63');
+  p.px(20, 3, '#ffffff'); p.px(19, 4, '#ffffff'); p.px(21, 2, '#eef6f6');
+  // guard, grip, pommel
+  p.line(3, 14, 10, 21, '#8f6f1a', 3); p.line(3, 13, 10, 20, '#f0d27a', 1); p.line(4, 15, 10, 21, '#c9a227', 1);
+  p.line(5, 18, 1, 22, '#4a3527', 3); p.line(5, 17, 1, 21, '#977049', 1);
+  circ(p, 0.9, 22.4, 1.7, '#c9a227'); p.px(1, 22, '#fff3c4');
+  for (const [x, y] of [[22, 12], [23, 7], [12, 23]]) p.px(x, y, '#fff3c4');
+});
+S.act_guard = A(24, 24, (p) => {
+  const outer = [[3, 2.5], [12, 1], [21, 2.5], [21, 12.5], [18, 18.4], [12, 23], [6, 18.4], [3, 12.5]];
+  const inner = [[5.2, 4.6], [12, 3.4], [18.8, 4.6], [18.8, 12], [16.4, 16.8], [12, 20.2], [7.6, 16.8], [5.2, 12]];
+  fillLit(p, outer, STEEL, { lx: 0.5, ly: 0.5, bias: 0.15 });
+  fillLit(p, inner, ['#10202b', '#1e3b4d', '#3a6a86', '#5f9bb8', '#9fd0e4'], { lx: 0.5, ly: 0.5 });
+  p.line(12, 4, 12, 19, '#10202b', 1); p.line(6, 10, 18, 10, '#10202b', 1);
+  ball(p, 12, 10.4, 3.4, GOLD);
+  p.px(11, 9, '#fff3c4'); p.px(5, 3, '#ffffff'); p.px(6, 2, '#ffffff'); p.px(4, 4, '#eef6f6');
+  p.line(4, 7, 4, 12, '#eef6f6', 1);
+});
+S.act_special = A(24, 24, (p) => {
+  const pts = [];
+  for (let k = 0; k < 24; k++) { const a = -Math.PI / 2 + (k * Math.PI) / 12, r = k % 2 ? 6 : (k % 4 === 0 ? 11.4 : 8.8); pts.push([12 + Math.cos(a) * r, 12 + Math.sin(a) * r]); }
+  fillLit(p, pts, ['#8a1c1c', '#c4501e', '#e8a33a', '#f0d27a', '#fff3c4'], { lx: 0.35, ly: 0.35, bias: 0.15 });
+  ball(p, 12, 12, 5, ['#c4501e', '#e8a33a', '#f0d27a', '#fff3c4', '#ffffff']);
+  p.px(10, 10, '#ffffff'); p.px(11, 9, '#ffffff'); p.px(2, 3, '#f0d27a'); p.px(22, 20, '#f0d27a'); p.px(21, 2, '#fff3c4');
+});
+S.act_special_knight = A(24, 24, (p) => {
+  // speed lines (steel) trailing to the left
+  for (const [y, x0, x1, c] of [[7, 0, 9, '#8e98a3'], [11, 1, 8, '#bccfd9'], [15, 0, 8, '#8e98a3'], [19, 2, 9, '#545a63'], [3, 3, 9, '#545a63']]) p.line(x0, y, x1, y, c, 1);
+  // impact flash behind the shield
+  const star = []; for (let k = 0; k < 16; k++) { const a = (k * Math.PI) / 8, r = k % 2 ? 6 : 11; star.push([15 + Math.cos(a) * r, 11 + Math.sin(a) * r]); }
+  p.poly(star, '#c9a227'); p.poly(star.map(([x, y]) => [15 + (x - 15) * 0.7, 11 + (y - 11) * 0.7]), '#f0d27a');
+  const outer = [[8, 4], [21, 3], [22, 12], [19.4, 18], [14.6, 22.6], [10, 18], [8.4, 12]];
+  const inner = [[10, 6], [19.4, 5.4], [20.2, 11.6], [18, 16.4], [14.6, 20], [11.2, 16.4], [10, 12]];
+  fillLit(p, outer, GOLD, { lx: 0.5, ly: 0.5, bias: 0.1 });
+  fillLit(p, inner, ['#1b2330', '#2f4a6a', '#4f7ba8', '#86b2d6', '#cfe4f4'], { lx: 0.5, ly: 0.5 });
+  p.line(15, 6, 15, 19, '#1b2330', 1); p.line(10, 11, 20, 11, '#1b2330', 1);
+  ball(p, 15, 11.6, 2.8, GOLD); p.px(14, 10, '#fff3c4');
+  for (const [x, y] of [[22, 1], [23, 6], [20, 0], [23, 16], [21, 21], [6, 1]]) p.px(x, y, '#fff3c4');
+  for (const [x, y] of [[23, 3], [22, 7], [19, 1], [23, 19]]) p.px(x, y, '#f0d27a');
+});
+S.act_special_witch = A(24, 24, (p) => {
+  const G = ['#1c2a10', '#3d5226', '#5c7a2a', '#8fae3a', '#c4dc68'];
+  for (const [x, y, r] of [[12, 8, 4.6], [6.4, 10, 3.4], [17.6, 9.4, 3.6], [9.6, 3.6, 2.6], [15.4, 3.2, 2.2], [3.6, 5.4, 1.7], [20.6, 5, 1.7], [21, 12.6, 1.3], [2.6, 13, 1.3]]) ball(p, x, y, r, G);
+  p.px(11, 6, '#eaf5b0'); p.px(11, 7, '#c4dc68');
+  // flask below
+  p.rect(10, 12, 4, 3, '#a19c9c'); p.rect(10, 12, 1, 3, '#cfc6b0'); p.rect(9, 11, 6, 1, '#cfc6b0');
+  shader(p, 5, 13, 19, 23, (x, y) => {
+    const nx = (x + 0.5 - 12) / 6.6, ny = (y + 0.5 - 18.2) / 5.6;
+    const d = nx * nx + ny * ny; if (d > 1) return null;
+    if (d > 0.7) return lit(['#363040', '#57535c', '#8a8590', '#cfc6b0'], 0.62 - nx * 0.42 - ny * 0.4, x, y, 0.2);
+    if (y < 16) return '#241f2b';
+    return lit(['#253318', '#3d5226', '#5c7a2a', '#8fae3a'], 0.62 - nx * 0.35 - ny * 0.3, x, y, 0.35);
+  });
+  p.px(7, 16, '#fbf3df'); p.px(7, 17, '#fbf3df'); p.px(15, 19, '#c4dc68'); p.px(13, 21, '#c4dc68');
+  for (const [x, y] of [[21, 9], [1, 8], [22, 2], [1, 2], [12, 0]]) p.px(x, y, '#8fae3a');
+});
+S.act_special_wren = A(24, 24, (p) => {
+  // two silver knives crossed behind the mask
+  const knife = (tx, ty, hx, hy) => {
+    p.line(tx, ty, hx, hy, '#545a63', 3); p.line(tx, ty, hx, hy, '#bccfd9', 2); p.line(tx + 0.5, ty - 1, hx + 0.5, hy - 1, '#ffffff', 1);
+    const dx = hx - tx, dy = hy - ty, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+    const gx = tx + ux * L * 0.72, gy = ty + uy * L * 0.72;
+    p.line(Math.round(gx - uy * 3), Math.round(gy + ux * 3), Math.round(gx + uy * 3), Math.round(gy - ux * 3), '#c9a227', 2);
+    p.line(Math.round(gx + ux * 1), Math.round(gy + uy * 1), hx, hy, '#4b3b5e', 3);
+  };
+  knife(1, 1, 22, 22); knife(22, 1, 1, 22);
+  const face = [[5, 5], [12, 3], [19, 5], [20.4, 11], [17.4, 17.6], [12, 21.6], [6.6, 17.6], [3.6, 11]];
+  fillLit(p, face, ['#2b2135', '#4b3b5e', '#7b5aa6', '#b49ad6', '#e2d6f2'], { lx: 0.45, ly: 0.5, bias: 0.08 });
+  p.poly([[5.4, 9], [10, 10.2], [9.4, 12.6], [6, 11.8]], '#0b0a0d'); p.poly([[18.6, 9], [14, 10.2], [14.6, 12.6], [18, 11.8]], '#0b0a0d');
+  p.px(6, 10, '#eef6f6'); p.px(17, 10, '#eef6f6');
+  p.line(12, 12, 12, 17, '#4b3b5e', 1); p.line(8, 16, 10, 19, '#4b3b5e', 1); p.line(16, 16, 14, 19, '#2b2135', 1);
+  p.line(5, 6, 12, 4, '#eef6f6', 1); p.px(12, 6, '#c9a227'); p.px(12, 7, '#f0d27a');
+});
+S.act_special_cantor = A(24, 24, (p) => {
+  const Gh = '#7fd1c4', Gd = '#3f8a80';
+  // ghost-blue sound rings on both sides (arcs)
+  for (const [r, c] of [[9.6, Gd], [12.2, '#24504c']]) for (let a = -48; a <= 48; a += 2) {
+    const th = (a * Math.PI) / 180;
+    p.px(Math.round(12 + Math.cos(th) * r - 0.5) + 0, Math.round(13 + Math.sin(th) * r - 0.5), a % 6 ? c : Gh);
+    p.px(Math.round(12 - Math.cos(th) * r - 0.5), Math.round(13 + Math.sin(th) * r - 0.5), a % 6 ? c : Gh);
+  }
+  for (const a of [-30, 0, 30]) { const th = (a * Math.PI) / 180; p.px(Math.round(12 + Math.cos(th) * 7.6), Math.round(13 + Math.sin(th) * 7.6), '#cff5ec'); p.px(Math.round(12 - Math.cos(th) * 7.6) - 1, Math.round(13 + Math.sin(th) * 7.6), '#cff5ec'); }
+  circ(p, 12, 3.4, 1.9, '#8f6f1a'); p.px(11, 3, '#f0d27a');
+  fillLit(p, [[9.4, 5], [14.6, 5], [16.2, 9], [17.6, 16], [21, 19.4], [3, 19.4], [6.4, 16], [7.8, 9]], GOLD, { lx: 0.5, ly: 0.35 });
+  p.rect(3, 18, 18, 2, '#c9a227'); p.rect(3, 18, 18, 1, '#fff3c4'); p.rect(3, 19, 18, 1, '#5e4612');
+  p.line(9, 7, 7, 16, '#fff3c4', 1); p.line(11, 6, 10, 10, '#f0d27a', 1);
+  ball(p, 12, 21.6, 1.9, GOLD);
+});
+// =================================================================== NEW UI GLYPHS (16×16)
+const speedCols = {
+  1: ['#57535c', '#a19c9c', '#cfc6b0', '#fbf3df'],
+  2: ['#5e4612', '#c9a227', '#f0d27a', '#fff3c4'],
+  3: ['#5e1212', '#c4501e', '#e8a33a', '#fff3c4'],
+};
+const chevrons = (n) => C(16, 16, (p) => {
+  const cols = speedCols[n], w = n === 1 ? 9 : n === 2 ? 6.6 : 4.8, gap = n === 1 ? 0 : n === 2 ? 0.6 : 0.2;
+  const x0 = n === 1 ? 3.5 : n === 2 ? 1 : 0.2;
+  for (let i = 0; i < n; i++) {
+    const x = x0 + i * (w + gap);
+    fillLit(p, [[x, 2.6], [x + w, 8], [x, 13.4]], cols, { lx: 0.55, ly: 0.35, bias: 0.12 });
+    p.px(Math.round(x), 3, cols[3]);
+  }
+});
+S.ui_speed1 = chevrons(1);
+S.ui_speed2 = chevrons(2);
+S.ui_speed3 = chevrons(3);
+S.ui_auto = C(16, 16, (p) => {
+  const cx = 8, cy = 8, r = 6.3, T = ['#24504c', '#3f8a80', '#7fd1c4', '#cff5ec'];
+  const arc = (a0, a1) => { for (let a = a0; a <= a1; a += 3) { const th = (a * Math.PI) / 180; const x = Math.floor(cx + Math.cos(th) * r), y = Math.floor(cy + Math.sin(th) * r); p.px(x, y, T[2]); p.px(Math.floor(cx + Math.cos(th) * (r - 1)), Math.floor(cy + Math.sin(th) * (r - 1)), T[1]); } };
+  arc(200, 330); arc(20, 150);
+  const head = (deg) => { const th = (deg * Math.PI) / 180, px = cx + Math.cos(th) * r, py = cy + Math.sin(th) * r, tx = -Math.sin(th), ty = Math.cos(th), nx = Math.cos(th), ny = Math.sin(th); p.poly([[px + tx * 3.4, py + ty * 3.4], [px + nx * 2.8, py + ny * 2.8], [px - nx * 2.8, py - ny * 2.8]], T[3]); };
+  head(338); head(158);
+  fillLit(p, [[5.8, 4.8], [11.4, 8], [5.8, 11.2]], ['#8f6f1a', '#c9a227', '#f0d27a', '#fff3c4'], { lx: 0.5, ly: 0.4, bias: 0.1 });
+});
+S.ui_autoend = C(16, 16, (p) => {
+  p.rect(1, 1, 9, 2, '#c9a227'); p.rect(1, 1, 9, 1, '#fff3c4'); p.rect(1, 13, 9, 2, '#8f6f1a'); p.rect(1, 14, 9, 1, '#5e4612');
+  p.poly([[2, 3], [9, 3], [6.2, 7.2], [6.2, 8.8], [9, 13], [2, 13], [4.8, 8.8], [4.8, 7.2]], '#5f9bb8');
+  p.poly([[2.6, 3], [5.4, 3], [5.2, 6.6], [3.4, 4.6]], '#9fd0e4');
+  p.poly([[3.4, 4.2], [8.2, 4.2], [5.5, 7.4]], '#f0d27a'); p.poly([[2.8, 13], [8.2, 13], [7, 11], [4, 11]], '#f0d27a'); p.line(5, 8, 5, 10, '#fff3c4');
+  p.path([[8.4, 10.6], [10.8, 13.4], [15.2, 7.4]], '#0b0a0d', 4);
+  p.path([[8.4, 10.6], [10.8, 13.4], [15.2, 7.4]], '#5c7a2a', 3);
+  p.path([[8.4, 10.2], [10.8, 13], [15.2, 7]], '#c4dc68', 1);
+});
+S.ui_brace = C(16, 16, (p) => {
+  const sh = [[3.6, 2.4], [12.4, 2.4], [12.4, 8.2], [10.6, 11.8], [8, 14.4], [5.4, 11.8], [3.6, 8.2]];
+  fillLit(p, sh, STEEL, { lx: 0.5, ly: 0.5, bias: 0.12 });
+  fillLit(p, [[5, 4], [11, 4], [11, 8], [9.6, 10.6], [8, 12.2], [6.4, 10.6], [5, 8]], ['#10202b', '#1e3b4d', '#3a6a86', '#5f9bb8'], { lx: 0.5, ly: 0.5 });
+  for (let a = 0; a < 360; a += 4) { if (((a + 20) % 90) < 22) continue; const th = (a * Math.PI) / 180; p.px(Math.floor(8 + Math.cos(th) * 7.4), Math.floor(8 + Math.sin(th) * 7.4), a % 8 ? '#f0d27a' : '#fff3c4'); }
+  for (const [x, y] of [[1, 1], [14, 1], [1, 14], [14, 14]]) p.px(x, y, '#fff3c4');
+  p.px(5, 4, '#ffffff');
+});
+S.ui_relics = C(16, 16, (p) => {
+  const L = ['#2c1e16', '#4a3527', '#6e5039', '#977049', '#c29a68'];
+  p.path([[4.4, 6], [5.4, 2.6], [10.6, 2.6], [11.6, 6]], '#2c1e16', 3); p.path([[4.4, 6], [5.4, 2.6], [10.6, 2.6], [11.6, 6]], '#6e5039', 1);
+  fillLit(p, [[1.6, 6], [14.4, 6], [14.8, 13], [13, 15], [3, 15], [1.2, 13]], L, { lx: 0.4, ly: 0.4 });
+  fillLit(p, [[1.6, 5.6], [14.4, 5.6], [13.4, 9.6], [8, 11.4], [2.6, 9.6]], ['#33231a', '#5a4030', '#7e5c40', '#a67c58'], { lx: 0.4, ly: 0.4, bias: 0.1 });
+  p.line(2, 10, 8, 11.4, '#2c1e16'); p.line(8, 11.4, 14, 10, '#2c1e16');
+  p.rect(6.4, 10, 3.2, 3.4, '#8f6f1a'); p.rect(6.4, 10, 3.2, 1, '#f0d27a'); p.rect(7.4, 11, 1.2, 1.4, '#16131a');
+  ball(p, 12, 12.6, 1.5, ['#3a0b10', '#8a1c1c', '#e0644c']);
+  p.px(3, 7, '#c29a68'); p.px(4, 7, '#c29a68');
+});
+const meterPip = (filled) => C(16, 16, (p) => {
+  const d = [[8, 1.2], [14.2, 8], [8, 14.8], [1.8, 8]];
+  if (filled) {
+    fillLit(p, d, ['#8a1c1c', '#c4501e', '#e8a33a', '#f0d27a', '#fff3c4'], { lx: 0.4, ly: 0.45, bias: 0.12 });
+    p.poly([[8, 4], [11, 8], [8, 12], [5, 8]], '#fff3c4'); p.poly([[8, 5.4], [9.6, 8], [8, 10.6], [6.4, 8]], '#ffffff');
+    p.px(6, 4, '#fff3c4');
+  } else {
+    p.poly(d, '#79747a'); p.poly([[8, 2.8], [12.6, 8], [8, 13.2], [3.4, 8]], '#16131a');
+    p.poly([[8, 4.2], [11.2, 8], [8, 11.8], [4.8, 8]], '#241f2b'); p.px(5, 5, '#363040'); p.px(6, 4, '#363040');
+  }
+});
+S.ui_meter = meterPip(true);
+S.ui_meter_empty = meterPip(false);
+
 defineSprites(S);
 export const ICON_IDS = Object.keys(S);

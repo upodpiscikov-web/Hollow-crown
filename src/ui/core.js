@@ -2,6 +2,7 @@
 import { sfx } from './sound.js';
 
 export const UI = {
+  auto: false,        // Auto button state (combat)
   g: null,            // the Game
   view: 'title',      // meta view when there is no run: title | hub | heroes | chronicle | compendium
   viewArg: null,
@@ -99,12 +100,29 @@ export function fmtTime(ms) {
 // Safe accessor helpers (content arrives in parallel and may be partial).
 export function safe(fn, fallback) { try { const v = fn(); return v === undefined ? fallback : v; } catch (e) { return fallback; } }
 
+// ---- speed & view settings -------------------------------------------------
+// Effective animation speed 1|2|3 (legacy `fast` counts as 2).
+export function speedOf() {
+  const st = UI.g && UI.g.meta && UI.g.meta.settings;
+  if (!st) return 1;
+  return Math.max(st.speed || 1, st.fast ? 2 : 1);
+}
+// Multiplier applied to every pause and animation (1x is already a little snappier than the old pacing).
+export function timeMul() { return [1, 0.78, 0.45, 0.27][speedOf()] ?? 1; }
+// Simple view (declutter) is the default.
+export function isSimple() {
+  const st = UI.g && UI.g.meta && UI.g.meta.settings;
+  return !st || st.simple !== false;
+}
+
 // Animate with WAAPI if available; resolves when done. Honors reduced motion by shortening.
 export function anim(el, frames, opts) {
   if (!el || !el.animate) return Promise.resolve();
   const o = typeof opts === 'number' ? { duration: opts } : { ...opts };
   if (UI.reduced) o.duration = Math.min(o.duration || 200, 120);
-  if (UI.g && UI.g.meta && UI.g.meta.settings.fast) o.duration = (o.duration || 200) * 0.6;
+  if (!o.exact) o.duration = Math.max(60, (o.duration || 200) * timeMul());
+  if (o.delay) o.delay *= timeMul();
+  delete o.exact;
   try {
     const a = el.animate(frames, { easing: 'ease-out', fill: 'none', ...o });
     return a.finished.catch(() => {});

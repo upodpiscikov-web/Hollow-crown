@@ -1,6 +1,6 @@
 // Overlays: tooltips, toasts, banners, modals, confirm dialogs, the card-choose
 // modal (g.ui.choose), pile / deck viewers and the card zoom.
-import { h, $, clear, tap, longPress, UI, sleep, safe, anim } from './core.js';
+import { h, $, clear, tap, longPress, UI, sleep, safe, anim, timeMul, speedOf } from './core.js';
 import { S, stageRect } from './scale.js';
 import { sfx } from './sound.js';
 import { cardEl, cardDetail, upgradedCopy, sortCards } from './card.js';
@@ -66,8 +66,8 @@ export function banner(text, kind = '', sub = '', ms = 1000) {
   const fx = $('#fx');
   if (!fx) return Promise.resolve();
   for (const old of fx.querySelectorAll('.banner')) old.remove();
-  const fast = UI.g && UI.g.meta.settings.fast;
-  if (fast) ms *= 0.6;
+  if (speedOf() >= 3 && kind !== 'boss') return Promise.resolve();
+  ms *= timeMul();
   const b = h('div.banner' + (kind ? '.' + kind : ''), h('div.banner-band', h('div.banner-text', text), sub ? h('div.banner-sub', sub) : null));
   fx.appendChild(b);
   anim(b, [{ opacity: 0, transform: 'scaleY(0.4)' }, { opacity: 1, transform: 'none' }], 220);
