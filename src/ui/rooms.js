@@ -294,7 +294,8 @@ const treasure = simple('treasure', (g) => {
   const t = run.treasure || {};
   const { scr, body } = roomShell(g, 'treasure', actBg(g), { shade: 'heavy' });
   const size = t.size || 'small';
-  const chest = h('button.chest.' + size, icon('map_treasure', size === 'large' ? 7 : size === 'medium' ? 6 : 5, 'chest-ic', '▣'), h('div.chest-glow'));
+  const chestArt = hasSprite('map_treasure') ? spr('map_treasure', size === 'large' ? 7 : size === 'medium' ? 6 : 5, 'chest-ic') : h('div.chest-css', h('i.chest-lock'));
+  const chest = h('button.chest.' + size, chestArt, h('div.chest-glow'));
   let opening = false;
   const open = async () => {
     if (opening) return;
