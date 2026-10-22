@@ -614,7 +614,10 @@ export const combatMethods = {
     const d = ENEMIES[id];
     if (!d) throw new Error('unknown enemy ' + id);
     let hp = Array.isArray(d.hp) ? int(this.crng, d.hp[0], d.hp[1]) : d.hp;
-    if (!opts.hp) hp = Math.max(1, Math.round(hp * paceOf(this.run.act).hp)); // per-act pacing (pace.js)
+    if (!opts.hp) { // per-act pacing (pace.js)
+      const pc = paceOf(this.run.act);
+      hp = Math.max(1, Math.round(hp * pc.hp * (d.kind === 'elite' ? pc.hpElite : d.kind === 'boss' ? pc.hpBoss : 1)));
+    }
     const asc = this.run.asc || 0;
     if (d.kind === 'normal' && asc >= 2) hp = Math.round(hp * 1.1);
     if (d.kind === 'elite' && asc >= 3) hp = Math.round(hp * 1.1);
@@ -653,6 +656,8 @@ export const combatMethods = {
     let dmg = num(m.dmg, this, e);
     if (dmg == null) return null;
     if ((this.run.asc || 0) >= 8) dmg = Math.round(dmg * 1.1);
+    const k = paceOf(this.run.act).dmg; // per-act enemy damage (pace.js)
+    if (k !== 1 && dmg > 0) dmg = Math.max(1, Math.round(dmg * k));
     return dmg;
   },
 

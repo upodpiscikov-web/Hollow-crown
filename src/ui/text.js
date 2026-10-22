@@ -160,3 +160,99 @@ export function statusDesc(g, id, n, owner) {
   if (typeof d.desc === 'function') return safe(() => d.desc(n, g, owner), '');
   return d.desc || '';
 }
+
+// ---------------------------------------------------------------------------------------------
+// Simple view: a card's effect as a few big chips (⚔ 6, 🛡 5, status icon + number, keywords).
+// Parsed from the card's rules template so numbers stay live (Might, Weakened, Frail...).
+// Returns [{ k:'dmg'|'blk'|'sts'|'draw'|'heal'|'hp'|'energy'|'spirit'|'misc'|'kw', n, icon, glyph, label, tag, cls }].
+const STATUS_BY_NAME = {};
+function statusByName(name) {
+  const key = name.toLowerCase();
+  if (STATUS_BY_NAME[key] !== undefined) return STATUS_BY_NAME[key];
+  let hit = null;
+  for (const id in STATUSES) if (STATUSES[id].name && STATUSES[id].name.toLowerCase() === key) { hit = STATUSES[id]; break; }
+  if (!hit && key === 'weak') hit = STATUSES.weak;
+  return (STATUS_BY_NAME[key] = hit || null);
+}
+const KW_CHIP = { exhaust: ['✕', 'Exhaust'], retain: ['↻', 'Retain'], ethereal: ['≈', 'Ethereal'], innate: '★Innate'.split(/(?=I)/), unplayable: ['⊘', 'Unplayable'] };
+
+export function cardChips(g, card, opts = {}) {
+  const def = CARDS[card.id];
+  if (!def) return [];
+  let t = card.up && def.upText ? def.upText : def.text;
+  if (typeof t === 'function') t = safe(() => t(g, card), '');
+  t = String(t ?? '');
+  let v = {};
+  try { v = g.cardVals(card); } catch (e) { v = { ...(def.v || {}) }; }
+  const inCombat = opts.live && g.cb && g.run && g.run.combat;
+  // Resolve a number token: "{dmg}" or "6".
+  const num = (tok, kind) => {
+    if (tok == null) return null;
+    let key = null, val;
+    const m = /^\{(\w+)\}$/.exec(tok);
+    if (m) { key = m[1]; if (!(key in v)) return null; val = v[key]; } else val = +tok;
+    const base = val;
+    if (inCombat && typeof val === 'number') {
+      if (kind === 'dmg') val = safe(() => g.calcAttack(g.player, opts.target || null, base, { card }), base);
+      else if (kind === 'blk') val = safe(() => g.calcBlock(base), base);
+    }
+    return { val, cls: typeof val === 'number' ? (val > base ? 'up' : val < base ? 'down' : '') : '' };
+  };
+  const chips = [];
+  const N = '(\\{\\w+\\}|\\d+)';
+  const text = t.replace(/\n/g, ' ');
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  for (const raw of sentences) {
+    const s = raw.trim();
+    if (!s) continue;
+    let m;
+    if ((m = new RegExp(`Deal ${N} damage(?: to ALL enemies)?(?: (twice)| ${N} times)?`, 'i').exec(s))) {
+      const r = num(m[1], 'dmg');
+      if (r) chips.push({ k: 'dmg', n: r.val, cls: r.cls, tag: /ALL enemies/i.test(s) ? 'ALL' : /random enem/i.test(s) ? 'RND' : '', times: m[2] ? 2 : m[3] ? (num(m[3]) || {}).val : 1 });
+      continue;
+    }
+    if ((m = new RegExp(`Gain ${N} Block`, 'i').exec(s))) {
+      const r = num(m[1], 'blk');
+      if (r) chips.push({ k: 'blk', n: r.val, cls: r.cls });
+      continue;
+    }
+    if ((m = new RegExp(`Draw ${N} cards?`, 'i').exec(s))) { const r = num(m[1]); if (r) { chips.push({ k: 'draw', n: r.val }); continue; } }
+    if ((m = new RegExp(`Heal ${N}`, 'i').exec(s))) { const r = num(m[1]); if (r) { chips.push({ k: 'heal', n: r.val }); continue; } }
+    if ((m = new RegExp(`Gain ${N} Energy`, 'i').exec(s))) { const r = num(m[1]); if (r) { chips.push({ k: 'energy', n: r.val }); continue; } }
+    if ((m = new RegExp(`Lose ${N} HP`, 'i').exec(s))) { const r = num(m[1]); if (r) chips.push({ k: 'hp', n: r.val }); }
+    // Status applications / gains: "Apply 3 Rot (to ALL enemies)", "Gain 2 Might", "Wither 2".
+    const re = new RegExp(`(?:Apply|Give|Gain|Wither|Gain a|Gain an)\\s+${N}?\\s*([A-Z][a-z]+(?: [A-Z][a-z]+)?)`, 'g');
+    let any = false;
+    while ((m = re.exec(s))) {
+      const word = m[2];
+      if (/^(Block|Energy|HP|Soul|Gold)$/.test(word) && word !== 'Soul') continue;
+      const d = statusByName(word) || (word === 'Wither' ? STATUSES.might : null);
+      if (!d) continue;
+      const r = m[1] ? num(m[1]) : { val: 1, cls: '' };
+      if (!r) continue;
+      const neg = d.kind === 'debuff' || /Wither/.test(m[0]) || (/Apply|Give/.test(m[0]) && /enem/i.test(s));
+      chips.push({ k: 'sts', n: /Wither/.test(m[0]) ? -r.val : r.val, icon: 'st_' + (d.icon || d.id), label: d.name, neg, tag: /ALL enemies/i.test(s) ? 'ALL' : '' });
+      any = true;
+    }
+    if (any) continue;
+    if ((m = /Channel (?:an? |(\d+|\{\w+\}) )?(Wisp|Warden|Lantern|Banshee)/i.exec(s))) { const r = m[1] ? num(m[1]) : { val: 1 }; chips.push({ k: 'spirit', n: r ? r.val : 1, icon: 'sp_' + m[2].toLowerCase(), label: m[2] }); continue; }
+    if (/Deal damage equal to/i.test(s)) { chips.push({ k: 'dmg', n: 'X', cls: '', tag: /ALL enemies/i.test(s) ? 'ALL' : '', times: 1 }); continue; }
+    if (/Double your Block/i.test(s)) { chips.push({ k: 'blk', n: '\u00D72', cls: '' }); continue; }
+    if (/Double your Might/i.test(s) && STATUSES.might) { chips.push({ k: 'sts', n: '\u00D72', icon: 'st_' + STATUSES.might.icon, label: 'Might' }); continue; }
+    if (/Release/i.test(s)) { chips.push({ k: 'misc', glyph: '✨', label: 'Release' }); continue; }
+    if (/Brew/i.test(s)) { chips.push({ k: 'misc', glyph: '⚗', label: 'Brew' }); continue; }
+    if (/Shift|Mask/i.test(s)) { chips.push({ k: 'misc', glyph: '☺', label: 'Mask' }); continue; }
+    if (/Oath/i.test(s)) { chips.push({ k: 'misc', glyph: '✦', label: 'Oath' }); continue; }
+    if (/Knife|Knives/i.test(s)) { chips.push({ k: 'misc', glyph: '†', label: 'Knife' }); continue; }
+    if (/Discard/i.test(s)) { chips.push({ k: 'misc', glyph: '⇩', label: 'Discard' }); continue; }
+  }
+  // Keywords
+  const kws = safe(() => g.keywordsOf(card), def.kw || []);
+  for (const k of kws) if (KW_CHIP[k]) chips.push({ k: 'kw', glyph: KW_CHIP[k][0], label: KW_CHIP[k][1] });
+  // Nothing recognised: show a short snippet so the card is never blank.
+  if (!chips.some((c) => c.k !== 'kw')) {
+    const first = text.split(/(?<=[.!?])\s+/)[0].replace(/\{(\w+)\}/g, (mm, key) => (key in v ? v[key] : '?')).replace(/\s+/g, ' ').trim();
+    chips.unshift({ k: 'text', label: first.length > 38 ? first.slice(0, 36).trim() + '…' : first });
+  }
+  return chips.slice(0, 5);
+}
