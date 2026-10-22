@@ -3,8 +3,11 @@
 import '../src/engine/statuses.js';
 import { defineCards, defineEnemies, defineHeroes, defineRelics, CARDS } from '../src/engine/registry.js';
 import { Game, freshMeta } from '../src/engine/game.js';
+import { PACE } from '../src/engine/pace.js';
 
-defineHeroes([{ id: 't_hero', name: 'T', hp: 80, gold: 99, deck: ['t_strike', 't_strike', 't_strike', 't_strike', 't_strike', 't_def', 't_def', 't_def', 't_def', 't_def'], relic: 't_relic' }]);
+PACE[1].hp = 1; // tests assume the fixture enemy has its written HP (pacing is tested separately below)
+
+defineHeroes([{ id: 't_hero', special: { name: 'Smash', target: 'enemy', desc: '', use(g, t) { g.attack(t, 12); } }, name: 'T', hp: 80, gold: 99, deck: ['t_strike', 't_strike', 't_strike', 't_strike', 't_strike', 't_def', 't_def', 't_def', 't_def', 't_def'], relic: 't_relic' }]);
 defineRelics([{ id: 't_relic', name: 'T', rarity: 'starter', desc: '' }]);
 defineCards([
   { id: 't_strike', name: 'S', hero: 't_hero', type: 'attack', rarity: 'starter', cost: 1, target: 'enemy', v: { dmg: 6 }, up: { dmg: 3 }, text: '', play(g, v, t) { g.attack(t, v.dmg); } },
@@ -132,6 +135,89 @@ const E = (g) => g.cb.enemies[0];
   await g.endTurn();
   eq(g.run.screen, 'death', 'lost → death');
   eq(g.meta.deaths, 1, 'death counted');
+}
+
+// --- hero actions: Strike / Guard once per turn, meter, Special
+{
+  const g = await fresh();
+  const e = E(g);
+  eq(await g.useAction('strike', e.uid), true, 'strike works');
+  eq(e.hp, 96, 'strike deals 4');
+  eq(await g.useAction('strike', e.uid), false, 'strike once per turn');
+  await g.useAction('guard');
+  eq(g.player.block, 4, 'guard gives 4 block');
+  eq(await g.useAction('guard'), false, 'guard once per turn');
+  eq(g.cb.act.meter, 2, 'actions charge the meter');
+  eq(await g.useAction('special', e.uid), false, 'special needs a full meter');
+  g.cb.act.meter = 6;
+  eq(await g.useAction('special', e.uid), true, 'special at full meter');
+  eq(e.hp, 84, 'special dealt 12');
+  eq(g.cb.act.meter, 0, 'special spends the meter');
+  await g.endTurn();
+  eq(g.actionList().find((a) => a.id === 'strike').ready, true, 'strike ready again next turn');
+}
+// --- playing a card and taking a hit charge the meter
+{
+  const g = await fresh({ hand: ['t_strike'] });
+  await g.playCard(g.cb.hand[0].uid, E(g).uid);
+  eq(g.cb.act.meter, 1, 'card play +1 meter');
+  g.cb.hand = []; E(g).move = 'hit';
+  await g.endTurn();
+  eq(g.cb.act.meter, 2, 'taking an enemy hit +1 meter');
+}
+// --- timed Brace: success cuts the hit, miss does not, headless skips it
+{
+  const g = await fresh({ hand: [] });
+  g.ui = { ...g.ui, brace: async () => true };
+  E(g).move = 'hit';
+  await g.endTurn();
+  eq(g.player.hp, 74, 'brace success: 10 dmg -> 6');
+  eq(g.cb.act.meter, 3, 'brace success +2 meter (+1 for the hit)');
+}
+{
+  const g = await fresh({ hand: [] });
+  g.ui = { ...g.ui, brace: async () => false };
+  E(g).move = 'hit';
+  await g.endTurn();
+  eq(g.player.hp, 70, 'brace miss: full 10 dmg');
+}
+{
+  const g = await fresh({ hand: [] });
+  g.meta.settings.timedBrace = false;
+  let called = 0; g.ui = { ...g.ui, brace: async () => { called++; return true; } };
+  E(g).move = 'hit';
+  await g.endTurn();
+  eq(called, 0, 'brace window honours the setting');
+  eq(g.player.hp, 70, 'no window -> full damage');
+}
+// --- suggestPlay offers something sensible and never null while there are cards
+{
+  const g = await fresh({ hand: ['t_def', 't_strike'] });
+  E(g).move = 'wait';
+  const s1 = g.suggestPlay();
+  eq(s1 && s1.kind, 'card', 'suggestPlay picks a card');
+}
+// --- pacing: Act 1 enemies get the multiplier; short act-1 map
+{
+  PACE[1].hp = 0.7;
+  const g = await fresh();
+  eq(E(g).maxHp, 70, 'act 1 pace.hp scales enemy HP');
+  PACE[1].hp = 1;
+  const { generateMap } = await import('../src/engine/map.js');
+  const { newStream } = await import('../src/engine/rng.js');
+  const m1 = generateMap(newStream(5), 1, 0), m2 = generateMap(newStream(5), 2, 0);
+  eq(m1.floors < m2.floors, true, 'act 1 map is shorter than act 2');
+  eq(Object.values(m1.nodes).filter((n) => n.f === 0).length <= 4, true, 'act 1 map has few routes');
+}
+// --- opening card choice
+{
+  const g = new Game(); g.meta = freshMeta(); g.newRun('t_hero', 0, 11);
+  eq(g.run.screen, 'starter', 'run opens on the starter pick');
+  const n = g.run.deck.length;
+  eq(g.run.starter.length >= 1, true, 'starter options offered');
+  eq(g.pickStarter(0), true, 'pickStarter works');
+  eq(g.run.deck.length, n + 1, 'picked card joins the deck');
+  eq(g.run.screen, 'blessing', 'then blessing');
 }
 console.log(`${passes} passed, ${fails} failed`);
 process.exit(fails ? 1 : 0);

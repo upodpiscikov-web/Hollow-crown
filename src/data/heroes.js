@@ -1,4 +1,4 @@
-import { defineHeroes } from '../engine/registry.js';
+import { defineHeroes, HEROES } from '../engine/registry.js';
 
 // Each hero agent may tune ONLY its own entry (deck, hp, relic).
 defineHeroes([
@@ -39,3 +39,42 @@ defineHeroes([
     mechanic: 'Channels Spirits that act each turn, and Releases them. Bleeds for power.',
   },
 ]);
+
+// ---------------------------------------------------------------- hero actions
+// Every hero has free Strike and Guard buttons (defaults in engine/actions.js, override with
+// `actions: { strike: { dmg }, guard: { blk }, meterMax }`) and one Special that charges as you
+// play cards, take hits and Brace. `use(g, target)` may be async; `target` is 'enemy' or 'none'.
+const MASKS = ['wolf', 'moth', 'owl'];
+Object.assign(HEROES.knight, {
+  special: {
+    name: 'Shield Bash', icon: 'act_special_knight', target: 'enemy',
+    desc: 'Deal 12 damage and gain 8 Block.',
+    use(g, t) { g.attack(t, 12); g.block(8); },
+  },
+});
+Object.assign(HEROES.witch, {
+  special: {
+    name: 'Plague Burst', icon: 'act_special_witch', target: 'none',
+    desc: 'Apply 6 Rot to ALL enemies. Brew 1.',
+    use(g) { g.applyAll('rot', 6); g.brew(1); },
+  },
+});
+Object.assign(HEROES.wren, {
+  special: {
+    name: 'Shift & Slash', icon: 'act_special_wren', target: 'none',
+    desc: 'Shift to your next Mask. Add 2 Knives to your hand.',
+    use(g) {
+      const i = MASKS.indexOf(g.cb.mask);
+      g.setMask(MASKS[(i + 1) % MASKS.length]);
+      g.addCard('knife', 'hand');
+      g.addCard('knife', 'hand');
+    },
+  },
+});
+Object.assign(HEROES.cantor, {
+  special: {
+    name: 'Toll the Bell', icon: 'act_special_cantor', target: 'none',
+    desc: 'Release all Spirits, Channel a Wisp, and gain 6 Block.',
+    use(g) { g.releaseAll(); g.channel('wisp'); g.block(6); },
+  },
+});

@@ -3,6 +3,7 @@
 
 import { combatMethods } from './combat.js';
 import { runMethods } from './run.js';
+import { actionMethods } from './actions.js';
 import { HEROES } from './registry.js';
 
 const META_KEY = 'hc_meta_v1';
@@ -20,7 +21,9 @@ export function freshMeta() {
     flags: {}, seenEvents: {}, lore: {}, endings: {}, deathsBy: {}, bossesDefeated: {},
     seen: { cards: {}, relics: {}, enemies: {}, potions: {} },
     hubSeen: {}, lastRun: null, playtime: 0,
-    settings: { music: 0.5, sfx: 0.7, fast: false, shake: true, confirmEnd: false },
+    // timedBrace/braceMs: Brace window on heavy hits; autoEnd: end the turn when nothing is left to do;
+    // speed: animation speed 1|2|3 (fast kept for older saves)
+    settings: { music: 0.5, sfx: 0.7, fast: false, shake: true, confirmEnd: false, timedBrace: true, braceMs: 1400, autoEnd: false, speed: 1 },
   };
 }
 
@@ -139,3 +142,4 @@ export class Game {
 
 Object.defineProperties(Game.prototype, Object.getOwnPropertyDescriptors(combatMethods));
 Object.defineProperties(Game.prototype, Object.getOwnPropertyDescriptors(runMethods));
+Object.defineProperties(Game.prototype, Object.getOwnPropertyDescriptors(actionMethods));

@@ -6,6 +6,8 @@
 
 import { CARDS, STATUSES, ENEMIES, RELICS, POTIONS, ENCOUNTERS } from './registry.js';
 import { rnd, int, pick, shuffle } from './rng.js';
+import { paceOf } from './pace.js';
+import { BRACE_MUL } from './actions.js';
 
 export const MASKS = {
   wolf: {
@@ -268,7 +270,7 @@ export const combatMethods = {
     if (n <= 0) return 0;
     e.hp -= n;
     this.emit('hploss', { e, n, type: opts.type });
-    if (e.isPlayer) { this.cnt.hpLost += n; this.tot.hpLost += n; this.run.stats.damageTaken += n; }
+    if (e.isPlayer) { this.cnt.hpLost += n; this.tot.hpLost += n; this.run.stats.damageTaken += n; if (opts.enemy) this.gainMeter(1); }
     for (const id of Object.keys(e.st)) {
       const d = STATUSES[id];
       if (d && d.hpLost && e.st[id]) d.hpLost(this, e, e.st[id], n, opts);
@@ -612,6 +614,7 @@ export const combatMethods = {
     const d = ENEMIES[id];
     if (!d) throw new Error('unknown enemy ' + id);
     let hp = Array.isArray(d.hp) ? int(this.crng, d.hp[0], d.hp[1]) : d.hp;
+    if (!opts.hp) hp = Math.max(1, Math.round(hp * paceOf(this.run.act).hp)); // per-act pacing (pace.js)
     const asc = this.run.asc || 0;
     if (d.kind === 'normal' && asc >= 2) hp = Math.round(hp * 1.1);
     if (d.kind === 'elite' && asc >= 3) hp = Math.round(hp * 1.1);
@@ -680,9 +683,10 @@ export const combatMethods = {
     const m = d.moves[e.move];
     this.emit('enemyAct', { e, move: m });
     await this.ui.wait(220);
-    const dmg = this.moveDmg(e, m);
+    let dmg = this.moveDmg(e, m);
     if (dmg != null) {
       const times = num(m.times, this, e) || 1;
+      dmg = await this.braceWindow(e, dmg, times);
       for (let i = 0; i < times; i++) {
         if (e.dead || this.cb.phase === 'over') break;
         this.emit('enemyStrike', { e });
@@ -693,6 +697,23 @@ export const combatMethods = {
     if (!e.dead && this.cb.phase !== 'over' && m.fx) await m.fx(this, e);
     e.hist.push(e.move);
     e.turns++;
+  },
+
+  // Timed Brace: before a heavy attack the UI may open a short window (g.ui.brace). Tapping
+  // in time reduces that attack's damage and charges the Special. Off in headless play,
+  // when the setting is off, and for light hits, so it never becomes busywork.
+  async braceWindow(e, dmg, times) {
+    const cb = this.cb;
+    const st = (this.meta && this.meta.settings) || {};
+    if (typeof this.ui.brace !== 'function' || st.timedBrace === false || (cb.braces || 0) >= 2) return dmg;
+    const total = this.calcAttack(e, this.player, dmg, {}) * times;
+    if (total < Math.max(8, Math.round(this.player.maxHp * 0.12))) return dmg;
+    cb.braces = (cb.braces || 0) + 1;
+    const ok = await this.ui.brace({ enemy: e, dmg: this.calcAttack(e, this.player, dmg, {}), times, ms: st.braceMs || 1400 });
+    this.emit(ok ? 'braceOk' : 'braceMiss', { e });
+    if (!ok) return dmg;
+    this.gainMeter(2);
+    return Math.max(0, Math.round(dmg * BRACE_MUL));
   },
 
   // AI helpers
@@ -730,6 +751,7 @@ export const combatMethods = {
       noGold: !!opts.noGold, extraReward: opts.extraReward || null, busy: false,
     };
     const cb = run.combat;
+    cb.act = this.freshActions();
     cb.maxEnergy += this.sumMod(P, 'maxEnergy');
     for (const id of enemyIds) {
       const e = this.makeEnemy(id);
@@ -762,6 +784,7 @@ export const combatMethods = {
     const P = this.player;
     cb.turn++;
     cb.phase = 'player';
+    if (cb.act) { cb.act.strike = false; cb.act.guard = false; }
     cb.drawnThisTurn = false;
     if (P.st.bulwark || P.st.barricade) {
       if (P.st.bulwark) this.addStatus(P, 'bulwark', -1, { silent: true });
@@ -827,6 +850,7 @@ export const combatMethods = {
       if (t === 'skill') { cb.cnt.skills++; cb.tot.skills++; }
       if (t === 'power') { cb.cnt.powers++; cb.tot.powers++; }
       this.run.stats.cardsPlayed++;
+      this.gainMeter(1);
       if (t === 'attack' && this.player.st.vigor) this.removeStatus(this.player, 'vigor');
       if (cb.phase !== 'over') this.trigger('cardPlayed', card, target);
       this.checkEnd();
@@ -919,6 +943,7 @@ export const combatMethods = {
 
   async enemyPhase() {
     const cb = this.cb;
+    cb.braces = 0;
     for (const e of this.enemies) if (!e.st.barricade) e.block = 0;
     for (const e of [...this.enemies]) {
       if (cb.phase === 'over') return;

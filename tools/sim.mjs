@@ -28,6 +28,7 @@ for (const c of Object.values(CARDS)) {
   if (c.hero && !['neutral', 'status', 'curse'].includes(c.hero) && !HEROES[c.hero]) warn(`card ${c.id}: unknown hero ${c.hero}`);
 }
 for (const h of Object.values(HEROES)) {
+  if (!h.special || typeof h.special.use !== 'function') warn(`hero ${h.id}: missing special.use()`);
   for (const id of h.deck) if (!CARDS[id]) warn(`hero ${h.id}: starter card ${id} missing`);
   if (!RELICS[h.relic]) warn(`hero ${h.id}: starter relic ${h.relic} missing`);
 }
@@ -121,6 +122,15 @@ async function botCombat(g) {
       const slot = g.run.potions.findIndex((p) => p && POTIONS[p] && !POTIONS[p].revive);
       if (slot >= 0) { const t = g.enemies[0]; await g.usePotion(slot, t && t.uid); if (!g.run || !g.run.combat) return; continue; }
     }
+    // Free hero actions first, like a player would: Special when charged, then Strike/Guard.
+    const acts = g.actionList();
+    const foe = g.enemies.reduce((m, e) => (!m || e.hp < m.hp ? e : m), null);
+    const sp = acts.find((a) => a.id === 'special' && a.ready);
+    if (sp) { await g.useAction('special', foe && foe.uid); continue; }
+    const st = acts.find((a) => a.id === 'strike' && a.ready);
+    if (st) { await g.useAction('strike', foe && foe.uid); continue; }
+    const gd = acts.find((a) => a.id === 'guard' && a.ready);
+    if (gd && incoming(g) > P.block) { await g.useAction('guard'); continue; }
     const playable = cb.hand.filter((c) => g.canPlay(c));
     if (!playable.length) { await g.endTurn(); continue; }
     const needBlock = incoming(g) > P.block;
@@ -155,6 +165,7 @@ async function playRun(hero, seed) {
     const scr = g.run.screen;
     if (VERBOSE && scr !== 'combat') console.log(`  [${hero}] act ${g.run.act} floor ${g.run.floor} ${scr} hp ${g.run.player.hp}/${g.run.player.maxHp} gold ${g.run.gold} deck ${g.run.deck.length}`);
     switch (scr) {
+      case 'starter': g.pickStarter(Math.floor(rnd(botR) * Math.max(1, g.run.starter.length))); break;
       case 'blessing': await g.chooseBlessing(Math.floor(rnd(botR) * g.run.blessing.length)); break;
       case 'actIntro': g.beginAct(); break;
       case 'map': {

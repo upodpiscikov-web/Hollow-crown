@@ -39,7 +39,8 @@ export const runMethods = {
     this.buildRelicPool();
     this.addRelic(H.relic, { silent: true });
     this.startAct(1);
-    run.screen = 'blessing';
+    run.screen = 'starter';
+    run.starter = this.rollStarterCards();
     run.blessing = this.rollBlessings();
     this.meta.runs++;
     this.heroMeta(heroId).runs++;
@@ -87,6 +88,32 @@ export const runMethods = {
     const bosses = Object.values(ENCOUNTERS).filter((e) => e.act === act && e.pool === 'boss' && (!e.req || e.req(this)));
     if (!bosses.length) return null;
     return pick(run.rng.enc, bosses).id;
+  },
+
+  // ------------------------------------------------------------- opening card
+  // Every run opens with a choice: one of three hero cards (an attack, a skill, a power).
+  rollStarterCards() {
+    const run = this.run;
+    const out = [];
+    for (const [type, rarity] of [['attack', 'uncommon'], ['skill', 'uncommon'], ['power', 'uncommon']]) {
+      let [id] = this.randomCards({ count: 1, type, rarity, rng: run.rng.cards, exclude: out.map((o) => o.id) });
+      if (!id) [id] = this.randomCards({ count: 1, type, rng: run.rng.cards, exclude: out.map((o) => o.id) });
+      if (id) out.push({ id, up: 0 });
+    }
+    return out;
+  },
+
+  pickStarter(i) {
+    const run = this.run;
+    if (!run || run.screen !== 'starter') return false;
+    const o = run.starter && run.starter[i];
+    if (!o) return false;
+    this.addToDeck(o.id, o.up);
+    run.starter = null;
+    run.screen = 'blessing';
+    this.save();
+    this.emit('refresh', {});
+    return true;
   },
 
   // ------------------------------------------------------------- blessing
