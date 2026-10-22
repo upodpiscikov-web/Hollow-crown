@@ -98,7 +98,7 @@ export function modal(opts = {}) {
     },
   };
   if (closeBtn) tap(closeBtn, () => api.close());
-  if (opts.closable !== false && opts.tapOutside !== false) {
+  if (opts.tapOutside ?? opts.closable !== false) {
     root.addEventListener('click', (e) => { if (e.target === root) { sfx('click'); api.close(); } });
   }
   layer().appendChild(root);
@@ -139,7 +139,7 @@ export function zoomCard(g, card, opts = {}) {
   const toggle = canUp && opts.noUpgradeToggle !== true ? h('button.btn.small', {
     onTap: () => { showUp = !showUp; toggle.classList.toggle('on', showUp); draw(); },
   }, 'View upgrade') : null;
-  const m = modal({ cls: 'm-zoom', body: [holder, toggle ? h('div.zoom-actions', toggle) : null, opts.extra || null], closable: true });
+  const m = modal({ cls: 'm-zoom', body: [holder, toggle ? h('div.zoom-actions', toggle) : null, opts.extra || null], closable: false, tapOutside: true });
   holder.addEventListener('click', () => { sfx('click'); m.close(); });
   return m;
 }

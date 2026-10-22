@@ -61,7 +61,7 @@ export function openSettings(g) {
   const danger = h('div.set-group', h('div.set-head', 'Danger'));
   if (g.run && UI.inRun) {
     const quit = h('button.btn.small', 'Save & quit to title');
-    tap(quit, () => { g.save(); UI.inRun = false; UI.view = 'title'; closeAllModals(); UI.render(); });
+    tap(quit, () => { if (g.cb && (g.cb.busy || g.cb.phase !== 'player')) { toast('Wait for the enemy turn to end.', 'warn'); return; } g.save(); UI.inRun = false; UI.view = 'title'; closeAllModals(); UI.render(); });
     danger.appendChild(quit);
   }
   if (g.run) {

@@ -39,8 +39,8 @@
 .c-tx .kwline { display: block; margin-top: .25em; font-style: italic; }
 .c-price { position: absolute; left: 50%; bottom: -1.6em; transform: translateX(-50%); font: 1.1em var(--f-num); color: var(--candle); }
 .card.t-curse .c-text, .card.t-status .c-text { background: linear-gradient(180deg, #b9ae9a, #9a907d); }
-.card.silhouette { background: #17131c; border: .25em solid #2a232f; display: flex; align-items: center; justify-content: center; }
-.card.silhouette span { font: 4em var(--f-title); color: #2f2836; }
+.card.silhouette { background: #17131c; border: .25em solid #342d3b; display: flex; align-items: center; justify-content: center; }
+.card.silhouette span { font: 4em var(--f-title); color: #3d3546; }
 .card.unknown .c-name span { opacity: .5; }
 .card.burning { filter: sepia(1) brightness(1.4); }
 

@@ -162,11 +162,12 @@ export const mapScreen = {
     const inner = buildMap(g, { interactive: true });
     scroller.appendChild(inner);
     area.appendChild(scroller);
-    area.appendChild(h('div.map-title', h('span.mt-act', act === 4 ? 'Act IV' : `Act ${ROMAN[act] || act}`), h('span.mt-name', actTitle(act))));
     area.appendChild(h('div.map-fade.l'));
     area.appendChild(h('div.map-fade.r'));
     scr.appendChild(area);
-    scr.appendChild(legend());
+    const lg = legend();
+    lg.insertBefore(h('div.map-title', h('span.mt-act', act === 4 ? 'Act IV' : `Act ${ROMAN[act] || act}`), h('span.mt-name', actTitle(act))), lg.firstChild);
+    scr.appendChild(lg);
     if (!g.reachable().length) scr.appendChild(h('div.map-stuck', 'No road leads on.'));
     root.appendChild(scr);
     this.scroller = scroller;

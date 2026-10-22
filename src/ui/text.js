@@ -149,7 +149,7 @@ export function inline(text, terms) {
 // Choice label "[Verb] outcome" → {verb, rest}
 export function splitChoice(label) {
   const m = /^\s*\[([^\]]+)\]\s*(.*)$/s.exec(String(label ?? ''));
-  return m ? { verb: m[1], rest: m[2] } : { verb: '', rest: String(label ?? '') };
+  return m ? { verb: smart(m[1]), rest: m[2] } : { verb: '', rest: String(label ?? '') };
 }
 
 export function statusName(id) { return (STATUSES[id] && STATUSES[id].name) || id; }

@@ -210,4 +210,4 @@ select { background: #1a1620; color: var(--bone); border: 1px solid #4d4553; bor
 .crash-box .row { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
 
 body.reduced *, body.reduced *::before, body.reduced *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
-@media (prefers-reduced-motion: reduce) { .campfire *, .map-node.reach, .fade-p { animation: none !important; } .fade-p { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } .ent-sprite, .intent, .cf-glow, .cf-flame, .ash-layer i, .end-turn.ready::after, .map-node.reach::after { animation: none !important; } .fade-p, .ev-choices .choice { opacity: 1 !important; } }

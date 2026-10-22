@@ -103,6 +103,7 @@ async function openCardReward(g, i) {
 const reward = simple('reward', (g) => {
   const run = g.run;
   const rw = run.reward || { items: [] };
+  music(rw.boss ? 'victory' : 'act' + Math.min(4, run.act || 1));
   const { scr, body } = roomShell(g, 'reward', actBg(g), { shade: 'heavy' });
   const title = rw.kind === 'treasure' ? 'Treasure' : rw.boss ? 'The Master Falls' : rw.kind === 'elite' ? 'Spoils of the Elite' : 'Spoils';
   const list = h('div.reward-list');
@@ -524,7 +525,7 @@ const ending = simple('ending', (g) => {
       h('div.end-title', E.title || FALLBACK[e] || 'The End'),
       h('div.ai-rule'),
       h('div.end-text.prose', { html: prose(text) })),
-    h('div.ending-side.panel', statsGrid(run), renownBlock(g), unlockNotes(g), home)));
+    h('div.ending-side', h('div.panel.es-panel', statsGrid(run), renownBlock(g), unlockNotes(g)), home)));
   setTimeout(() => sfx('victory'), 300);
   return scr;
 }, { music: 'victory', sig: () => 'end' });

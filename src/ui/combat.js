@@ -214,7 +214,7 @@ export const combatScreen = {
     const g = this.g;
     const rec = this.makeEntity(true);
     const H = HEROES[g.run.hero];
-    this.setSprite(rec, (H && H.sprite) || 'hero_' + g.run.hero, 2.5);
+    this.setSprite(rec, (H && H.sprite) || 'hero_' + g.run.hero, 2.5 * Math.min(1.45, Math.max(1, S.H / 390)));
     rec.oaths = h('div.oaths');
     rec.root.appendChild(rec.oaths);
     rec.body.addEventListener('click', (ev) => {
@@ -279,7 +279,7 @@ export const combatScreen = {
   enemyScale(e) {
     const d = ENEMIES[e.id] || {};
     const base = d.kind === 'boss' ? 1.5 : d.kind === 'elite' ? 1.75 : 2;
-    return base * (d.scale || 1);
+    return base * (d.scale || 1) * Math.min(1.45, Math.max(1, S.H / 390));
   },
 
   renderEnemies() {
@@ -447,7 +447,7 @@ export const combatScreen = {
   // ------------------------------------------------------------------ hand
   handGeom() {
     const x0 = 100, x1 = S.W - 152;
-    return { x0, x1, y: S.H - CH + 3 };
+    return { x0, x1, y: S.H - CH - 8 };
   },
 
   layoutHand() {
@@ -935,7 +935,7 @@ export const combatScreen = {
           if (!rec) return;
           flash(rec.fl, 260);
           if (rec.maskBadge) pulse(rec.maskBadge, 1.4, 360);
-          floatText(rec.body, to ? to.name : 'Mask removed', 'buff', { at: 0.1 });
+          floatText(rec.body, to ? to.name : 'Mask removed', 'buff', { at: 0.42 });
           particlesOn(rec.body, 'violet', { at: 0.2 });
         });
         break;
@@ -964,7 +964,7 @@ export const combatScreen = {
         if (cb.turn > 1) { banner('Your Turn', 'turn', `Turn ${cb.turn}`, 700); sfx('turnStart'); }
         break;
       }
-      case 'endTurn': banner('Enemy Turn', 'enemy', '', 650); this.mark('end'); break;
+      case 'endTurn': banner('Enemy Turn', 'enemy', '', 520); this.mark('end'); break;
       case 'phase': {
         const rec = this.recOf(d.e);
         if (rec) { flash(rec.fl, 400); particlesOn(rec.body, 'ember', { n: 30 }); }

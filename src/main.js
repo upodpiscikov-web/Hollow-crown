@@ -155,8 +155,10 @@ UI.applySettings = applySettings;
 
 document.addEventListener('pointerdown', () => unlockAudio(), { capture: true });
 document.addEventListener('touchstart', () => {}, { passive: true }); // enables :active on iOS
-document.addEventListener('visibilitychange', () => { if (document.hidden) { suspend(); g.save(); } else resume(); });
-window.addEventListener('pagehide', () => { try { g.save(); } catch (e) { /* ignore */ } });
+// Never persist a half-resolved turn: the last afterAction() save is the safe point.
+const safeSave = () => { try { if (g.cb && (g.cb.busy || g.cb.phase !== 'player')) return; g.save(); } catch (e) { /* ignore */ } };
+document.addEventListener('visibilitychange', () => { if (document.hidden) { suspend(); safeSave(); } else resume(); });
+window.addEventListener('pagehide', safeSave);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { hideTip(); closeTopModal(); } });
 document.addEventListener('gesturestart', (e) => e.preventDefault());
 document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
