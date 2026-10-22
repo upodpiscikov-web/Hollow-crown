@@ -3,7 +3,7 @@
 import { CARDS, HEROES } from '../engine/registry.js';
 import { h, safe, cap } from './core.js';
 import { spr, sprURL, hasSprite } from './gfx.js';
-import { cardText, glossaryFor } from './text.js';
+import { cardText, cardChips, glossaryFor } from './text.js';
 
 const TYPE_LABEL = { attack: 'Attack', skill: 'Skill', power: 'Power', curse: 'Curse', status: 'Status' };
 
@@ -26,7 +26,7 @@ export function cardEl(card, opts = {}) {
   }
   const type = TYPE_LABEL[def.type] ? def.type : 'skill';
   const rarity = def.rarity || 'common';
-  const el = h(`div.card.t-${type}.r-${rarity}` + (card.up ? '.up' : '') + (opts.cls ? '.' + opts.cls : ''), {
+  const el = h(`div.card.t-${type}.r-${rarity}` + (card.up ? '.up' : '') + (opts.simple ? '.simple' : '') + (opts.cls ? '.' + opts.cls : ''), {
     style: { fontSize: width / 10 + 'px', '--hc': heroColor(def.hero) },
   });
   el.dataset.uid = card.uid;
@@ -43,6 +43,17 @@ export function cardEl(card, opts = {}) {
   // Cost gem
   const cost = costInfo(g, card, def, opts.live);
   if (cost) el.appendChild(h('div.c-cost' + (cost.cls ? '.' + cost.cls : ''), h('span', String(cost.text))));
+  // Simple view: big effect chips instead of rules text (the full text appears when selected).
+  if (opts.simple) {
+    const all = cardChips(g, card, { live: opts.live, target: opts.target });
+    const main = all.filter((c) => c.k !== 'kw').slice(0, 3);
+    const kws = all.filter((c) => c.k === 'kw');
+    const box = h('div.c-chips.n' + main.length, main.map(chipEl));
+    el.appendChild(h('div.c-text', box));
+    if (kws.length) art.appendChild(h('div.c-kws', kws.map((c) => h('span.kwb', { title: c.label }, c.glyph))));
+    el._terms = cardText(g, card, { live: opts.live, target: opts.target }).terms;
+    return el;
+  }
   // Type plate + rarity gem
   el.appendChild(h('div.c-type', h('i.c-gem'), h('span', TYPE_LABEL[type])));
   // Text
@@ -55,6 +66,22 @@ export function cardEl(card, opts = {}) {
   el._terms = terms;
   if (opts.price != null) el.appendChild(h('div.c-price', String(opts.price)));
   return el;
+}
+
+const CHIP_ICON = { dmg: 'in_atk', blk: 'ui_block', draw: 'ui_draw', heal: 'ui_heart', hp: 'ui_hp', energy: 'ui_energy' };
+const CHIP_GLYPH = { dmg: '\u2694', blk: '\u25C6', draw: '\u25A4', heal: '+', hp: '\u2665', energy: '\u26A1' };
+
+// One effect chip: icon + number (+ ALL / xN tags). Sized in em so it scales with the card.
+function chipEl(c) {
+  const iconId = c.icon || CHIP_ICON[c.k];
+  const ic = iconId && hasSprite(iconId) ? h('img.px.chip-ic', { src: sprURL(iconId), alt: '', draggable: 'false' })
+    : h('span.chip-gl', c.glyph || CHIP_GLYPH[c.k] || '\u2726');
+  const cls = `chip.k-${c.k}` + (c.cls ? '.' + c.cls : '') + (c.neg ? '.neg' : '');
+  if (c.k === 'text') return h('div.chip.k-text', c.label);
+  const n = c.n == null ? null : h('span.chip-n', (c.k === 'hp' ? '\u2212' : '') + c.n);
+  const times = c.times > 1 ? h('span.chip-x', '\u00D7' + c.times) : null;
+  const tag = c.tag ? h('span.chip-tag', c.tag) : null;
+  return h('div.' + cls, ic, n, times, tag);
 }
 
 function costInfo(g, card, def, live) {

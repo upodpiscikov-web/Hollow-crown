@@ -2,18 +2,19 @@
 // piles, energy, top bar) coalesced per animation frame. FX are driven by emits.
 import { CARDS, ENEMIES, ENCOUNTERS, STATUSES, HEROES, TEXTS } from '../engine/registry.js';
 import { MASKS, SPIRITS } from '../engine/combat.js';
-import { h, clear, tap, UI, safe, anim, sleep } from './core.js';
+import { h, clear, tap, UI, safe, anim, sleep, isSimple, timeMul, speedOf, longPress } from './core.js';
 import { S, toStage, stageRect } from './scale.js';
-import { spr, sprInfo, bgStyle, icon, hasSprite } from './gfx.js';
+import { spr, sprFit, sprInfo, bgStyle, icon, hasSprite } from './gfx.js';
 import { cardEl } from './card.js';
-import { cardText, statusDesc, glossaryFor } from './text.js';
+import { cardText, cardChips, statusDesc, glossaryFor } from './text.js';
 import { topbar, TB, updateTopbarStats } from './topbar.js';
-import { tip, infoTip, toast, banner, showPile, modalOpen, hideTip } from './overlay.js';
+import { tip, infoTip, toast, banner, showPile, modalOpen, hideTip, zoomCard } from './overlay.js';
 import { floatText, particlesOn, particles, shake, screenShake, flash, pulse, screenFlash, flyGhost } from './fx.js';
 import { sfx, music } from './sound.js';
+import { AUTO, stopAuto } from './auto.js';
 
 const GROUND = 150;      // design px from stage bottom to the ground line
-const CW = 84, CH = 118; // hand card size
+const CW = 88, CH = 123; // hand card size
 const SEL_SCALE = 1.55;
 
 const INTENT_ICON = {
@@ -33,13 +34,13 @@ export const combatScreen = {
   g: null, root: null, cbRef: null,
   els: {}, enemyRecs: new Map(), heroRec: null,
   handEls: new Map(), fresh: new Set(), created: new Set(),
-  sel: null, drag: null, potionSlot: null, dying: new Map(),
+  sel: null, drag: null, potionSlot: null, pendAct: null, dying: new Map(), actEls: {}, autoEndTimer: 0,
   dirty: {}, raf: 0, flying: new Map(), confirmEnd: 0, hoverTarget: null,
 
   mount(root, g) {
     this.g = g; this.root = root; this.cbRef = g.cb;
     this.enemyRecs = new Map(); this.handEls = new Map(); this.fresh = new Set(); this.created = new Set();
-    this.dying = new Map(); this.flying = new Map(); this.sel = null; this.drag = null; this.potionSlot = null; this.hoverTarget = null;
+    this.dying = new Map(); this.flying = new Map(); this.sel = null; this.drag = null; this.potionSlot = null; this.pendAct = null; this.hoverTarget = null; this.actEls = {}; clearTimeout(this.autoEndTimer); this.autoEndTimer = 0;
     const cb = g.cb;
     // Cards already in hand at mount time animate in from the draw pile.
     for (const c of cb.hand) this.fresh.add(c.uid);
@@ -56,15 +57,16 @@ export const combatScreen = {
     field.append(heroZone, enemyZone);
     const hand = h('div.hand-zone');
     const energy = h('div.energy', h('div.en-orb', h('span.en-val', '3/3')));
-    const drawBtn = h('button.pile.pile-draw', { 'aria-label': 'Draw pile' }, icon('ui_draw', 2, '', '▤'), h('span.pile-count', '0'), h('span.pile-lbl', 'Draw'));
-    const discBtn = h('button.pile.pile-discard', { 'aria-label': 'Discard pile' }, icon('ui_discard', 2, '', '▥'), h('span.pile-count', '0'), h('span.pile-lbl', 'Discard'));
-    const exhBtn = h('button.pile-exh', icon('ui_exhaust', 1.5, '', '✕'), h('span', '0'));
+    const drawBtn = h('button.pile.pile-draw', { 'aria-label': 'Draw pile' }, icon('ui_draw', 2, '', '▤'), h('span.pile-count', '0'));
+    const discBtn = h('button.pile.pile-discard', { 'aria-label': 'Discard pile' }, icon('ui_discard', 2, '', '▥'), h('span.pile-count', '0'));
+    const exhBtn = h('button.pile-exh', { 'aria-label': 'Exhausted cards' }, icon('ui_exhaust', 1.25, '', '✕'), h('span', '0'));
     const endBtn = h('button.end-turn', h('span', 'End Turn'));
+    const actbar = h('div.actbar');
     const hint = h('div.c-hint');
-    sr.append(tb, field, energy, drawBtn, discBtn, exhBtn, endBtn, hand, hint);
+    sr.append(tb, field, energy, drawBtn, discBtn, exhBtn, actbar, endBtn, hand, hint);
     scr.appendChild(sr);
     root.appendChild(scr);
-    this.els = { scr, sr, tb, field, heroZone, enemyZone, hand, energy, drawBtn, discBtn, exhBtn, endBtn, hint };
+    this.els = { scr, sr, tb, field, heroZone, enemyZone, hand, energy, drawBtn, discBtn, exhBtn, endBtn, hint, actbar };
 
     tap(drawBtn, () => showPile(g, 'Draw Pile', g.cb ? g.cb.draw : [], { sort: true, note: 'Shown in no particular order.' }));
     tap(discBtn, () => showPile(g, 'Discard Pile', g.cb ? g.cb.discard : [], { reverse: true }));
@@ -73,6 +75,9 @@ export const combatScreen = {
     field.addEventListener('click', (e) => this.onFieldTap(e));
 
     TB.onPotionTarget = (slot) => this.startPotionTarget(slot);
+    this.autoCb = () => { if (this.root) this.mark('tb', 'act'); };
+    AUTO.listeners.add(this.autoCb);
+    this.buildActions();
     this.buildHero();
     this.renderAll();
     music(cb.kind === 'boss' ? 'boss' : cb.kind === 'elite' ? 'elite' : 'act' + act);
@@ -85,16 +90,18 @@ export const combatScreen = {
     const enc = cb.encounter && ENCOUNTERS[cb.encounter];
     if (cb.kind === 'boss' && enc) {
       sfx('bossIntro');
-      await banner(enc.name || 'Boss', 'boss', safe(() => TEXTS.boss_intro[cb.encounter], '') || '', 1700);
-    } else if (cb.kind === 'elite') {
+      await banner(enc.name || 'Boss', 'boss', speedOf() >= 2 ? '' : safe(() => TEXTS.boss_intro[cb.encounter], '') || '', speedOf() >= 2 ? 900 : 1500);
+    } else if (cb.kind === 'elite' && speedOf() < 3) {
       sfx('eliteIntro');
-      await banner(enc && enc.name ? enc.name : 'Elite', 'elite', '', 1000);
+      await banner(enc && enc.name ? enc.name : 'Elite', 'elite', '', 800);
     }
-    if (this.g === g && g.cb === cb && cb.turn === 1) banner('Your Turn', 'turn', '', 800);
   },
 
   unmount() {
     cancelAnimationFrame(this.raf); this.raf = 0;
+    clearTimeout(this.autoEndTimer); this.autoEndTimer = 0;
+    if (this.autoCb) AUTO.listeners.delete(this.autoCb);
+    stopAuto();
     TB.onPotionTarget = null;
     this.endDrag(true);
     this.root = null;
@@ -108,25 +115,27 @@ export const combatScreen = {
     this.markAll();
   },
 
-  markAll() { this.dirty = { hand: 1, piles: 1, energy: 1, hero: 1, enemies: 1, tb: 1, end: 1 }; this.schedule(); },
+  markAll() { this.dirty = { hand: 1, piles: 1, energy: 1, hero: 1, enemies: 1, tb: 1, end: 1, act: 1 }; this.schedule(); },
   mark(...keys) { for (const k of keys) this.dirty[k] = 1; this.schedule(); },
   schedule() { if (!this.raf) this.raf = requestAnimationFrame(() => { this.raf = 0; this.flush(); }); },
 
-  renderAll() { this.dirty = { hand: 1, piles: 1, energy: 1, hero: 1, enemies: 1, tb: 1, end: 1 }; this.flush(); },
+  renderAll() { this.dirty = { hand: 1, piles: 1, energy: 1, hero: 1, enemies: 1, tb: 1, end: 1, act: 1 }; this.flush(); },
 
   flush() {
     const g = this.g;
     if (!this.root || !g.run || !g.cb) return;
     const d = this.dirty; this.dirty = {};
     try {
-      if (d.tb) { clear(this.els.tb).appendChild(topbar(g)); }
+      if (d.tb) { clear(this.els.tb).appendChild(topbar(g, { combat: true })); }
       if (d.enemies) this.renderEnemies();
       if (d.hero) this.renderHero();
       if (d.energy) this.renderEnergy();
       if (d.piles) this.renderPiles();
       if (d.hand) this.renderHand();
       if (d.end || d.hand || d.energy) this.renderEndTurn();
+      if (d.act || d.hand || d.energy || d.end) this.renderActions();
       this.renderHint();
+      this.checkAutoEnd();
     } catch (e) { console.error('combat render', e); }
   },
 
@@ -188,7 +197,7 @@ export const combatScreen = {
     if (sig === rec.stSig) return;
     rec.stSig = sig;
     clear(rec.st);
-    const max = 7;
+    const max = isSimple() ? 4 : 7;
     list.slice(0, list.length > max ? max - 1 : max).forEach((id) => rec.st.appendChild(this.statusIcon(e, id)));
     if (list.length > max) {
       const more = h('div.st-ic.more', h('span', '+' + (list.length - max + 1)));
@@ -203,7 +212,7 @@ export const combatScreen = {
     const d = STATUSES[id] || { name: id, kind: 'buff', icon: id };
     const n = e.st[id];
     const el = h('div.st-ic.' + (d.kind === 'debuff' || (d.negOk && n < 0) ? 'debuff' : 'buff'),
-      icon('st_' + (d.icon || id), 1.5, '', (d.name || id).slice(0, 1)),
+      icon('st_' + (d.icon || id), isSimple() ? 1.9 : 1.5, '', (d.name || id).slice(0, 1)),
       Math.abs(n) !== 1 || d.negOk || d.decay ? h('span.st-n', String(n)) : null);
     el.dataset.st = id;
     infoTip(el, () => ({ icon: icon('st_' + (d.icon || id), 2, '', ''), title: `${d.name || id}${n !== 1 ? ' ' + n : ''}`, text: statusDesc(g, id, n, e) }));
@@ -292,7 +301,7 @@ export const combatScreen = {
     for (const [uid, rec] of this.enemyRecs) if (!keep.has(uid)) { rec.root.remove(); this.enemyRecs.delete(uid); }
     // Fit sprites into the zone.
     const zoneW = S.W * 0.5;
-    const maxH = Math.max(110, S.H - 165 - 72);
+    const maxH = Math.max(110, S.H - 171 - 88);
     let total = 0;
     const scales = list.map((e) => {
       const d = ENEMIES[e.id] || {};
@@ -344,10 +353,12 @@ export const combatScreen = {
     const icons = INTENT_ICON[it.type] || ['in_unknown'];
     const box = h('div.intent.it-' + (it.type || 'unknown'));
     const heavy = it.dmg != null && (it.dmg * (it.times || 1) >= 20 || it.dmg >= 15);
+    if (heavy) box.classList.add('heavy');
+    const big = isSimple();
     icons.forEach((id, i) => {
       let sid = id;
       if (i === 0 && id === 'in_atk' && heavy && hasSprite('in_atk_heavy')) sid = 'in_atk_heavy';
-      box.appendChild(icon(sid, i === 0 ? 1.75 : 1.25, i ? 'it-sub' : 'it-main', INTENT_GLYPH[sid] || '?'));
+      box.appendChild(icon(sid, i === 0 ? (big ? 2.3 : 1.75) : (big ? 1.6 : 1.25), i ? 'it-sub' : 'it-main', INTENT_GLYPH[sid] || '?'));
     });
     if (it.dmg != null) box.appendChild(h('span.it-dmg', `${it.dmg}${it.times > 1 ? '×' + it.times : ''}`));
     rec.top.appendChild(box);
@@ -367,12 +378,20 @@ export const combatScreen = {
   applyTargetable() {
     const g = this.g;
     const card = this.sel != null && g.cb ? g.cb.hand.find((c) => c.uid === this.sel) : null;
-    const tgt = (card && CARDS[card.id] && CARDS[card.id].target === 'enemy' && g.canPlay(card)) || this.potionSlot != null;
+    const tgt = (card && CARDS[card.id] && CARDS[card.id].target === 'enemy' && g.canPlay(card)) || this.pending();
     for (const [uid, rec] of this.enemyRecs) {
       const e = g.byUid(uid);
       rec.root.classList.toggle('targetable', !!tgt && e && !e.dead);
       rec.root.classList.toggle('targeted', !!tgt && this.hoverTarget === uid);
     }
+  },
+
+  pending() { return this.potionSlot != null || this.pendAct != null; },
+  cancelPending() {
+    if (!this.pending()) return;
+    this.potionSlot = null; this.pendAct = null;
+    for (const b of Object.values(this.actEls)) b.root.classList.remove('armed');
+    this.applyTargetable(); this.renderHint();
   },
 
   // ------------------------------------------------------------------ energy, piles, end turn
@@ -398,7 +417,7 @@ export const combatScreen = {
     const b = this.els.endBtn;
     const mine = cb.phase === 'player';
     b.classList.toggle('disabled', !mine || cb.busy);
-    const any = mine && cb.hand.some((c) => safe(() => g.canPlay(c), false));
+    const any = mine && (cb.hand.some((c) => safe(() => g.canPlay(c), false)) || safe(() => g.hasFreeAction(), false));
     b.classList.toggle('ready', mine && !cb.busy && !any);
     const label = !mine ? 'Enemy Turn' : this.confirmEnd > performance.now() ? 'Confirm?' : 'End Turn';
     b.firstChild.textContent = label;
@@ -409,6 +428,7 @@ export const combatScreen = {
     const hint = this.els.hint;
     let text = '';
     if (this.potionSlot != null) text = 'Choose a target for the tincture';
+    else if (this.pendAct != null) text = 'Tap an enemy to target';
     else if (this.sel != null) {
       const card = cb.hand.find((c) => c.uid === this.sel);
       const d = card && CARDS[card.id];
@@ -419,7 +439,7 @@ export const combatScreen = {
       clear(hint);
       if (text) {
         hint.appendChild(h('span', text));
-        if (this.potionSlot != null) hint.appendChild(h('button.btn.small', { onTap: () => { this.potionSlot = null; this.applyTargetable(); this.renderHint(); } }, 'Cancel'));
+        if (this.pending()) hint.appendChild(h('button.btn.small', { onTap: () => this.cancelPending() }, 'Cancel'));
       }
       hint.classList.toggle('on', !!text);
     }
@@ -439,15 +459,15 @@ export const combatScreen = {
     this.confirmEnd = 0;
     sfx('endTurn');
     this.deselect();
-    this.potionSlot = null;
+    this.cancelPending();
     g.endTurn();
     this.mark('end', 'hand');
   },
 
   // ------------------------------------------------------------------ hand
   handGeom() {
-    const x0 = 100, x1 = S.W - 152;
-    return { x0, x1, y: S.H - CH - 8 };
+    const x0 = 112, x1 = S.W - 236;
+    return { x0, x1, y: S.H - CH - 12 };
   },
 
   layoutHand() {
@@ -470,7 +490,7 @@ export const combatScreen = {
       let sc = 1;
       if (selIdx >= 0 && i !== selIdx) x += i < selIdx ? -22 : 22;
       if (i === selIdx) {
-        sc = SEL_SCALE; rot = 0; yy = S.H - CH - 2;
+        sc = SEL_SCALE; rot = 0; yy = S.H - CH - 6;
         const half = (CW * SEL_SCALE) / 2;
         const cx = Math.max(half + 6, Math.min(S.W - half - 6, x + CW / 2));
         x = cx - CW / 2;
@@ -487,19 +507,40 @@ export const combatScreen = {
     return en.length === 1 ? en[0] : null;
   },
 
+  // Simple view shows effect chips; the selected (or dragged) card shows its full rules text.
+  faceSimple(card) {
+    return isSimple() && this.sel !== card.uid && !(this.drag && this.drag.active && this.drag.uid === card.uid);
+  },
+
+  cardFace(card) {
+    return cardEl(card, { g: this.g, width: CW, live: true, target: this.handTarget(card), simple: this.faceSimple(card) });
+  },
+
   cardSig(card) {
     const g = this.g;
     const target = this.handTarget(card);
     const playable = safe(() => g.canPlay(card), false);
-    const txt = cardText(g, card, { live: true, target }).html;
-    return `${card.id}|${card.up}|${safe(() => g.cardCost(card), '')}|${playable}|${txt}`;
+    const simple = this.faceSimple(card);
+    const txt = simple ? cardChips(g, card, { live: true, target }).map((c) => `${c.k}${c.n}${c.cls}${c.label || ''}`).join(',') : cardText(g, card, { live: true, target }).html;
+    return `${simple ? 's' : 'f'}|${card.id}|${card.up}|${safe(() => g.cardCost(card), '')}|${playable}|${txt}`;
+  },
+
+  refreshFaces() {
+    const cb = this.g.cb;
+    if (!cb) return;
+    for (const card of cb.hand) {
+      const el = this.handEls.get(card.uid);
+      if (!el) continue;
+      const sig = this.cardSig(card);
+      if (el._sig !== sig) { el._sig = sig; el.replaceChild(this.cardFace(card), el.firstChild); }
+    }
   },
 
   buildHandCard(card) {
     const g = this.g;
     const wrap = h('div.hcard');
     wrap.dataset.uid = card.uid;
-    wrap.appendChild(cardEl(card, { g, width: CW, live: true, target: this.handTarget(card) }));
+    wrap.appendChild(this.cardFace(card));
     wrap.addEventListener('pointerdown', (e) => this.onCardDown(e, card.uid, wrap));
     wrap.addEventListener('contextmenu', (e) => e.preventDefault());
     return wrap;
@@ -536,11 +577,10 @@ export const combatScreen = {
         el.style.transition = 'none';
         el.style.transform = `translate(${sx}px, ${sy}px) rotate(${created ? 0 : -20}deg) scale(${created ? 0.8 : 0.3})`;
         el.style.opacity = '0';
-        el._enterDelay = fresh || created ? k++ * (g.meta.settings.fast ? 45 : 80) : 0;
+        el._enterDelay = fresh || created ? k++ * Math.round(70 * timeMul()) : 0;
       } else if (el._sig !== sig) {
         el._sig = sig;
-        const inner = cardEl(card, { g, width: CW, live: true, target: this.handTarget(card) });
-        el.replaceChild(inner, el.firstChild);
+        el.replaceChild(this.cardFace(card), el.firstChild);
       }
       el.classList.toggle('playable', cb.phase === 'player' && safe(() => g.canPlay(card), false));
       el.classList.toggle('selected', this.sel === card.uid);
@@ -574,11 +614,12 @@ export const combatScreen = {
     if (where === 'exhaust') { this.burn(el); return; }
     const target = where === 'draw' ? this.els.drawBtn : this.els.discBtn;
     const r = stageRect(target);
-    el.style.transition = 'transform .32s cubic-bezier(.5,0,.7,1), opacity .32s';
+    const dur = Math.max(0.12, 0.3 * timeMul());
+    el.style.transition = `transform ${dur}s cubic-bezier(.5,0,.7,1), opacity ${dur}s`;
     el.style.transform = `translate(${r.cx - CW / 2}px, ${r.cy - CH / 2}px) rotate(25deg) scale(.25)`;
     el.style.opacity = '0';
     el.style.pointerEvents = 'none';
-    setTimeout(() => el.remove(), 360);
+    setTimeout(() => el.remove(), dur * 1000 + 40);
   },
 
   burn(el) {
@@ -594,6 +635,7 @@ export const combatScreen = {
     this.hoverTarget = null;
     sfx('cardSelect');
     for (const [u, el] of this.handEls) el.classList.toggle('selected', u === uid);
+    this.refreshFaces();
     this.positionHand();
     this.applyTargetable();
     this.renderHint();
@@ -605,6 +647,7 @@ export const combatScreen = {
     this.sel = null;
     this.hoverTarget = null;
     for (const el of this.handEls.values()) el.classList.remove('selected');
+    this.refreshFaces();
     this.positionHand();
     this.applyTargetable();
     this.renderHint();
@@ -615,6 +658,7 @@ export const combatScreen = {
   showKwTips() {
     const old = this.els.sr.querySelector('.hand-tips');
     if (old) old.remove();
+    if (isSimple()) return; // Simple view: keywords are bold in the text; long-press a card for the glossary.
     if (this.sel == null || (this.drag && this.drag.active)) return;
     const el = this.handEls.get(this.sel);
     const card = el && el.firstChild;
@@ -638,11 +682,19 @@ export const combatScreen = {
     if (e.button && e.button !== 0) return;
     hideTip();
     if (this.locked()) { if (g.cb && g.cb.phase !== 'player') sfx('error'); return; }
-    if (this.potionSlot != null) { this.potionSlot = null; this.applyTargetable(); }
+    if (this.pending()) this.cancelPending();
     e.preventDefault();
     try { el.setPointerCapture(e.pointerId); } catch (err) { /* noop */ }
     const p = toStage(e.clientX, e.clientY);
-    this.drag = { uid, el, id: e.pointerId, sx: p.x, sy: p.y, active: false, wasSel: this.sel === uid };
+    const d = { uid, el, id: e.pointerId, sx: p.x, sy: p.y, active: false, wasSel: this.sel === uid, lp: 0 };
+    this.drag = d;
+    // Long-press: read the card in full (with the glossary) without playing it.
+    d.lp = setTimeout(() => {
+      if (this.drag !== d || d.active) return;
+      const card = g.cb && g.cb.hand.find((c) => c.uid === uid);
+      this.drag = null;
+      if (card) zoomCard(g, card, { live: true, target: this.handTarget(card) });
+    }, 480);
     const move = (ev) => this.onCardMove(ev);
     const up = (ev) => { el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', cancel); this.onCardUp(ev); };
     const cancel = () => { el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', cancel); this.endDrag(false); };
@@ -657,6 +709,7 @@ export const combatScreen = {
     const p = toStage(ev.clientX, ev.clientY);
     if (!d.active) {
       if (Math.hypot(p.x - d.sx, p.y - d.sy) < 10) return;
+      clearTimeout(d.lp);
       const g = this.g;
       const card = g.cb && g.cb.hand.find((c) => c.uid === d.uid);
       if (!card) return;
@@ -683,7 +736,7 @@ export const combatScreen = {
       this.applyTargetable();
       if (d.target) {
         const card = this.g.cb.hand.find((c) => c.uid === d.uid);
-        if (card) { const inner = cardEl(card, { g: this.g, width: CW, live: true, target: this.handTarget(card) }); d.el.replaceChild(inner, d.el.firstChild); d.el._sig = ''; }
+        if (card) { d.el.replaceChild(this.cardFace(card), d.el.firstChild); d.el._sig = this.cardSig(card); }
       }
     }
     d.lastY = p.y;
@@ -693,6 +746,7 @@ export const combatScreen = {
   onCardUp(ev) {
     const d = this.drag;
     if (!d) return;
+    clearTimeout(d.lp);
     const g = this.g;
     const card = g.cb && g.cb.hand.find((c) => c.uid === d.uid);
     if (!card) { this.endDrag(true); return; }
@@ -736,6 +790,7 @@ export const combatScreen = {
     const d = this.drag;
     this.drag = null;
     if (!d) return;
+    clearTimeout(d.lp);
     d.el.classList.remove('dragging', 'will-play');
     d.el.style.transition = '';
     this.hoverTarget = null;
@@ -756,7 +811,7 @@ export const combatScreen = {
   },
 
   onFieldTap(e) {
-    if (this.potionSlot != null) return;
+    if (this.pending()) { this.cancelPending(); return; }
     if (!this.trySelectedOnPlayArea()) hideTip();
   },
 
@@ -764,10 +819,15 @@ export const combatScreen = {
     const g = this.g;
     const e = g.byUid(uid);
     if (!e || e.dead) return;
+    if (this.pendAct != null && !this.locked()) {
+      const id = this.pendAct;
+      this.cancelPending();
+      g.useAction(id, uid);
+      return;
+    }
     if (this.potionSlot != null && !this.locked()) {
       const slot = this.potionSlot;
-      this.potionSlot = null;
-      this.applyTargetable(); this.renderHint();
+      this.cancelPending();
       g.usePotion(slot, uid);
       return;
     }
@@ -791,6 +851,7 @@ export const combatScreen = {
 
   startPotionTarget(slot) {
     this.deselect();
+    this.cancelPending();
     this.potionSlot = slot;
     sfx('cardSelect');
     this.applyTargetable();
@@ -839,8 +900,8 @@ export const combatScreen = {
     const rec = { el, exhaust: false };
     this.flying.set(card.uid, rec);
     sfx(def.type === 'attack' ? 'cardAttack' : def.type === 'power' ? 'cardPower' : 'cardSkill');
-    anim(el, [{ transform: cur || mid, opacity: 1 }, { transform: mid, opacity: 1 }], { duration: auto ? 380 : 220, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' })
-      .then(() => sleep(60))
+    anim(el, [{ transform: cur || mid, opacity: 1 }, { transform: mid, opacity: 1 }], { duration: auto ? 300 : 200, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' })
+      .then(() => sleep(40 * timeMul()))
       .then(() => {
         this.flying.delete(card.uid);
         if (rec.exhaust) { el.style.transform = mid; this.burn(el); return; }
@@ -849,8 +910,140 @@ export const combatScreen = {
           return anim(el, [{ transform: mid, opacity: 1 }, { transform: `translate(${tx}px, ${ty - 40}px) scale(1.15)`, opacity: 0 }], { duration: 380, fill: 'forwards' }).then(() => el.remove());
         }
         const r = stageRect(this.els.discBtn);
-        return anim(el, [{ transform: mid, opacity: 1 }, { transform: `translate(${r.cx - CW / 2}px, ${r.cy - CH / 2}px) rotate(30deg) scale(.2)`, opacity: 0.1 }], { duration: 300, easing: 'ease-in', fill: 'forwards' }).then(() => el.remove());
+        return anim(el, [{ transform: mid, opacity: 1 }, { transform: `translate(${r.cx - CW / 2}px, ${r.cy - CH / 2}px) rotate(30deg) scale(.2)`, opacity: 0.1 }], { duration: 260, easing: 'ease-in', fill: 'forwards' }).then(() => el.remove());
       });
+  },
+
+  // ------------------------------------------------------------------ action bar (Strike / Guard / Special)
+  buildActions() {
+    const g = this.g, bar = this.els.actbar;
+    clear(bar);
+    this.actEls = {};
+    const list = safe(() => g.actionList(), []);
+    bar.classList.toggle('none', !list.length);
+    for (const a of list) {
+      const ic = h('div.act-ic', this.actIcon(a));
+      const val = h('span.act-val');
+      const lbl = h('span.act-lbl');
+      const root = h('button.act.act-' + a.id, { 'aria-label': a.name }, h('div.act-ring'), ic, val, lbl);
+      root.dataset.act = a.id;
+      tap(root, () => this.onActionTap(a.id), { sound: false, onDisabled: () => this.onActionTap(a.id) });
+      longPress(root, () => { const cur = (safe(() => g.actionList(), []).find((x) => x.id === a.id)) || a; tip(root, { icon: this.actIcon(a, 28), title: cur.name, text: cur.desc, sub: a.id === 'special' ? `Charges as you fight: +1 per card or Strike/Guard, +1 per hit you take, +2 per successful Brace. ${cur.charge}/${cur.max}.` : 'Free. No energy needed.' }); });
+      bar.appendChild(root);
+      this.actEls[a.id] = { root, val, lbl, ic };
+    }
+  },
+
+  actIcon(a, size = 38) {
+    const FB = { strike: 'art_sword', guard: 'art_shield', act_special_knight: 'art_tower_shield', act_special_witch: 'art_cauldron', act_special_wren: 'art_mask', act_special_cantor: 'art_bell', act_special: 'art_spark' };
+    const id = hasSprite(a.icon) ? a.icon : (FB[a.icon] || FB[a.id] || 'missing');
+    return sprFit(id, size, size, 'act-img');
+  },
+
+  renderActions() {
+    const g = this.g, cb = g.cb;
+    if (!cb) return;
+    const list = safe(() => g.actionList(), []);
+    if (list.length !== Object.keys(this.actEls).length) this.buildActions();
+    const single = g.enemies.length === 1 ? g.enemies[0] : null;
+    for (const a of list) {
+      const e = this.actEls[a.id];
+      if (!e) continue;
+      const mine = cb.phase === 'player' && !cb.busy;
+      e.root.classList.toggle('ready', !!a.ready);
+      e.root.classList.toggle('used', !!a.used);
+      e.root.classList.toggle('locked', !mine);
+      e.root.classList.toggle('armed', this.pendAct === a.id);
+      if (a.id === 'strike') {
+        const v = safe(() => g.calcAttack(g.player, single, a.value, {}), a.value);
+        e.val.textContent = a.used ? '✓' : String(v);
+        e.lbl.textContent = 'Strike';
+        e.val.className = 'act-val' + (v > a.value ? ' up' : v < a.value ? ' down' : '');
+      } else if (a.id === 'guard') {
+        const v = safe(() => g.calcBlock(a.value), a.value);
+        e.val.textContent = a.used ? '✓' : String(v);
+        e.lbl.textContent = 'Guard';
+        e.val.className = 'act-val' + (v > a.value ? ' up' : v < a.value ? ' down' : '');
+      } else {
+        const full = a.charge >= a.max;
+        e.root.style.setProperty('--p', Math.max(0, Math.min(1, a.charge / a.max)));
+        e.root.classList.toggle('full', full);
+        e.val.textContent = full ? '' : `${a.charge}/${a.max}`;
+        e.lbl.textContent = 'Special';
+        e.root.classList.toggle('ready', !!a.ready);
+      }
+    }
+  },
+
+  onActionTap(id) {
+    const g = this.g;
+    const a = safe(() => g.actionList(), []).find((x) => x.id === id);
+    if (!a) return;
+    if (this.locked()) { sfx('error'); return; }
+    if (!a.ready) {
+      toast(a.used ? `${a.name} was already used this turn.` : id === 'special' ? `${a.name} needs a full charge (${a.charge}/${a.max}).` : 'Nothing to do that on.', 'warn');
+      sfx('error');
+      return;
+    }
+    this.deselect();
+    this.cancelPending();
+    if (a.target === 'enemy' && g.enemies.length > 1) {
+      this.pendAct = id;
+      this.actEls[id].root.classList.add('armed');
+      sfx('cardSelect');
+      this.applyTargetable(); this.renderHint();
+      return;
+    }
+    sfx(id === 'guard' ? 'block' : id === 'special' ? 'bell' : 'cardAttack');
+    g.useAction(id, g.enemies.length === 1 ? g.enemies[0].uid : null);
+  },
+
+  fxAction(d) {
+    const rec = this.heroRec;
+    if (!rec) return;
+    const g = this.g;
+    if (d.id === 'strike') {
+      const tr = d.target ? this.recOf(d.target) : null;
+      const dx = tr ? Math.max(30, Math.min(90, (stageRect(tr.body).cx - stageRect(rec.body).cx) * 0.18)) : 44;
+      anim(rec.body, [{ transform: 'translateX(0)' }, { transform: `translateX(${dx}px) scale(1.04)`, offset: 0.4 }, { transform: 'translateX(0)' }], { duration: 280, easing: 'ease-out' });
+    } else if (d.id === 'guard') {
+      pulse(rec.body, 1.05, 260);
+    } else {
+      const a = safe(() => g.actionList(), []).find((x) => x.id === 'special');
+      flash(rec.fl, 320);
+      particlesOn(rec.body, 'spark', { n: 24, at: 0.4 });
+      floatText(rec.body, (a ? a.name : 'Special') + '!', 'buff', { at: 0.02 });
+      screenShake(6);
+      sfx('bell');
+    }
+  },
+
+  fxMeter(d) {
+    this.mark('act');
+    const e = this.actEls.special;
+    if (e && d && d.full) {
+      pulse(e.root, 1.22, 380);
+      sfx('buff');
+      requestAnimationFrame(() => particlesOn(e.root, 'spark', { n: 10 }));
+    }
+  },
+
+  // Auto-End: end the turn by itself once nothing is left worth waiting for.
+  checkAutoEnd() {
+    const g = this.g, cb = g.cb;
+    if (!cb || this.autoEndTimer || !g.meta.settings.autoEnd || AUTO.running) return;
+    if (cb.phase !== 'player' || cb.busy || modalOpen() || this.pending() || cb.result || performance.now() < UI.hold) return;
+    const worth = () => safe(() => g.hasPlayableCard() || g.hasFreeAction() || safe(() => g.actionList(), []).some((x) => x.id === 'special' && x.ready), true);
+    if (worth()) return;
+    const turn = cb.turn;
+    this.autoEndTimer = setTimeout(() => {
+      this.autoEndTimer = 0;
+      const c = g.cb;
+      if (!this.root || !c || c !== cb || c.turn !== turn || c.phase !== 'player' || c.busy || modalOpen() || this.pending() || worth()) return;
+      sfx('endTurn');
+      this.deselect();
+      g.endTurn();
+    }, Math.max(260, 600 * timeMul()));
   },
 
   // ------------------------------------------------------------------ emits
@@ -889,6 +1082,15 @@ export const combatScreen = {
       case 'upgrade': { const el = d.card && this.handEls.get(d.card.uid); if (el) { particlesOn(el, 'spark'); el._sig = ''; } sfx('upgrade'); this.mark('hand'); break; }
       case 'energy': this.mark('energy', 'hand', 'end'); pulse(this.els.energy.firstChild, 1.15, 260); break;
       case 'handFull': toast('Your hand is full.', 'warn'); break;
+      case 'action': this.fxAction(d); this.mark('act', 'tb'); break;
+      case 'meter': this.fxMeter(d); break;
+      case 'braceOk': {
+        const rec = this.heroRec;
+        if (rec) { floatText(rec.body, 'Braced!', 'block', { at: 0.05, big: true }); particlesOn(rec.body, 'block', { n: 18, at: 0.5 }); flash(rec.fl, 220); }
+        this.mark('act');
+        break;
+      }
+      case 'braceMiss': break;
 
       case 'damage': this.fxDamage(d); break;
       case 'hploss': {
@@ -961,10 +1163,11 @@ export const combatScreen = {
       case 'turnStart': {
         if (!cb) break;
         this.mark('hand', 'piles', 'energy', 'hero', 'enemies', 'end');
-        if (cb.turn > 1) { banner('Your Turn', 'turn', `Turn ${cb.turn}`, 700); sfx('turnStart'); }
+        if (cb.turn > 1) sfx('turnStart');
+        this.mark('act');
         break;
       }
-      case 'endTurn': banner('Enemy Turn', 'enemy', '', 520); this.mark('end'); break;
+      case 'endTurn': if (speedOf() === 1) banner('Enemy Turn', 'enemy', '', 380); this.mark('end', 'act'); break;
       case 'phase': {
         const rec = this.recOf(d.e);
         if (rec) { flash(rec.fl, 400); particlesOn(rec.body, 'ember', { n: 30 }); }
@@ -980,10 +1183,10 @@ export const combatScreen = {
       case 'revive': screenFlash('#f0d27a', 500); if (this.heroRec) { particlesOn(this.heroRec.body, 'heal', { n: 30 }); floatText(this.heroRec.body, 'Revived!', 'heal', { big: true }); } sfx('revive'); this.mark('hero', 'tb'); break;
       case 'gold': case 'maxhp': this.mark('tb'); break;
       case 'combatWon': {
-        UI.hold = performance.now() + (g.meta.settings.fast ? 700 : 1300);
+        UI.hold = performance.now() + Math.max(450, 1000 * timeMul());
         this.deselect();
         sfx('victory');
-        setTimeout(() => banner('Victory', 'victory', '', 900), 250);
+        if (speedOf() === 1) setTimeout(() => banner('Victory', 'victory', '', 600), 150);
         break;
       }
       case 'combatLost': this.fxHeroDeath(); break;
@@ -1040,7 +1243,7 @@ export const combatScreen = {
   fxDeath(e) {
     const rec = this.recOf(e);
     if (!rec || e.isPlayer) return;
-    const ms = this.g.meta.settings.fast ? 600 : 950;
+    const ms = Math.max(420, Math.round(850 * timeMul()));
     this.dying.set(e.uid, performance.now() + ms);
     rec.root.classList.add('dying');
     sfx('enemyDeath');
@@ -1080,11 +1283,11 @@ export const combatScreen = {
     const rec = this.recOf(e);
     if (!rec) return;
     rec.top.classList.add('acted');
-    if (move && move.name) {
+    if (move && move.name && (!isSimple() || (!move.dmg && speedOf() < 3))) {
       const lbl = h('div.move-name', move.name);
       const r = stageRect(rec.body);
       lbl.style.left = r.cx + 'px';
-      lbl.style.top = Math.max(40, r.y - 34) + 'px';
+      lbl.style.top = Math.max(50, r.y + r.h * 0.3) + 'px';
       document.getElementById('fx').appendChild(lbl);
       anim(lbl, [{ opacity: 0, transform: 'translate(-50%, 6px)' }, { opacity: 1, transform: 'translate(-50%, 0)', offset: 0.15 }, { opacity: 1, transform: 'translate(-50%, 0)', offset: 0.8 }, { opacity: 0, transform: 'translate(-50%, -6px)' }], { duration: 1100 }).then(() => lbl.remove());
     }
@@ -1114,7 +1317,7 @@ export const combatScreen = {
 
   fxHeroDeath() {
     const g = this.g;
-    UI.hold = performance.now() + (g.meta.settings.fast ? 1200 : 2100);
+    UI.hold = performance.now() + Math.max(1000, 2000 * timeMul());
     this.deselect();
     const rec = this.heroRec;
     sfx('heroDeath');

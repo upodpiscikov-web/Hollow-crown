@@ -32,7 +32,7 @@ function open(g) {
 
   body.append(
     row('Quick start', heroSel, btn('New run', () => { if (g.run) g.abandonRun(); g.meta.heroes[heroSel.value].unlocked = true; g.newRun(heroSel.value, 0, (Math.random() * 4294967295) >>> 0); UI.inRun = true; closeAllModals(); UI.render(); }),
-      btn('Skip blessing', () => { if (!need()) return; g.run.blessing = null; g.run.screen = 'map'; g.save(); closeAllModals(); refresh(); })),
+      btn('Skip blessing', () => { if (!need()) return; g.run.starter = null; g.run.blessing = null; g.run.screen = 'map'; g.save(); closeAllModals(); refresh(); })),
     row('Resources', btn('+100 gold', () => { if (need()) { g.gainGold(100); refresh(); } }), btn('Heal', () => { if (need()) { g.run.player.hp = g.run.player.maxHp; refresh(); } }),
       btn('-10 HP', () => { if (need()) { g.run.player.hp = Math.max(1, g.run.player.hp - 10); refresh(); } }), btn('+10 Max HP', () => { if (need()) { g.gainMaxHp(10); refresh(); } })),
     row('Combat', btn('Kill all', () => { if (g.cb) { for (const e of [...g.enemies]) g.kill(e); g.afterAction(); } else toast('Not in combat.', 'warn'); }),

@@ -4,7 +4,7 @@ import './data/index.js';
 import './gfx/sprites/index.js';
 import { Game } from './engine/game.js';
 import { RELICS, POTIONS, CARDS, LORE } from './engine/registry.js';
-import { UI, h, clear, anim } from './ui/core.js';
+import { UI, h, clear, anim, timeMul, speedOf, isSimple } from './ui/core.js';
 import { initScale, onResize } from './ui/scale.js';
 import { initParticles, screenFlash } from './ui/fx.js';
 import { toast, chooseCards, closeTopModal, hideTip } from './ui/overlay.js';
@@ -18,6 +18,8 @@ import { openSettings } from './ui/settings.js';
 import { openMapPeek } from './ui/map.js';
 import { initDev } from './ui/dev.js';
 import { sfx, music, unlockAudio, setVolume, suspend, resume } from './ui/sound.js';
+import { braceWindow, braceCancel } from './ui/brace.js';
+import { AUTO, stopAuto } from './ui/auto.js';
 
 const g = new Game();
 UI.g = g;
@@ -28,12 +30,23 @@ if (window.matchMedia) {
   try { matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (e) => { UI.reduced = e.matches; document.body.classList.toggle('reduced', e.matches); }); } catch (e) { /* old Safari */ }
 }
 
+// Older saves: the legacy `fast` flag becomes speed 2; Simple view defaults to on.
+{
+  const st = g.meta.settings;
+  if (st.fast && (st.speed || 1) === 1) st.speed = 2;
+  st.fast = false;
+  if (st.simple === undefined) st.simple = true;
+}
+UI.toast = toast;
 g.ui = {
-  wait(ms) {
-    const fast = g.meta && g.meta.settings && g.meta.settings.fast;
-    return new Promise((r) => setTimeout(r, Math.max(0, (ms || 0) * (fast ? 0.5 : 1))));
+  // All engine pauses scale with the Speed setting (1x is already brisker than the engine's raw numbers).
+  wait(ms) { return new Promise((r) => setTimeout(r, Math.max(0, Math.round((ms || 0) * timeMul())))); },
+  choose(opts) {
+    hideTip();
+    if (AUTO.running) stopAuto('Auto stopped: a card needs a choice.');
+    return chooseCards(g, opts);
   },
-  choose(opts) { hideTip(); return chooseCards(g, opts); },
+  brace(o) { return braceWindow(g, o); },
 };
 
 // Recover a run that was saved mid-action.
@@ -70,12 +83,14 @@ function render() {
     return;
   }
   const name = currentName();
+  document.body.classList.toggle('simple-view', isSimple());
   const scr = SCREENS[name] || SCREENS.missing;
   const root = document.getElementById('screen');
   try {
     if (!mounted || mounted.name !== name || mounted.scr !== scr) {
       const old = mounted;
       if (old) {
+        braceCancel();
         try { old.scr.unmount && old.scr.unmount(); } catch (e) { console.warn(e); }
         old.host.classList.add('leaving');
         old.host.style.pointerEvents = 'none';
@@ -150,7 +165,11 @@ function applySettings() {
   const s = g.meta.settings;
   setVolume('music', s.music);
   setVolume('sfx', s.sfx);
+  applyTimeVar();
 }
+// CSS transitions read --tm (the current time multiplier).
+function applyTimeVar() { document.documentElement.style.setProperty('--tm', String(timeMul())); }
+UI.applyTimeVar = applyTimeVar;
 UI.applySettings = applySettings;
 
 document.addEventListener('pointerdown', () => unlockAudio(), { capture: true });

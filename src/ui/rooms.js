@@ -50,6 +50,43 @@ function simple(name, build, opts = {}) {
   };
 }
 
+// ------------------------------------------------------------------ starter card (first screen of a run)
+const starter = simple('starter', (g) => {
+  const run = g.run;
+  const opts = run.starter || [];
+  const { scr, body } = roomShell(g, 'starter', bgStyle('bg_hub'), { shade: 'heavy' });
+  let sel = -1, busy = false;
+  const takeBtn = h('button.btn.primary.big.disabled', 'Take this card');
+  const kinds = { attack: 'Attack', skill: 'Skill', power: 'Power' };
+  const cells = opts.map((o, i) => {
+    const card = { uid: 'starter' + i, id: o.id, up: o.up ? 1 : 0 };
+    const def = CARDS[o.id];
+    const cell = h('button.starter-card', cardEl(card, { g, width: 128 }));
+    tap(cell, () => {
+      if (sel === i) { take(); return; }
+      sel = i;
+      cells.forEach((c, j) => c.classList.toggle('sel', j === i));
+      takeBtn.classList.remove('disabled');
+    }, { sound: 'cardSelect' });
+    return cell;
+  });
+  const take = async () => {
+    if (busy || sel < 0) return;
+    busy = true;
+    sfx('confirm');
+    try { g.pickStarter(sel); } catch (e) { console.error(e); }
+    busy = false;
+    UI.render();
+  };
+  tap(takeBtn, take, { sound: false });
+  body.appendChild(h('div.starter-wrap',
+    h('div.room-title', 'Choose your first card'),
+    h('div.starter-sub', 'It joins your deck. The others stay behind.'),
+    h('div.starter-row', cells),
+    takeBtn));
+  return scr;
+}, { music: 'hub', sig: (g) => 'starter' + (g.run.starter ? g.run.starter.map((x) => x.id).join() : '') });
+
 // ------------------------------------------------------------------ blessing
 const blessing = simple('blessing', (g, self) => {
   const run = g.run;
@@ -530,4 +567,4 @@ const ending = simple('ending', (g) => {
   return scr;
 }, { music: 'victory', sig: () => 'end' });
 
-export const roomScreens = { blessing, reward, bossRelic, rest, shop, treasure, event, actIntro, throne, death, ending };
+export const roomScreens = { starter, blessing, reward, bossRelic, rest, shop, treasure, event, actIntro, throne, death, ending };

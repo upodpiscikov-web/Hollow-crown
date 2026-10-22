@@ -656,7 +656,9 @@ export const combatMethods = {
     let dmg = num(m.dmg, this, e);
     if (dmg == null) return null;
     if ((this.run.asc || 0) >= 8) dmg = Math.round(dmg * 1.1);
-    const k = paceOf(this.run.act).dmg; // per-act enemy damage (pace.js)
+    const pc = paceOf(this.run.act); // per-act enemy damage (pace.js)
+    const kind = ENEMIES[e.id] && ENEMIES[e.id].kind;
+    const k = pc.dmg * (kind === 'elite' ? pc.dmgElite : kind === 'boss' ? pc.dmgBoss : 1);
     if (k !== 1 && dmg > 0) dmg = Math.max(1, Math.round(dmg * k));
     return dmg;
   },

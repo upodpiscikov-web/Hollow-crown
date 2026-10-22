@@ -106,7 +106,8 @@ export function floatText(el, text, kind = 'dmg', opts = {}) {
   const big = opts.big || (kind === 'dmg' && +text >= 20);
   const d = h('div.float.' + kind + (big ? '.big' : ''), String(text));
   const jitter = ((k % 3) - 1) * 14;
-  d.style.left = (r.cx + jitter + (opts.dx || 0)) + 'px';
+  const half = Math.min(S.W / 2 - 8, String(text).length * (big ? 8.5 : kind === 'dmg' || kind === 'block' || kind === 'heal' ? 6 : 4.4) + 8);
+  d.style.left = Math.max(half, Math.min(S.W - half, r.cx + jitter + (opts.dx || 0))) + 'px';
   d.style.top = (r.y + r.h * (opts.at ?? 0.35)) + 'px';
   d.style.opacity = '0';
   fx.appendChild(d);

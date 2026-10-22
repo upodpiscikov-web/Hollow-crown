@@ -44,37 +44,45 @@ defineHeroes([
 // Every hero has free Strike and Guard buttons (defaults in engine/actions.js, override with
 // `actions: { strike: { dmg }, guard: { blk }, meterMax }`) and one Special that charges as you
 // play cards, take hits and Brace. `use(g, target)` may be async; `target` is 'enemy' or 'none'.
+// The numbers live in `actions` and in each Special's `v` (see BALANCE_NOTES.md for how they were tuned).
 const MASKS = ['wolf', 'moth', 'owl'];
 Object.assign(HEROES.knight, {
+  actions: { strike: { dmg: 5 }, guard: { blk: 3 }, meterMax: 12 },
   special: {
     name: 'Shield Bash', icon: 'act_special_knight', target: 'enemy',
+    v: { dmg: 12, blk: 8 },
     desc: 'Deal 12 damage and gain 8 Block.',
-    use(g, t) { g.attack(t, 12); g.block(8); },
+    use(g, t) { g.attack(t, this.v.dmg); g.block(this.v.blk); },
   },
 });
 Object.assign(HEROES.witch, {
+  actions: { strike: { dmg: 4 }, guard: { blk: 5 }, meterMax: 10 },
   special: {
     name: 'Plague Burst', icon: 'act_special_witch', target: 'none',
+    v: { rot: 6, brew: 1 },
     desc: 'Apply 6 Rot to ALL enemies. Brew 1.',
-    use(g) { g.applyAll('rot', 6); g.brew(1); },
+    use(g) { g.applyAll('rot', this.v.rot); g.brew(this.v.brew); },
   },
 });
 Object.assign(HEROES.wren, {
+  actions: { strike: { dmg: 4 }, guard: { blk: 5 }, meterMax: 10 },
   special: {
     name: 'Shift & Slash', icon: 'act_special_wren', target: 'none',
+    v: { knives: 2 },
     desc: 'Shift to your next Mask. Add 2 Knives to your hand.',
     use(g) {
       const i = MASKS.indexOf(g.cb.mask);
       g.setMask(MASKS[(i + 1) % MASKS.length]);
-      g.addCard('knife', 'hand');
-      g.addCard('knife', 'hand');
+      for (let k = 0; k < this.v.knives; k++) g.addCard('knife', 'hand');
     },
   },
 });
 Object.assign(HEROES.cantor, {
+  actions: { strike: { dmg: 4 }, guard: { blk: 4 }, meterMax: 8 },
   special: {
     name: 'Toll the Bell', icon: 'act_special_cantor', target: 'none',
-    desc: 'Release all Spirits, Channel a Wisp, and gain 6 Block.',
-    use(g) { g.releaseAll(); g.channel('wisp'); g.block(6); },
+    v: { blk: 16 },
+    desc: 'Release all Spirits, Channel a Wisp, and gain 16 Block.',
+    use(g) { g.releaseAll(); g.channel('wisp'); g.block(this.v.blk); },
   },
 });

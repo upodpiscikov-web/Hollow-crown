@@ -183,8 +183,8 @@ defineEnemies([
     desc: 'Fen-dogs gone feral since Ashfall, ribs like a gibbet\'s cage. Kill one and the rest come harder.',
     init(g, e) { g.addStatus(e, 'pack', 3, { silent: true }); },
     moves: {
-      bite: { name: 'Bite', intent: 'atk', dmg: 5 },
-      worry: { name: 'Worry', intent: 'atk', dmg: 2, times: 2 },
+      bite: { name: 'Bite', intent: 'atk', dmg: 11 },
+      worry: { name: 'Worry', intent: 'atk', dmg: 4, times: 2 },
       circle: { name: 'Circle', intent: 'def', fx(g, e) { g.gainBlock(e, 5, { raw: true }); } },
     },
     ai(g, e) {
@@ -197,8 +197,8 @@ defineEnemies([
     desc: 'Fat on the hanged. It has learned that wherever you walk, there will be more to eat.',
     init(g, e) { g.addStatus(e, 'carrion', 4, { silent: true }); },
     moves: {
-      peck: { name: 'Peck', intent: 'atk', dmg: 2, times: 2 },
-      eyes: { name: 'Go for the Eyes', intent: 'atkdebuff', dmg: 3, fx(g, e) { g.apply(g.player, 'weak', 1, e); } },
+      peck: { name: 'Peck', intent: 'atk', dmg: 4, times: 2 },
+      eyes: { name: 'Go for the Eyes', intent: 'atkdebuff', dmg: 6, fx(g, e) { g.apply(g.player, 'weak', 1, e); } },
     },
     ai(g, e) { return g.aiPick(e, { peck: 55, eyes: 45 }, { peck: 2, eyes: 1 }); },
   },
@@ -207,8 +207,8 @@ defineEnemies([
     desc: 'A plague-villager who should have died years ago. The Blight did not kill it. It only stopped it.',
     init(g, e) { g.addStatus(e, 'stopped', 1, { silent: true }); },
     moves: {
-      lurch: { name: 'Lurch', intent: 'atk', dmg: 8 },
-      cough: { name: 'Wet Cough', intent: 'atkdebuff', dmg: 2, fx(g, e) { g.apply(g.player, 'rot', 3, e); } },
+      lurch: { name: 'Lurch', intent: 'atk', dmg: 17 },
+      cough: { name: 'Wet Cough', intent: 'atkdebuff', dmg: 4, fx(g, e) { g.apply(g.player, 'rot', 3, e); } },
       rise: { name: 'Rises Again', intent: 'heal', fx(g, e) { e.data.fallen = false; g.heal(e, 9); } },
     },
     ai(g, e) {
@@ -229,12 +229,12 @@ defineEnemies([
     },
   },
   {
-    id: 'ash_cultist', name: 'Ash Cultist', kind: 'normal', act: 1, hp: [36, 40], sprite: 'en_ash_cultist',
+    id: 'ash_cultist', name: 'Ash Cultist', kind: 'normal', act: 1, hp: [44, 50], sprite: 'en_ash_cultist',
     desc: 'They smear their faces with the ash of Ashfall and call it sacrament. Every prayer makes the next blow heavier.',
     moves: {
-      rite: { name: 'Ashen Rite', intent: 'buff', fx(g, e) { g.apply(e, 'rite', 2, e); } },
-      lash: { name: 'Cinder Lash', intent: 'atk', dmg: 5 },
-      scatter: { name: 'Scatter Ash', intent: 'atkdebuff', dmg: 3, fx(g) { g.addCard('ash', 'discard'); } },
+      rite: { name: 'Ashen Rite', intent: 'buff', fx(g, e) { g.apply(e, 'rite', 3, e); } },
+      lash: { name: 'Cinder Lash', intent: 'atk', dmg: 11 },
+      scatter: { name: 'Scatter Ash', intent: 'atkdebuff', dmg: 6, fx(g) { g.addCard('ash', 'discard'); } },
     },
     ai(g, e) {
       if (e.turns === 0) return 'rite';
@@ -246,8 +246,8 @@ defineEnemies([
     desc: 'A deserter of the Marcher levy, red scarf over his mouth against the ash. He waits for your guard to drop.',
     init(g, e) { g.addStatus(e, 'backstab', 1, { silent: true }); },
     moves: {
-      stab: { name: 'Stab', intent: 'atk', dmg: 7 },
-      straps: { name: 'Cut the Straps', intent: 'atkdebuff', dmg: 4, fx(g, e) { g.apply(g.player, 'frail', 2, e); } },
+      stab: { name: 'Stab', intent: 'atk', dmg: 14 },
+      straps: { name: 'Cut the Straps', intent: 'atkdebuff', dmg: 8, fx(g, e) { g.apply(g.player, 'frail', 2, e); } },
       skulk: { name: 'Skulk', intent: 'def', fx(g, e) { g.gainBlock(e, 6, { raw: true }); } },
     },
     ai(g, e) {
@@ -260,8 +260,8 @@ defineEnemies([
     desc: 'A longbowman of the old levy, unpaid since Ashfall. Patient behind his pavise. Very accurate.',
     moves: {
       pavise: { name: 'Behind the Pavise', intent: 'def', fx(g, e) { g.gainBlock(e, 6, { raw: true }); } },
-      loose: { name: 'Loose', intent: 'atk', dmg: 13 },
-      pin: { name: 'Pinning Shot', intent: 'atkdebuff', dmg: 4, fx(g, e) { g.apply(g.player, 'dread', 1, e); } },
+      loose: { name: 'Loose', intent: 'atk', dmg: 24 },
+      pin: { name: 'Pinning Shot', intent: 'atkdebuff', dmg: 7, fx(g, e) { g.apply(g.player, 'dread', 1, e); } },
     },
     ai(g, e) { return step(e, ['pavise', 'loose', 'pin']); },
   },
@@ -270,7 +270,7 @@ defineEnemies([
     desc: 'Fen-leeches the length of a man\'s arm. They grow fat on the drowned, and fatter on the living.',
     init(g, e) { g.addStatus(e, 'bloodsucker', 1, { silent: true }); },
     moves: {
-      latch: { name: 'Latch On', intent: 'atk', dmg: 6 },
+      latch: { name: 'Latch On', intent: 'atk', dmg: 13 },
       swell: { name: 'Engorge', intent: 'buff', fx(g, e) { g.apply(e, 'might', 2, e); } },
     },
     ai(g, e) {
@@ -282,8 +282,8 @@ defineEnemies([
     id: 'grave_robber', name: 'Grave Robber', kind: 'normal', act: 1, hp: [22, 26], sprite: 'en_grave_robber',
     desc: 'He digs up the dead for their rings. You are only slightly more trouble, and carry more coin.',
     moves: {
-      pilfer: { name: 'Pilfer', intent: 'atk', dmg: 6, fx(g, e) { steal(g, e, 15); } },
-      shovel: { name: 'Shovel to the Skull', intent: 'atk', dmg: 9 },
+      pilfer: { name: 'Pilfer', intent: 'atk', dmg: 13, fx(g, e) { steal(g, e, 15); } },
+      shovel: { name: 'Shovel to the Skull', intent: 'atk', dmg: 19 },
       dust: { name: 'Grave-Dust', intent: 'def', fx(g, e) { g.gainBlock(e, 10, { raw: true }); } },
       flee: {
         name: 'Scarper', intent: 'flee',
@@ -304,12 +304,12 @@ defineEnemies([
     id: 'wight_militiaman', name: 'Wight Militiaman', kind: 'normal', act: 1, hp: [28, 32], sprite: 'en_wight_militiaman',
     desc: 'Mustered for a war that never came. A century on it still holds the line, for anything that stands beside it.',
     moves: {
-      thrust: { name: 'Pike Thrust', intent: 'atk', dmg: 9 },
+      thrust: { name: 'Pike Thrust', intent: 'atk', dmg: 19 },
       line: {
         name: 'Hold the Line', intent: 'def',
         fx(g, e) { for (const x of g.enemies) g.gainBlock(x, x === e ? 6 : 8, { raw: true }); },
       },
-      bash: { name: 'Shield-Bash', intent: 'atkdef', dmg: 5, fx(g, e) { g.gainBlock(e, 5, { raw: true }); } },
+      bash: { name: 'Shield-Bash', intent: 'atkdef', dmg: 11, fx(g, e) { g.gainBlock(e, 5, { raw: true }); } },
     },
     ai(g, e) {
       const allies = g.enemies.length > 1;
@@ -322,8 +322,8 @@ defineEnemies([
     desc: 'Not a rat. Rats: a carpet of them moving as one thing, thinking as one thing. Every bite carries the Blight.',
     init(g, e) { g.addStatus(e, 'plague_bite', 1, { silent: true }); },
     moves: {
-      gnaw: { name: 'Gnaw', intent: 'atkdebuff', dmg: 1, times: 3 },
-      swarm: { name: 'Swarm Over', intent: 'atkdebuff', dmg: 4 },
+      gnaw: { name: 'Gnaw', intent: 'atkdebuff', dmg: 2, times: 3 },
+      swarm: { name: 'Swarm Over', intent: 'atkdebuff', dmg: 8 },
     },
     ai(g, e) { return g.aiPick(e, { gnaw: 60, swarm: 40 }, { gnaw: 2, swarm: 2 }); },
   },
@@ -332,8 +332,8 @@ defineEnemies([
     desc: 'Bragg\'s mastiffs, collared in nails and fed on men. They fight harder over their brothers\' bodies.',
     init(g, e) { g.addStatus(e, 'pack', 3, { silent: true }); },
     moves: {
-      rend: { name: 'Rend', intent: 'atk', dmg: 6 },
-      savage: { name: 'Savage', intent: 'atk', dmg: 3, times: 2 },
+      rend: { name: 'Rend', intent: 'atk', dmg: 13 },
+      savage: { name: 'Savage', intent: 'atk', dmg: 6, times: 2 },
     },
     ai(g, e) { return g.aiPick(e, { rend: 55, savage: 45 }, { rend: 2, savage: 2 }); },
   },
@@ -344,9 +344,9 @@ defineEnemies([
     desc: 'Hanged at the crossroads for cowardice, eighty years ago. The rope never let him go, so he took it with him.',
     init(g, e) { g.addStatus(e, 'hanged_man', 3, { silent: true }); },
     moves: {
-      chain: { name: 'Strangling Chain', intent: 'atkdebuff', dmg: 5, fx(g, e) { g.apply(g.player, 'choked', 2, e); } },
-      cleave: { name: 'Headsman\'s Cleave', intent: 'atk', dmg: 14 },
-      swing: { name: 'Gallows Swing', intent: 'atk', dmg: 4, times: 3 },
+      chain: { name: 'Strangling Chain', intent: 'atkdebuff', dmg: 10, fx(g, e) { g.apply(g.player, 'choked', 2, e); } },
+      cleave: { name: 'Headsman\'s Cleave', intent: 'atk', dmg: 28 },
+      swing: { name: 'Gallows Swing', intent: 'atk', dmg: 8, times: 3 },
       brace: { name: 'Rusted Guard', intent: 'def', fx(g, e) { g.gainBlock(e, 14, { raw: true }); } },
     },
     ai(g, e) {
@@ -372,10 +372,10 @@ defineEnemies([
     moves: {
       brood: { name: 'Spawn Brood', intent: 'summon', fx(g) { spawnLeeches(g, 2); } },
       grasp: {
-        name: 'Mire Grasp', intent: 'atkdebuff', dmg: 8,
+        name: 'Mire Grasp', intent: 'atkdebuff', dmg: 16,
         fx(g) { g.addCard('mire', 'draw'); g.addCard('mire', 'draw'); },
       },
-      smother: { name: 'Smother', intent: 'atk', dmg: 13 },
+      smother: { name: 'Smother', intent: 'atk', dmg: 26 },
       devour: {
         name: 'Devour Young', intent: 'heal',
         fx(g, e) {
@@ -411,7 +411,7 @@ defineEnemies([
         name: 'Hymn of Cinders', intent: 'buff',
         fx(g, e) { for (const x of g.enemies) if (x.st.chorus) g.apply(x, 'might', 2, e); },
       },
-      psalm: { name: 'Cinder Psalm', intent: 'atk', dmg: 6 },
+      psalm: { name: 'Cinder Psalm', intent: 'atk', dmg: 14 },
     },
     ai(g, e) {
       return step(e, ['hymn', 'psalm', 'psalm']);
@@ -422,7 +422,7 @@ defineEnemies([
     desc: 'Her censer burns the bones of the unshriven. The smoke gets into the lungs, and the mind.',
     init(g, e) { g.addStatus(e, 'chorus', 2, { silent: true }); },
     moves: {
-      censer: { name: 'Censer Swing', intent: 'atk', dmg: 5 },
+      censer: { name: 'Censer Swing', intent: 'atk', dmg: 12 },
       smoke: {
         name: 'Choking Smoke', intent: 'debuff',
         fx(g, e) { g.addCard('ash', 'draw'); g.apply(g.player, 'weak', 1, e); },
@@ -445,7 +445,7 @@ defineEnemies([
           g.gainBlock(e, 4, { raw: true });
         },
       },
-      flail: { name: 'Flail', intent: 'atk', dmg: 3, times: 2 },
+      flail: { name: 'Flail', intent: 'atk', dmg: 7, times: 2 },
     },
     ai(g, e) {
       return step(e, ['scourge', 'flail', 'flail']);
@@ -459,12 +459,12 @@ defineEnemies([
     init(g, e) { g.addStatus(e, 'hound_lord', 1, { silent: true }); },
     moves: {
       loose: { name: 'Loose the Hounds', intent: 'summon', fx(g, e) { summonHounds(g, e, 2); } },
-      cleaver: { name: 'Butcher\'s Cleaver', intent: 'atk', dmg: 14 },
+      cleaver: { name: 'Butcher\'s Cleaver', intent: 'atk', dmg: 28 },
       sic: {
-        name: 'Sic \'Em!', intent: 'atkbuff', dmg: 7,
+        name: 'Sic \'Em!', intent: 'atkbuff', dmg: 14,
         fx(g, e) { for (const h of g.enemies) if (h.id === 'war_hound') g.apply(h, 'might', 2, e); },
       },
-      gut: { name: 'Gut-Rip', intent: 'atk', dmg: 3, times: 3 },
+      gut: { name: 'Gut-Rip', intent: 'atk', dmg: 6, times: 3 },
       frenzy: {
         name: 'Blood Frenzy', intent: 'buff',
         fx(g, e) {
@@ -475,7 +475,7 @@ defineEnemies([
           summonHounds(g, e, 2);
         },
       },
-      hack: { name: 'Frenzied Hacking', intent: 'atk', dmg: 6, times: 2 },
+      hack: { name: 'Frenzied Hacking', intent: 'atk', dmg: 12, times: 2 },
     },
     ai(g, e) {
       if (e.turns === 0) return 'loose';
@@ -496,26 +496,26 @@ defineEnemies([
     },
   },
   {
-    id: 'hanged_sheriff', name: 'The Hanged Sheriff', kind: 'boss', act: 1, hp: 260, sprite: 'en_hanged_sheriff',
+    id: 'hanged_sheriff', name: 'The Hanged Sheriff', kind: 'boss', act: 1, hp: 280, sprite: 'en_hanged_sheriff',
     desc: 'He hanged three hundred men at the Marcher crossroads, all by the King\'s law. When the King died, the Sheriff\'s heart stopped. He did not.',
-    init(g, e) { e.data.per = 2; g.addStatus(e, 'hanging_judge', 2, { silent: true }); },
+    init(g, e) { e.data.per = 5; g.addStatus(e, 'hanging_judge', 5, { silent: true }); },
     moves: {
       charges: {
         name: 'Read the Charges', intent: 'strongdebuff',
         fx(g, e) { const n = e.data.day ? 3 : 2; for (let i = 0; i < n; i++) g.addCard('sheriffs_warrant', 'draw'); },
       },
-      manacles: { name: 'Iron Manacles', intent: 'atkdebuff', dmg: 8, fx(g, e) { shackle(g, e, 2); } },
-      cudgel: { name: 'Reeve\'s Cudgel', intent: 'atk', dmg: 13 },
+      manacles: { name: 'Iron Manacles', intent: 'atkdebuff', dmg: 22, fx(g, e) { shackle(g, e, 2); } },
+      cudgel: { name: 'Reeve\'s Cudgel', intent: 'atk', dmg: 34 },
       noose: {
         name: 'The Noose', intent: 'atk',
-        dmg: (g, e) => 6 + (e.data.per || 2) * (g.cb ? g.cb.cnt.cards : 0),
+        dmg: (g, e) => 5 + (e.data.per || 5) * (g.cb ? g.cb.cnt.cards : 0),
       },
       day: {
         name: 'Hanging Day', intent: 'strongdebuff',
         fx(g, e) {
           e.data.day = true;
           e.data.dayNow = false;
-          e.data.per = 3;
+          e.data.per = 6;
           g.addStatus(e, 'hanging_judge', 1);
           g.gainBlock(e, 12, { raw: true });
           for (let i = 0; i < 3; i++) g.addCard('sheriffs_warrant', 'draw');
@@ -544,14 +544,14 @@ defineEnemies([
     desc: 'In the plague-pits under Saltmarsh something has eaten the dead for ten years. It has grown very large. It has had a great many children.',
     init(g, e) {
       e.data.acc = 0;
-      g.addStatus(e, 'teeming', 50, { silent: true });
+      g.addStatus(e, 'teeming', 35, { silent: true });
       g.addStatus(e, 'swarm_fed', 1, { silent: true });
     },
     moves: {
       birth: { name: 'Birth the Swarm', intent: 'summon', fx(g) { spawnRats(g, 2); } },
-      kiss: { name: 'Plague Kiss', intent: 'atkdebuff', dmg: 8, fx(g, e) { g.apply(g.player, 'rot', 3, e); } },
-      wallow: { name: 'Wallow', intent: 'atk', dmg: 15 },
-      tide: { name: 'Tide of Teeth', intent: 'atkdebuff', dmg: 3, times: 4 },
+      kiss: { name: 'Plague Kiss', intent: 'atkdebuff', dmg: 20, fx(g, e) { g.apply(g.player, 'rot', 3, e); } },
+      wallow: { name: 'Wallow', intent: 'atk', dmg: 34 },
+      tide: { name: 'Tide of Teeth', intent: 'atkdebuff', dmg: 8, times: 4 },
       boil: {
         name: 'The Pit Boils', intent: 'summon',
         fx(g, e) {

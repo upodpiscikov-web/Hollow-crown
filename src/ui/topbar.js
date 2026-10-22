@@ -1,10 +1,13 @@
 // Run top bar: HP, gold, tincture belt, relics, floor/act, map peek, deck, settings.
+// Simple view (default): relics collapse into one button + sheet; in combat the bar also carries
+// the Speed / Auto / Auto-End controls.
 import { RELICS, POTIONS, HEROES } from '../engine/registry.js';
-import { h, tap, UI, ROMAN, safe } from './core.js';
+import { h, tap, UI, ROMAN, safe, isSimple, speedOf } from './core.js';
 import { spr, icon, relicIcon, potionIcon, hasSprite } from './gfx.js';
-import { infoTip, menuAt, showDeck, toast, tip, hideTip } from './overlay.js';
+import { infoTip, menuAt, showDeck, toast, tip, hideTip, modal } from './overlay.js';
 import { inline } from './text.js';
 import { sfx } from './sound.js';
+import { AUTO, toggleAuto, cycleSpeed, toggleAutoEnd } from './auto.js';
 
 // Hooks set by screens (combat sets potion targeting).
 export const TB = { onPotionTarget: null, openSettings: null, openMapPeek: null };
@@ -13,7 +16,8 @@ export function topbar(g, opts = {}) {
   const run = g.run;
   const P = run.player;
   const H = HEROES[run.hero];
-  const bar = h('div.topbar');
+  const simple = isSimple();
+  const bar = h('div.topbar' + (simple ? '.simple' : '') + (opts.combat ? '.in-combat' : ''));
   // Hero + HP
   const hp = h('div.tb-item.tb-hp', icon('ui_hp', 1.5, 'tb-ic', '♥'), h('span.tb-val', `${Math.max(0, P.hp)}/${P.maxHp}`));
   hp.dataset.role = 'hp';
@@ -34,19 +38,27 @@ export function topbar(g, opts = {}) {
   });
   bar.appendChild(belt);
   // Relics
-  const relics = h('div.tb-relics');
-  for (const r of run.relics) {
-    const d = RELICS[r.id];
-    const b = h('div.tb-relic', relicIcon(d, 1.5), r.n != null && d && d.counter != null ? h('span.tb-count', String(r.n)) : null);
-    b.dataset.relic = r.id;
-    infoTip(b, () => relicTip(r));
-    relics.appendChild(b);
+  if (simple) {
+    const rb = h('button.tb-relicbtn', { 'aria-label': 'Relics' }, icon('ui_relics', 1.75, '', '✦'), h('span.tb-relic-n', String(run.relics.length)));
+    tap(rb, () => showRelics(g));
+    bar.append(rb, h('div.tb-spacer'));
+  } else {
+    const relics = h('div.tb-relics');
+    for (const r of run.relics) {
+      const d = RELICS[r.id];
+      const b = h('div.tb-relic', relicIcon(d, 1.5), r.n != null && d && d.counter != null ? h('span.tb-count', String(r.n)) : null);
+      b.dataset.relic = r.id;
+      infoTip(b, () => relicTip(r));
+      relics.appendChild(b);
+    }
+    bar.appendChild(relics);
   }
-  bar.appendChild(relics);
+  // Combat controls
+  if (opts.combat) bar.appendChild(combatControls(g));
   // Right cluster
   const right = h('div.tb-right');
   const floorLbl = run.act === 4 ? 'Beneath' : `Act ${ROMAN[run.act] || run.act}`;
-  const fl = h('div.tb-floor', h('span.tb-act', floorLbl), h('span.tb-fl', `Floor ${run.floor}`));
+  const fl = h('div.tb-floor', h('span.tb-act', floorLbl), h('span.tb-fl', `Floor ${Math.max(1, run.floor)}`));
   infoTip(fl, () => ({ title: `${floorLbl} — Floor ${run.floor}`, text: run.asc ? `Crown Weight ${run.asc}.` : 'The road to Ashgrave.' }));
   right.appendChild(fl);
   if (opts.mapPeek !== false) {
@@ -61,6 +73,43 @@ export function topbar(g, opts = {}) {
   right.append(db, sb);
   bar.appendChild(right);
   return bar;
+}
+
+// Speed / Auto / Auto-End: three 40px buttons, only in combat.
+function combatControls(g) {
+  const st = g.meta.settings;
+  const sp = speedOf();
+  const speed = h('button.tb-btn.tb-ctl.speed' + (sp > 1 ? '.on' : ''), { 'aria-label': 'Speed' }, icon('ui_speed' + sp, 1.75, '', sp + '×'), h('span.ctl-lbl', sp + '×'));
+  tap(speed, () => cycleSpeed(g), { sound: false });
+  longTip(speed, () => ({ title: 'Speed', text: 'Tap to change the pace of animations and pauses: 1×, 2×, 3×.' }));
+  const auto = h('button.tb-btn.tb-ctl.auto' + (AUTO.running ? '.on' : ''), { 'aria-label': 'Auto' }, icon('ui_auto', 1.75, '', '▶'), h('span.ctl-lbl', 'Auto'));
+  tap(auto, () => toggleAuto(g), { sound: false });
+  longTip(auto, () => ({ title: 'Auto', text: 'Plays sensible moves for you, one by one, and ends the turn. Tap again to stop.' }));
+  const ae = h('button.tb-btn.tb-ctl.autoend' + (st.autoEnd ? '.on' : ''), { 'aria-label': 'Auto-End' }, icon('ui_autoend', 1.75, '', '▷'), h('span.ctl-lbl', 'End'));
+  tap(ae, () => toggleAutoEnd(g), { sound: false });
+  longTip(ae, () => ({ title: 'Auto-End turn', text: st.autoEnd ? 'On: your turn ends by itself once nothing is left to play. Tap to turn off.' : 'Off. Tap to end your turn automatically once nothing is left to play.' }));
+  return h('div.tb-ctls', speed, auto, ae);
+}
+
+// Long-press tooltip for buttons that also act on tap.
+function longTip(el, fn) {
+  let t = null;
+  el.addEventListener('pointerdown', () => { clearTimeout(t); t = setTimeout(() => { el._lpFired = true; tip(el, fn()); setTimeout(() => { el._lpFired = false; }, 500); }, 450); });
+  const stop = () => clearTimeout(t);
+  el.addEventListener('pointerup', stop); el.addEventListener('pointerleave', stop); el.addEventListener('pointercancel', stop);
+}
+
+export function showRelics(g) {
+  const rel = g.run.relics;
+  const body = rel.length ? h('div.relic-sheet', rel.map((r) => {
+    const d = RELICS[r.id];
+    return h('div.relic-row',
+      h('div.rr-ic', relicIcon(d, 2.5)),
+      h('div.rr-body', h('div.rr-name', d ? d.name : r.id, r.n != null && d && d.counter != null ? h('span.rr-count', String(r.n)) : null),
+        h('div.rr-desc', { html: d ? inline(d.desc, true) : '' }),
+        d && d.flavor ? h('div.rr-flavor', { html: inline(d.flavor) }) : null));
+  })) : h('div.empty-note', 'You carry no relics yet.');
+  modal({ title: `Relics (${rel.length})`, cls: 'm-sheet m-relics', body });
 }
 
 export function relicTip(r) {

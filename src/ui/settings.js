@@ -1,5 +1,5 @@
 // Settings modal: volume, toggles, save export/import, abandon run, erase all.
-import { h, tap, UI, safe } from './core.js';
+import { h, tap, UI, safe, speedOf } from './core.js';
 import { modal, confirmBox, toast, closeAllModals } from './overlay.js';
 import { sfx, setVolume } from './sound.js';
 
@@ -9,6 +9,16 @@ function slider(label, value, onInput, onChange) {
   input.addEventListener('input', () => { val.textContent = input.value + '%'; onInput(input.value / 100); });
   input.addEventListener('change', () => onChange && onChange(input.value / 100));
   return h('label.set-row', h('span.set-label', label), h('div.sl-wrap', input, val));
+}
+
+// Segmented control: opts [{v, label}], value, onChange(v)
+function segmented(label, desc, opts, value, onChange) {
+  const btns = opts.map((o) => {
+    const b = h('button.seg' + (o.v === value ? '.on' : ''), o.label);
+    tap(b, () => { value = o.v; btns.forEach((x, i) => x.classList.toggle('on', opts[i].v === value)); onChange(o.v); });
+    return b;
+  });
+  return h('div.set-row', h('span.set-label', label, desc ? h('small', desc) : null), h('div.segs', btns));
 }
 
 function toggle(label, desc, value, onChange) {
@@ -28,7 +38,11 @@ export function openSettings(g) {
       slider('Effects', s.sfx, (v) => { s.sfx = v; setVolume('sfx', v); }, () => { save(); sfx('hit'); })),
     h('div.set-group',
       h('div.set-head', 'Play'),
-      toggle('Fast mode', 'Shorter pauses and animations.', s.fast, (v) => { s.fast = v; save(); }),
+      segmented('Speed', 'Pace of animations and pauses.', [{ v: 1, label: '1\u00D7' }, { v: 2, label: '2\u00D7' }, { v: 3, label: '3\u00D7' }], speedOf(), (v) => { s.speed = v; s.fast = false; save(); if (UI.applyTimeVar) UI.applyTimeVar(); if (UI.render) UI.render(); }),
+      toggle('Simple view', 'Glanceable cards and a tidier screen. Turn off for the full text everywhere.', s.simple !== false, (v) => { s.simple = v; save(); if (UI.render) UI.render(); }),
+      toggle('Timed Brace', 'A quick tap before a heavy hit lands cuts its damage and charges your Special.', s.timedBrace !== false, (v) => { s.timedBrace = v; save(); }),
+      segmented('Brace window', 'How long you have to tap.', [{ v: 900, label: 'Quick' }, { v: 1400, label: 'Normal' }, { v: 2000, label: 'Generous' }], s.braceMs || 1400, (v) => { s.braceMs = v; save(); }),
+      toggle('Auto-End turn', 'End your turn automatically once nothing is left to play.', !!s.autoEnd, (v) => { s.autoEnd = v; save(); }),
       toggle('Screen shake', 'Heavy hits shake the screen.', s.shake, (v) => { s.shake = v; save(); }),
       toggle('Confirm End Turn', 'Ask twice when you still have playable cards.', s.confirmEnd, (v) => { s.confirmEnd = v; save(); })));
 

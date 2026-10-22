@@ -19,7 +19,7 @@
 .c-name { position: absolute; left: .75em; right: .75em; top: .6em; height: 1.65em; display: flex; align-items: center; justify-content: center; padding: 0 .4em 0 1.5em;
   background: linear-gradient(180deg, #2c2532, #1b1620); border: .12em solid var(--rc, #6b6470); border-radius: .25em; font-family: var(--f-title); font-size: 1em; color: var(--parch); letter-spacing: .02em; line-height: 1; text-align: center; }
 .c-name span { white-space: nowrap; overflow: hidden; text-overflow: clip; max-width: 100%; display: block; }
-.c-name.md { font-size: .88em; } .c-name.sm { font-size: .76em; } .c-name.xs { font-size: .64em; }
+.c-name.md { font-size: .9em; } .c-name.sm { font-size: .82em; } .c-name.xs { font-size: .74em; }
 .card.up .c-name { color: #9be07a; }
 .c-cost { position: absolute; left: -.55em; top: -.55em; width: 2.5em; height: 2.5em; border-radius: 50%; z-index: 2; display: flex; align-items: center; justify-content: center;
   background: radial-gradient(circle at 35% 30%, #5f8fc4 0%, #27456b 60%, #162a45 100%); border: .16em solid #0b0a0d; box-shadow: 0 0 0 .13em #c9a227, 0 .15em .4em rgba(0,0,0,.6); }
@@ -27,7 +27,7 @@
 .c-cost.cheap { background: radial-gradient(circle at 35% 30%, #7fd06a, #2f7a2a 60%, #17441a); } .c-cost.cheap span { color: #eaffd8; }
 .c-cost.dear { background: radial-gradient(circle at 35% 30%, #d06a5f, #7a2a24 60%, #441a17); }
 .c-type { position: absolute; left: 50%; top: 7.15em; transform: translateX(-50%); display: flex; align-items: center; gap: .4em; height: 1.2em; padding: 0 .9em; background: #0f0c12; border: .1em solid var(--rc, #6b6470); border-radius: .6em; z-index: 1; }
-.c-type span { font-family: var(--f-num); font-size: .56em; letter-spacing: .12em; color: var(--bone); text-transform: uppercase; line-height: 1; }
+.c-type span { font-family: var(--f-num); font-size: .66em; letter-spacing: .12em; color: var(--bone); text-transform: uppercase; line-height: 1; }
 .c-gem { width: .55em; height: .55em; transform: rotate(45deg); background: var(--rc, #6b6470); box-shadow: 0 0 .3em var(--rc); }
 .card.r-rare .c-gem { background: #ffd24a; } .card.r-uncommon .c-gem { background: #8fd0ff; }
 .c-text { position: absolute; left: .7em; right: .7em; top: 8.45em; bottom: .7em; display: flex; align-items: center; justify-content: center; text-align: center;
@@ -45,7 +45,7 @@
 .card.burning { filter: sepia(1) brightness(1.4); }
 
 /* hand cards in combat */
-.hcard { position: absolute; left: 0; top: 0; width: 84px; height: 118px; transform-origin: 50% 100%; transition: transform .24s cubic-bezier(.2,.8,.3,1), opacity .2s; pointer-events: auto; touch-action: none; cursor: pointer; }
+.hcard { position: absolute; left: 0; top: 0; width: 84px; height: 118px; transform-origin: 50% 100%; transition: transform calc(.22s * var(--tm, 1)) cubic-bezier(.2,.8,.3,1), opacity calc(.2s * var(--tm, 1)); pointer-events: auto; touch-action: none; cursor: pointer; }
 .hcard .card { width: 100%; height: 100%; }
 .hcard:not(.playable) .card { filter: brightness(.72) saturate(.7); }
 .hcard.playable .card { box-shadow: 0 .2em .6em rgba(0,0,0,.7), 0 0 0 .15em rgba(240,210,122,.0); }
@@ -54,3 +54,24 @@
 .hcard.dragging.will-play .card { box-shadow: 0 0 1.4em rgba(143,174,58,.9), 0 .4em 1em rgba(0,0,0,.8); }
 .hcard.flying { pointer-events: none; transition: none; }
 .hcard.flying .card { box-shadow: 0 0 1em rgba(240,210,122,.6); }
+
+/* Simple view: art, name, cost and big effect chips; the rules text appears when the card is selected */
+.card.simple .c-art { height: 5.35em; }
+.card.simple .c-text { top: 8.2em; bottom: .65em; padding: .1em .2em; background: linear-gradient(180deg, #2a232f, #17121c); border-color: var(--rc, #6b6470); box-shadow: inset 0 0 .7em rgba(0,0,0,.65); }
+.c-chips { display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: .3em; width: 100%; }
+.c-chips.n3 .chip { font-size: 1.12em; padding: .08em .3em .08em .18em; } .c-chips.n2 .chip { font-size: 1.5em; } .c-chips.n3 .chip-ic { width: 1.2em; height: 1.2em; }
+.c-kws { position: absolute; right: .25em; bottom: .2em; display: flex; gap: .2em; }
+.kwb { min-width: 1.5em; height: 1.5em; padding: 0 .25em; display: inline-flex; align-items: center; justify-content: center; border-radius: .8em; background: rgba(8,6,10,.85); border: .1em solid var(--gold); color: var(--candle); font: 1em/1 var(--f-num); }
+.chip { display: inline-flex; align-items: center; gap: .24em; padding: .12em .5em .12em .3em; border-radius: 1em; background: rgba(255,255,255,.09); border: .1em solid rgba(255,255,255,.2); font: 1.8em/1 var(--f-num); color: #fff; white-space: nowrap; }
+
+.chip-ic { width: 1.35em; height: 1.35em; image-rendering: pixelated; flex: none; }
+.chip-gl { font-size: 1.1em; line-height: 1; }
+.chip-n { text-shadow: .09em .09em 0 #000; }
+.chip-x { font-size: .85em; opacity: .85; } .chip-tag { font-size: .9em; letter-spacing: .06em; color: #ffd8a0; }
+.chip.k-dmg { background: rgba(176,52,46,.5); border-color: #e8645a; } .chip.k-blk { background: rgba(70,120,166,.55); border-color: #86c0ea; }
+.chip.k-sts { background: rgba(72,110,48,.5); border-color: #9ad06a; } .chip.k-sts.neg { background: rgba(104,56,140,.55); border-color: #c09ae6; }
+.chip.k-draw, .chip.k-energy { background: rgba(120,100,40,.5); border-color: #e8c860; } .chip.k-heal { background: rgba(60,130,60,.5); border-color: #8ee08a; } .chip.k-hp { background: rgba(120,30,40,.55); border-color: #e0707a; }
+.chip.k-spirit { background: rgba(50,120,116,.5); border-color: #7fd1c4; } .chip.k-misc { background: rgba(110,80,140,.45); border-color: #b49ad6; }
+.chip.k-kw { padding: .08em .3em; font-size: 1.3em; opacity: .9; background: rgba(0,0,0,.35); }
+.chip.up .chip-n { color: #8dff72; } .chip.down .chip-n { color: #ff8a7a; }
+.chip.k-text { font: 500 1.12em/1.1 var(--f-body); white-space: normal; text-align: center; background: none; border: 0; color: #eadfc6; padding: 0; }

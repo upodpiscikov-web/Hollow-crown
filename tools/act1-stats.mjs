@@ -8,6 +8,7 @@
 //                             [--act1]            stop each run after the Act 1 boss (fast; no full-run win rate)
 //                             [--enc]             per-encounter table (Act 1)
 //                             [--acts]            fight tables for every act, not only Act 1
+//                             [--brace 0.6]       model the timed Brace window: the human taps in time 60% of the time (default 0 = off)
 //                             [--legacy]          the pre-revamp game: no Strike/Guard/Special, Act 1 = 15 floors, HP x1
 //                             [--meta fresh]      level-0 profile (default: everything unlocked, like tools/sim.mjs)
 //                             [--turn-sec 20] [--node-sec 25] [--reward-sec 0]   minutes model
@@ -98,8 +99,10 @@ async function playRun(hero, seed, cfg) {
   const ui = {
     wait: () => Promise.resolve(),
     choose: (o) => Promise.resolve(pickCards(o, rng)),
-    // no ui.brace: the timed Brace window is skipped in headless play
+    // no ui.brace by default: the timed Brace window is skipped in headless play (--brace P models a human
+    // who taps in time with probability P)
   };
+  if (cfg.brace > 0) ui.brace = async () => rnd(rng) < cfg.brace;
   const g = new Game({ ui });
   g.meta = freshMeta();
   if (cfg.meta !== 'fresh') {
@@ -302,7 +305,8 @@ function encTable(fights) {
 export async function simulate(cfg) {
   const heroes = cfg.hero === 'all' ? Object.keys(HEROES) : [cfg.hero];
   const result = { cfg, heroes: {}, errors: [] };
-  for (const [hi, hero] of heroes.entries()) {
+  for (const hero of heroes) {
+    const hi = Object.keys(HEROES).indexOf(hero); // seeds depend on the hero, not on the --hero filter
     const runs = [];
     for (let i = 0; i < cfg.runs; i++) {
       const seed = ((cfg.seed * 100003 + i * 7919 + hi * 104729) >>> 0) || 1;
@@ -319,7 +323,7 @@ function summarise(hero, runs, cfg) {
   const allFights = runs.flatMap((r) => r.fights);
   const a1Fights = allFights.filter((f) => f.act === 1);
   const minutes = (r) => (r.act1.turns * cfg.turnSec + r.act1.nonCombat * cfg.nodeSec + r.act1.rewards * cfg.rewardSec) / 60;
-  const deaths = runs.filter((r) => !r.won);
+  const deaths = runs.filter((r) => !r.won && !(cfg.act1Only && r.act1.cleared));
   const dieBy = {};
   for (const d of deaths) { const k = `A${d.deathAct}:${d.killer || '?'}`; dieBy[k] = (dieBy[k] || 0) + 1; }
   const dieAct = [0, 0, 0, 0, 0];
@@ -343,7 +347,7 @@ function summarise(hero, runs, cfg) {
 
 function report(result, cfg) {
   const lines = [];
-  const cfgLine = `runs/hero ${cfg.runs}  seed ${cfg.seed}  asc ${cfg.asc}  meta ${cfg.meta}${cfg.legacy ? '  LEGACY(no actions, 15 floors)' : ''}${cfg.act1Only ? '  ACT1-ONLY' : ''}  turn ${cfg.turnSec}s  node ${cfg.nodeSec}s${cfg.rewardSec ? `  reward ${cfg.rewardSec}s` : ''}`;
+  const cfgLine = `runs/hero ${cfg.runs}  seed ${cfg.seed}  asc ${cfg.asc}  meta ${cfg.meta}${cfg.legacy ? '  LEGACY(no actions, 15 floors)' : ''}${cfg.brace ? `  BRACE ${cfg.brace}` : ''}${cfg.act1Only ? '  ACT1-ONLY' : ''}  turn ${cfg.turnSec}s  node ${cfg.nodeSec}s${cfg.rewardSec ? `  reward ${cfg.rewardSec}s` : ''}`;
   lines.push(cfgLine);
   const H = Object.values(result.heroes);
   for (const s of H) {
@@ -364,6 +368,15 @@ function report(result, cfg) {
     const all = H.flatMap((s) => s.a1Fights);
     lines.push('\n=== ACT 1 PER-ENCOUNTER (all heroes) ===');
     lines.push(encTable(all));
+  }
+  if (H.length > 1 && !cfg.act1Only) {
+    lines.push('\n=== ALL HEROES, BY ACT (map fights; event fights excluded) ===');
+    lines.push(`${'act/pool'.padEnd(10)} ${'n'.padStart(6)} ${'turns'.padStart(6)} ${'%maxHP'.padStart(7)} ${'win%'.padStart(6)}`);
+    for (const a of [1, 2, 3]) for (const pool of ['easy', 'hard', 'elite', 'boss']) {
+      const fs = H.flatMap((s) => s.fights).filter((f) => f.act === a && f.pool === pool);
+      if (!fs.length) continue;
+      lines.push(`${(`A${a} ${pool}`).padEnd(10)} ${String(fs.length).padStart(6)} ${f1(avg(fs.map((f) => f.turns))).padStart(6)} ${f1(avg(fs.map((f) => 100 * f.hpLost / f.maxHp))).padStart(7)} ${f1(pct(fs.filter((f) => f.won).length, fs.length)).padStart(6)}`);
+    }
   }
   if (H.length > 1) {
     lines.push('\n=== SUMMARY ===');
@@ -392,14 +405,19 @@ if (isMain) {
   const cfg = {
     runs: +one('runs', 200), hero: one('hero', 'all'), seed: +one('seed', 1), asc: +one('asc', 0),
     act1Only: !!one('act1', false), enc: !!one('enc', false), acts: !!one('acts', false), legacy: !!one('legacy', false),
-    meta: one('meta', 'full'), turnSec: +one('turn-sec', 20), nodeSec: +one('node-sec', 25), rewardSec: +one('reward-sec', 0),
+    meta: one('meta', 'full'), turnSec: +one('turn-sec', 20), nodeSec: +one('node-sec', 25), rewardSec: +one('reward-sec', 0), brace: +one('brace', 0),
   };
   if (cfg.legacy) { PACE[1] = { floors: 15, paths: 6, hp: 1 }; for (const a of [2, 3]) delete PACE[a]; }
   for (const s of many('set')) applyOverride(s);
   const result = await simulate(cfg);
   console.log(report(result, cfg));
   if (one('json', false)) {
-    const slim = Object.fromEntries(Object.entries(result.heroes).map(([h, s]) => [h, { clear: s.act1Clear, win: s.win, min: s.act1MinCleared, turns: Object.fromEntries(POOLS.map((p) => [p, avg(s.a1Fights.filter((f) => f.pool === p).map((f) => f.turns))])) }]));
+    const byAct = (s, a) => Object.fromEntries(POOLS.map((p) => [p, avg(s.fights.filter((f) => f.act === a && f.pool === p).map((f) => f.turns))]));
+    const slim = Object.fromEntries(Object.entries(result.heroes).map(([h, s]) => [h, {
+      runs: s.runs, clear: s.act1Clear, win: s.win, min: s.act1MinCleared, deathsByAct: s.deathsByAct, dieBy: s.dieBy,
+      turns: { 1: byAct(s, 1), 2: byAct(s, 2), 3: byAct(s, 3) },
+      hpPct: Object.fromEntries([1, 2, 3].map((a) => [a, Object.fromEntries(POOLS.map((p) => [p, avg(s.fights.filter((f) => f.act === a && f.pool === p).map((f) => 100 * f.hpLost / f.maxHp))]))])),
+    }]));
     console.log('JSON ' + JSON.stringify(slim));
   }
   if (result.errors.length) process.exit(1);
