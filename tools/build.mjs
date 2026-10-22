@@ -80,7 +80,7 @@ const loader = `<script>
     ? fetch('app.bin?v='+V).then(function(r){if(!r.ok)throw new Error(r.status);return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).text();}).catch(plain)
     : plain();
   p.then(run).catch(fail);
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
     window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
   }
 })();
@@ -122,18 +122,7 @@ self.addEventListener('fetch', (e) => {
 `;
 fs.writeFileSync(path.join(OUT, 'sw.js'), sw);
 
-const noCache = [{ key: 'Cache-Control', value: 'no-cache' }];
-const forever = [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }];
-fs.writeFileSync(path.join(OUT, 'vercel.json'), JSON.stringify({
-  cleanUrls: false,
-  headers: [
-    { source: '/', headers: noCache },
-    { source: '/index.html', headers: noCache },
-    { source: '/sw.js', headers: noCache },
-    { source: '/manifest.webmanifest', headers: noCache },
-    { source: '/fonts/(.*)', headers: forever },
-  ],
-}, null, 1));
+// Deploy headers/config live in the repo-root vercel.json (a vercel.json inside dist/ is ignored).
 
 // ---------------------------------------------------------------- report
 const files = [];
