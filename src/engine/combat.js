@@ -59,6 +59,9 @@ export const DRAUGHTS = ['draught_bile', 'draught_ash', 'draught_ember', 'draugh
 // Status/enemy hooks with these names are only ever called on their owner.
 const OWNER_ONLY = new Set(['turnStart', 'turnEnd', 'hpLost', 'onAttacked', 'died']);
 
+// Hard cap on cards played in one turn; only a runaway infinite combo can ever reach it.
+const MAX_CARDS_PER_TURN = 120;
+
 const num = (x, g, e) => (typeof x === 'function' ? x(g, e) : x);
 
 export const combatMethods = {
@@ -389,6 +392,7 @@ export const combatMethods = {
     if (this.hasKw(card, 'unplayable') || d.cost === -1) return false;
     const cost = this.cardCost(card);
     if (cost !== 'X' && cost > cb.energy) return false;
+    if (cb.cnt.cards >= MAX_CARDS_PER_TURN) return false; // runaway-combo safety net
     if (d.canPlay && !d.canPlay(this, card)) return false;
     for (const id of Object.keys(this.player.st)) {
       const sd = STATUSES[id];
@@ -403,6 +407,7 @@ export const combatMethods = {
     if (this.hasKw(card, 'unplayable') || d.cost === -1) return 'This card cannot be played.';
     const cost = this.cardCost(card);
     if (cost !== 'X' && cost > this.cb.energy) return 'Not enough Energy.';
+    if (this.cb.cnt.cards >= MAX_CARDS_PER_TURN) return 'The hour will bear no more this turn.';
     if (d.canPlay && !d.canPlay(this, card)) return d.cantText || 'Cannot play this now.';
     return 'Cannot play this now.';
   },

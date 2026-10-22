@@ -400,7 +400,7 @@ defineCards([
     tier: 0, art: 'eye',
     text: 'Add a copy of a card in your hand to your hand.',
     async play(g, v, t, card) {
-      const [c] = await g.chooseHand(1, 'Choose a card to mimic', (x) => x !== card);
+      const [c] = await g.chooseHand(1, 'Choose a card to mimic', (x) => x !== card && x.id !== 'mimicry_wren');
       if (c) g.copyCard(c, 'hand');
     },
   },
