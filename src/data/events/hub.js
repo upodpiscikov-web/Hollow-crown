@@ -442,12 +442,10 @@ defineHubLines([
   beat('witch', 'witch_4', 66, [
     ['witch', "There was a ledger. Crane's. A list of the *kept*. My mother's name was in it."],
     ['hob', "They would. Clerks. It's always clerks."],
-    ['witch', 'Is she dead?'],
+    ['witch', 'Is she dead, Hob? Is she alive? Tell me which.'],
     ['hob', 'No.'],
-    ['witch', 'Is she alive?'],
-    ['hob', 'No.'],
-    ['witch', 'That is not an answer.'],
-    ['hob', "It's the only honest one I've got."],
+    ['witch', 'No to which?'],
+    ['hob', "To both. It's the only honest answer I've got."],
   ]),
   beat('witch', 'truth_witch', 65, [
     ['hob', "You've made up your mind. I can see it. It's the way a woman sets down a cup."],
@@ -833,6 +831,8 @@ defineHubLines([
     id: 'hob_pell_idle_bells', pri: 8, once: false, req: (m) => pre(m) && F(m, 'met_pell'),
     lines: [
       ['narrator', 'Someone has tied six little bells to the Waystone. None of them ring. Hob unties them, grumbling, and drops them in his pocket. By the time you turn round, they are back.'],
+      ['hob', "Pell. I know you're in the yew."],
+      ['pell', '(from the yew) I am not!'],
     ],
   },
   {
@@ -889,43 +889,43 @@ defineHubLines([
 
   // ================================================================== AFTER HOB RESTS (post true ending)
   ...[
-    [['narrator', 'The Waystone has moss on it. The oldest grave in the yard is closed, and snowdrops grow in a neat line along its edge. Nobody planted them. Everybody knows who did.']],
+    [['narrator', 'The Waystone has moss on it. The oldest grave in the yard is closed, and snowdrops grow in a neat line along its edge. Nobody planted them. Everybody knows who did.'], ['hob', '(from below, drowsily) ...is that you? Don\'t fuss. I\'m busy.']],
     [['narrator', 'A spade stands upright at the head of the oldest grave. You do not touch it. The handle is warm.'], ['hob', '(from below, drowsily) ...mind the third step...']],
-    [['narrator', 'The graves are no longer freshly dug. They have settled into the earth, and the grass has grown over them. It is a very ordinary graveyard now.']],
-    [['hob', '(from the earth, a long way down) Is that the tea? Leave it. I\'ll get to it. In my own time.']],
-    [['narrator', 'The ash has stopped. In its place there is rain, soft and ordinary and cold. You stand in it a while, and nobody hurries you.']],
+    [['narrator', 'The graves are no longer freshly dug. They have settled into the earth, and the grass has grown over them. It is a very ordinary graveyard now.'], ['hob', '(faintly) ...good drainage, that lot. Always said so...']],
+    [['hob', '(from the earth, a long way down) Is that the tea? Leave it. I\'ll get to it. In my own time.'], ['narrator', 'The kettle on the sill is cold, for the first time in living memory.']],
+    [['narrator', 'The ash has stopped. In its place there is rain, soft and ordinary and cold. You stand in it a while, and nobody hurries you.'], ['hob', '(from the earth, content) Good rain, that. Dig it in.']],
   ].map((lines, i) => ({
     id: `hob_idle_rested_${i + 1}`, pri: 11, once: false, req: (m) => trueDone(m), lines,
   })),
 
   // ================================================================== IDLE (repeatable, Hob above ground)
-  idle('hob_idle_tea', [['hob', "Tea? It's the same tea. It's always the same tea. I've found that's rather the point of tea."]]),
+  idle('hob_idle_tea', [['hob', "Tea? It's the same tea. It's always the same tea. I've found that's rather the point of tea."], ['hob', "Two sugars, if you've any. I haven't. I just like to say it."]]),
   idle('hob_idle_digging', [
     ['narrator', 'Hob is digging. He nods in time with the spade, a long slow rhythm, like a man humming without the tune.'],
     ['hob', "Don't mind me. Getting ahead of the day."],
   ]),
-  idle('hob_idle_ash', [['hob', "Ash again. Nice, that. Good for the roses, if I had roses."]]),
-  idle('hob_idle_yew', [['hob', "Fresh one for you by the yew. Good drainage. I've always said, if you're going to die, do it somewhere dry."]]),
-  idle('hob_idle_stone', [['hob', "Don't lean on the Waystone. She's old, and she gets ideas."]]),
+  idle('hob_idle_ash', [['hob', "Ash again. Nice, that. Good for the roses, if I had roses."], ['narrator', 'It settles on his hat, his shoulders, the blade of the spade. He lets it.']]),
+  idle('hob_idle_yew', [['hob', "Fresh one for you by the yew. Good drainage. I've always said, if you're going to die, do it somewhere dry."], ['narrator', 'The yew is much too tall for a tree of its age. Hob pats its trunk the way you would pat a horse.']]),
+  idle('hob_idle_stone', [['hob', "Don't lean on the Waystone. She's old, and she gets ideas."], ['narrator', 'The Waystone hums, faintly, as if she had heard.']]),
   idle('hob_idle_lantern', [
     ['narrator', 'A lantern hangs over each new grave, burning low and white.'],
     ['hob', 'So they can find their way out, if they must.'],
   ]),
-  idle('hob_idle_ledger', [['hob', "I keep a ledger. Not for the money. Somebody ought to write you down."]], (m) => m.deaths >= 5),
-  idle('hob_idle_tune', [['hob', "You know the tune? No? Shame. It's a lovely one. Nobody's hummed it in a very long time."]]),
-  idle('hob_idle_graves', [['hob', "Funny thing about my graves. They're never occupied for long."]]),
-  idle('hob_idle_crow', [['hob', "That crow's been watching us. Don't mind him. He's only waiting for the next one. They always know."]]),
-  idle('hob_idle_eat', [['hob', 'Eat before you go. Dying on an empty stomach is a dreadful thing.']]),
-  idle('hob_idle_hats', [['hob', "Whatever you do, don't trust a man who's too cheerful. Or a woman. Or a hat. Hats, especially."]]),
-  idle('hob_idle_mornings', [['hob', 'Mornings keep coming. I used to think that was a good thing.']]),
-  idle('hob_idle_names', [['hob', "I cut your name on the marker, in case you were wondering. Spelling's all right. I've had practice."]]),
-  idle('hob_idle_crown_hum', [['hob', "The Crown's awake. I feel it through the soles of my boots. It does that when you're getting close to something."]], (m) => m.runs >= 3),
-  idle('hob_idle_encourage', [['hob', "You're doing better than you think. That's not flattery. I've the data."]], (m) => m.deaths >= 3),
-  idle('hob_idle_road', [['hob', "The road goes east, and then it goes wrong. Keep to the left, where the ground's dry."]]),
-  idle('hob_idle_death_shy', [['hob', "People say death comes for everyone. In Morrow it's been rather shy."]]),
-  idle('hob_idle_spade', [['hob', "This spade's older than the road. Handle's been replaced thirty times, blade twice. Still the same spade. Don't ask me how."]], (m) => m.runs >= 4),
-  idle('hob_idle_sit', [['hob', "Sit. Breathe. It'll come back. Everything comes back. That's the trouble."]], (m, l) => died(l)),
-  idle('hob_idle_practice', [['hob', "You're getting quicker at it. Practice shows."]], (m, l) => died(l) && m.deaths >= 10),
+  idle('hob_idle_ledger', [['hob', "I keep a ledger. Not for the money. Somebody ought to write you down."], ['narrator', 'The ledger is a fat, soft thing wrapped in oilcloth. Its first page is in a script nobody has used for four hundred years.']], (m) => m.deaths >= 5),
+  idle('hob_idle_tune', [['hob', "You know the tune? No? Shame. It's a lovely one. Nobody's hummed it in a very long time."], ['narrator', 'He hums a few bars as he works. It is a lullaby of the Marches. He does not seem to know that he is doing it.']]),
+  idle('hob_idle_graves', [['hob', "Funny thing about my graves. They're never occupied for long."], ['hob', "Nobody's ever stayed to complain. Not in the ground, anyway."]]),
+  idle('hob_idle_crow', [['hob', "That crow's been watching us. Don't mind him. He's only waiting for the next one. They always know."], ['narrator', 'The crow looks at you for a long time. Then it looks at the nearest empty grave. Then, politely, at you again.']]),
+  idle('hob_idle_eat', [['hob', 'Eat before you go. Dying on an empty stomach is a dreadful thing.'], ['hob', "Bread's on the sill. Mind the mice. They've started taking sides."]]),
+  idle('hob_idle_hats', [['hob', "Whatever you do, don't trust a man who's too cheerful. Or a woman. Or a hat. Hats, especially."], ['narrator', 'He eyes his own hat suspiciously, as if it had been listening.']]),
+  idle('hob_idle_mornings', [['hob', 'Mornings keep coming. I used to think that was a good thing.'], ['hob', "Funny. I'd have given a kingdom, once, for one that started differently."]]),
+  idle('hob_idle_names', [['hob', "I cut your name on the marker, in case you were wondering. Spelling's all right. I've had practice."], ['hob', 'Each one cut by hand. I never use a stencil. It seems rude.']]),
+  idle('hob_idle_crown_hum', [['hob', "The Crown's awake. I feel it through the soles of my boots. It does that when you're getting close to something."], ['narrator', 'Far off, over the hill, a thin note rings in the iron of the sky. Hob does not look up.']], (m) => m.runs >= 3),
+  idle('hob_idle_encourage', [['hob', "You're doing better than you think. That's not flattery. I've the data."], ['hob', "Mind you, I've also the data on the others. So don't get cocky."]], (m) => m.deaths >= 3),
+  idle('hob_idle_road', [['hob', "The road goes east, and then it goes wrong. Keep to the left, where the ground's dry."], ['hob', 'The right looks nicer. They always do.']]),
+  idle('hob_idle_death_shy', [['hob', "People say death comes for everyone. In Morrow it's been rather shy."], ['hob', 'It used to knock. Now it just sort of lingers in the hall.']]),
+  idle('hob_idle_spade', [['hob', "This spade's older than the road. Handle's been replaced thirty times, blade twice. Still the same spade. Don't ask me how."], ['narrator', 'He leans on it. The blade is bright as new silver, and the haft is dark with four hundred years of hands.']], (m) => m.runs >= 4),
+  idle('hob_idle_sit', [['hob', "Sit. Breathe. It'll come back. Everything comes back. That's the trouble."], ['narrator', 'He puts a blanket round your shoulders. It smells of earth and woodsmoke, and it is warmer than a blanket ought to be.']], (m, l) => died(l)),
+  idle('hob_idle_practice', [['hob', "You're getting quicker at it. Practice shows."], ['hob', "I don't mean it unkindly. I mean it the way you'd say it to a fiddler."]], (m, l) => died(l) && m.deaths >= 10),
   idle('hob_idle_fire', [
     ['narrator', 'A small fire burns in the lee of the stone. Hob has set out three cups. He does not seem to find this strange.'],
     ['hob', "Habit. There used to be more of us."],
@@ -934,8 +934,8 @@ defineHubLines([
     ['hob', "The Blight's moved a mile since yesterday. Not far. A walking man's pace, I'd say, with a limp."],
     ['hob', "It's not coming for us. It's only coming home."],
   ], (m) => m.runs >= 2),
-  idle('hob_idle_kettle', [['hob', "Kettle's on. It's always on. I think it's the only thing in Morrow that's keeping proper time."]]),
-  idle('hob_idle_peddler', [['hob', "If you meet a fellow with a cart on the road, be civil. He remembers who's rude."]], (m) => m.runs >= 3),
+  idle('hob_idle_kettle', [['hob', "Kettle's on. It's always on. I think it's the only thing in Morrow that's keeping proper time."], ['narrator', 'The kettle sings. There is no fire under it. Hob nods to it, as one colleague to another.']]),
+  idle('hob_idle_peddler', [['hob', "If you meet a fellow with a cart on the road, be civil. He remembers who's rude."], ['hob', "Fellow's got a long memory. Longer than he lets on."]], (m) => m.runs >= 3),
 ]);
 
 // =================================================================================

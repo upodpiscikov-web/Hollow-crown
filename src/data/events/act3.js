@@ -17,10 +17,10 @@ defineEvents([
       start: {
         text: (g) => P(
           `Ashgrave's bells ring every hour but one. The hour they skip is the hour the Regent's curfew falls, and you are, unfortunately, in the street for it.`,
-          `You feel it before you hear it: a held breath, the length of the city. Shutters bang down in sequence like a firing line. A man runs past with a loaf under each arm and a look of professional dread. A woman drags her washing off the line, still wet, still pegged. Somewhere a child is shushed mid-word.`,
-          `Then the street is empty and the silence has weight. Far off, hobnails on cobbles: the watch, who are paid by the arrest. A door opens a hand's breadth. A floury arm. "In, in, in, you great fool."`,
+          `You feel it before you hear it: a held breath, the length of the city. Shutters bang down in sequence like a firing line. A man runs past with a loaf under each arm and a look of professional dread. A woman drags her washing off the line, still pegged. Somewhere a child is shushed mid-word.`,
+          `Then the street is empty and the silence has weight. Far off, hobnails: the watch, who are paid by the arrest. A door opens a hand's breadth. A floury arm. "In, in, you great fool."`,
           H(g, {
-            knight: `Aldous finds his feet know the curfew-step: soft heel, hand clear of the hilt. He did not enforce this curfew. On the first night he stood at a corner and watched it being enforced, which he has since decided was different.`,
+            knight: `Aldous finds his feet know the curfew-step: soft heel, hand clear of the hilt. He never enforced this curfew. On the first night he stood at a corner and watched it enforced, which he has decided was different.`,
             witch: `Isolde pulls her hood forward. A bounty bill two streets back had her nose wrong. It would be hopeful to count on the same mistake twice.`,
             wren: `Wren listens to the silence with something like delight. "The whole city is playing hide-and-seek," Wren whispers, "and nobody told them what happens when you're found."`,
             cantor: `The watch pass the end of the street. Not one lantern swings your way. A dog in a doorway watches you cross the open cobbles, and whines.`,
@@ -421,15 +421,15 @@ defineEvents([
     pages: {
       start: {
         text: (g) => P(
-          `Past the Tannery Gate, in the hour before the hour not rung, six men in oilcloth are prising up a grate with a crowbar and a great deal of swearing. A cart waits. A lantern hangs from a pole. It smells like you would think, and also, faintly underneath, like a church that has been shut for centuries.`,
-          `The foreman is a square, grey man named Marl, who has cleaned Ashgrave's drains for seventy-four years and has the forearms to show for it. He gives you the look night-soil men give everyone: is this a customer, or a story. "Sixty feet of drain," he says. "We go down that. No further. Past the second grate the rats stop, and it's —" he spits — "not rats."`,
+          `Past the Tannery Gate, in the hour before the hour not rung, six men in oilcloth are prising up a grate with a crowbar and a great deal of swearing. A cart waits. A lantern hangs from a pole. It smells as you would think, and also, faintly, like a church shut for centuries.`,
+          `The foreman is a square, grey man named Marl, who has cleaned Ashgrave's drains for seventy-four years and has the forearms to show for it. He gives you the look night-soil men give everyone: customer, or story? "Sixty feet of drain," he says. "No further. Past the second grate the rats stop, and it's —" he spits — "not rats."`,
           g.flag('knows_unspent')
             ? `He looks at you a long moment. "You've heard it," he says. It isn't a question. "Well. That's two of us who'll sleep badly."`
             : `"Rumours, plenty of them," he adds. "Don't go listening at grates. That's how the rumours start."`,
           H(g, {
-            knight: `Marl's eyes go to Aldous's sword and then his face. "You're old Shield. You'll want to see this. Everyone from the Shield wants to see it, in the end."`,
+            knight: `Marl's eyes go to Aldous's sword and then his face. "Old Shield. You'll want to see this. They all do, in the end."`,
             witch: `Isolde sniffs the draught and goes pale in an interesting way. "That isn't sewage. That's rot. Old rot, a very great deal of it, very patient."`,
-            wren: `As the grate lifts, a warm wet draught comes up, and Wren, for no reason, takes off a glove and holds a bare hand over the hole, palm down, as at a fire. "It's warm," Wren says. Marl takes a step back.`,
+            wren: `A warm wet draught comes up, and Wren, for no reason, takes off a glove and holds a bare hand over the hole, as at a fire. "It's warm," Wren says. Marl takes a step back.`,
             cantor: `Below the grate, very faintly, a hundred thousand voices are saying the responses to the Office for the Dead. They are a line behind. They are asking to be let finish.`,
           })),
         choices: [
@@ -579,13 +579,15 @@ defineEvents([
       },
       caught: {
         text: P(
-          `A hand clamps on your shoulder, quite gently. "Auction's tomorrow," says the guard, in the voice of a man who has been waiting all week for someone to do this, and then he calls his friends.`,
+          `A hand clamps on your shoulder, quite gently. "Auction's tomorrow," says the guard, in the voice of a man who has waited all week for someone to do this.`,
+          `Down the long hall, between the cradles and the lutes and the three thousand pairs of spectacles, other guards are straightening from their stools. None of them is in a hurry. They know there is only the one door, and that it is behind them, and that you are going to have to ask.`,
         ),
         choices: [{ label: '[Fight]', async fx(g) { await g.eventCombat(foes(g, 3, ['regents_inquisitor', 'crown_zealot']), { resume: 'after_caught' }); } }],
       },
       after_caught: {
         text: P(
           `You leave the Hall by the front door with nothing under your cloak. Behind you the clerks creep out from under their desks, find the guards, and begin, very quietly, to fill in a form.`,
+          `On the step you pass an old woman with a handcart, waiting in the ash for the doors to open. She has a tag in her hand and forty gold in a rag. She has been waiting, she tells you, since the autumn, for the courage to go in and ask for her husband's chair.`,
         ),
         choices: [{ label: '[Leave]', end: true }],
       },
@@ -701,12 +703,12 @@ defineEvents([
       relieve: {
         text: (g) => P(
           H(g, {
-            knight: `"Who relieves the guard?" you say, and the answer comes out of Aldous's mouth in a voice he has not used since the Shield: "*I relieve.*" The words know exactly where to go. Fifteen years of drill land square, like boots on a parade ground.`,
+            knight: `"Who relieves the guard?" you say, and the answer comes out of Aldous's mouth in a voice he has not used since the Shield: "*I relieve.*" Fifteen years of drill land square, like boots on a parade ground.`,
             cantor: `"Who relieves the guard?" you ask, the way you ask a congregation for its response. A long silence. Then, hesitantly, from Cael's own lips, the answer: "*I relieve.* Go in peace, brother. Your watch is ended."`,
             any: `"Who relieves the guard?" you say, guessing, because it is the sort of thing one says. A long, long pause. Then, from you, uncertainly: "I... relieve?" The sentinel considers this. "Close enough," he decides. "Nobody's ever been precise about the second half."`,
           }),
-          `You take his place and stand through the night with your back to the stair and your face to the street, and a thousand feet pass in the dark and none of them is looking at you. It is the longest night of your life. By dawn your legs have gone and your hands have gone and something in you has hardened the way a joint sets.`,
-          `He has not left. He stands beside you, in the grey, ungilding. The gold sloughs off him in flakes. "I swore my oath on iron," he says. "Founder's issue. They hammered every guardsman a nail for it, to fix the words to the door." He takes a black nail from under his breastplate. "Hold it for me, will you? I shan't be needing it." Then he is gone, and the gilded halberd clatters across the step, and he is not there at all.`),
+          `You take his place and stand through the night with your back to the stair and your face to the street, and a thousand feet pass in the dark and none of them is looking at you. It is the longest night of your life. By dawn your legs have gone and something in you has set like a joint.`,
+          `He has not left. He stands beside you, in the grey, ungilding. The gold sloughs off him in flakes. "I swore my oath on iron," he says. "Founder's issue. They hammered every guardsman a nail, to fix the words to the door." He takes a black nail from under his breastplate. "Hold it for me, will you? I shan't be needing it." Then the gilded halberd clatters across the step, and he is not there at all.`),
         choices: [{ label: '[Leave]', end: true }],
       },
       pried: {
@@ -725,14 +727,14 @@ defineEvents([
     pages: {
       start: {
         text: (g) => P(
-          `In the Street of Pens a puppet-booth has been set up, red and white stripes, a tiny theatre, a hat full of coppers at its foot. The audience is forty strong, mostly children and the very old, and they are rapt. They know every line.`,
-          `On the little stage a puppet king in a tin crown lies in a bed. Four puppet children come to the bedside in turn: one in a little steel helmet, one in a green hat, one with a blank white wooden face, one in a cassock. Each leans down. The King says, "Will you wear it?" and each says, "Yes!" and each in turn is hit on the head with a small wooden mallet by a puppet in motley, to roars of laughter. "*Again!*" shrieks the puppet Fool. "Again! Again!" The audience shrieks it with him. Two men in grey coats at the back are not laughing. They are writing.`,
-          g.flag('met_pell') ? `The Fool puppet's smile is a crack across white porcelain. You have seen that smile before.` : '',
+          `In the Street of Pens a red-and-white puppet-booth stands with a hat of coppers at its foot. The audience is mostly children and the very old, and they are rapt. They know every line.`,
+          `On the stage a puppet king in a tin crown lies in bed. Four puppet children come to him in turn: a steel helmet, a green hat, a blank white face, a cassock. The King says, "Will you wear it?" and each says, "Yes!" and each is hit on the head with a small mallet by a puppet in motley, to roars of laughter. "*Again!*" shrieks the Fool. The audience shrieks it with him. Two men in grey at the back are not laughing. They are writing.`,
+          g.flag('met_pell') ? `The Fool's smile is a crack across white porcelain. You have seen it before.` : '',
           H(g, {
-            knight: `The puppet in the steel helmet is rather good. It has Aldous's stance. It has been given a very small sword and a very small door, and it stands in front of the door through every scene, upright, doing nothing, and the children boo it with great affection.`,
-            witch: `The witch puppet is a caricature: green nose, a cauldron, a wooden wart. "I haven't got a wart," Isolde says. A child turns round. "It's the Fool's joke, miss. Everyone's got a wart." Isolde decides to let it go.`,
-            wren: `The blank white puppet is the audience's favourite. It has no mouth, and speaks anyway: children and old men chorus its lines from memory. "Who are you?" says the King. "*Nobody!*" roars the audience, joyfully. Wren is silent a long moment. "They like me," Wren says. "Why is that worse?"`,
-            cantor: `The cassock puppet is the only one not hit. He kneels at the bedside, the King whispers in his ear, and he sits in the corner for the rest of the play while the others are mallet-ed. "He knows too much," a small girl tells you gravely. "He's just supposed to *know.*"`,
+            knight: `The puppet in the steel helmet is rather good. It has Aldous's stance. It has a very small sword and a very small door, and it stands before the door through every scene, upright, doing nothing, and the children boo it with great affection.`,
+            witch: `The witch puppet has a green nose, a cauldron and a wooden wart. "I haven't got a wart," Isolde says. A child turns round. "It's the Fool's joke, miss. Everyone's got a wart."`,
+            wren: `The blank white puppet is the favourite. It has no mouth, and the crowd speaks for it. "Who are you?" says the King. "*Nobody!*" roars the audience, joyfully. Wren is silent a long moment. "They like me," Wren says. "Why is that worse?"`,
+            cantor: `The cassock puppet is the only one not hit. The King whispers in his ear, and he sits in the corner for the rest of the play. "He knows too much," a small girl tells you gravely. "He's just supposed to *know.*"`,
           })),
         choices: [
           { label: (g) => `[Watch to the end] Lose 40 gold (the hat comes round, and stops at you). Obtain ${relicFull(g, 'pells_bell')}.`, req: goldReq(40),
@@ -816,12 +818,12 @@ function courtChoices(withGossip) {
 
 function weatherIntro(g) {
   return P(
-    `The Ministry of Weather has a very fine brass door and one employee. He sits in a glass-roofed tower at the top of the Chancery with a rain-gauge, a barometer, a wind-vane and a ledger as long as a grave, and at dawn every morning he writes the day's weather. He is a thin, anxious, ink-stained man named Pettifer and he has done it for fifty-one years.`,
-    `"Ash," he says, showing you the page. "Wind light, northerly. Ash. Ash." He turns back. "Ash. It isn't that I haven't tried to be varied. The Regent's order is that weather be reported *accurately.*" He sniffs. "I am not permitted to report spring. It isn't in the forecast. It hasn't been in the forecast since before my time." He looks at the empty box marked FORECAST FOR TOMORROW, and then at you. "Would you care to do it? I've always wanted to know what it would feel like to have been wrong."`,
+    `The Ministry of Weather has a fine brass door and one employee. He sits in a glass-roofed tower atop the Chancery with a rain-gauge, a wind-vane and a ledger as long as a grave, and at dawn every morning he writes the day's weather. He is a thin, anxious, ink-stained man named Pettifer, and he has done it for fifty-one years.`,
+    `"Ash," he says, showing you the page. "Wind light, northerly. Ash. Ash." He turns back. "Ash. I've tried to be varied. The Regent's order is that weather be reported *accurately.*" He sniffs. "I am not permitted to report spring. It hasn't been in the forecast since before my time." He looks at the empty box marked FORECAST FOR TOMORROW, and then at you. "Would you care to do it? I've always wanted to know what it feels like to have been wrong."`,
     H(g, {
-      knight: `"The thing about an order," Aldous says slowly, "is that you aren't allowed to enjoy breaking it." "I'm told it's wonderful," says Pettifer.`,
-      witch: `Isolde reads back through the ledger. "No seasons," she says. "No autumn?" "Not in the proper sense." "No *rot?*" "Heavens, no." "Good God," says Isolde. "You haven't got any *compost.*"`,
-      wren: `Wren takes the pen at once, and then holds it over the page for a long time without writing. "What does rain smell like?" Pettifer tells them. "Oh," says Wren. "I think I've been missing that."`,
+      knight: `"The thing about an order," Aldous says slowly, "is that you're not allowed to enjoy breaking it." "I'm told it's wonderful," says Pettifer.`,
+      witch: `Isolde reads back through the ledger. "No autumn?" "Not in the proper sense." "No *rot?*" "Heavens, no." "Good God," says Isolde. "You haven't got any *compost.*"`,
+      wren: `Wren takes the pen at once, then holds it over the page without writing. "What does rain smell like?" Pettifer tells them. "Oh," says Wren. "I think I've been missing that."`,
       cantor: `"Pettifer," Cael says gently, "when did you last go outside?" "Outside?" The man blinks. "It's weather. I observe it from within."`,
     }));
 }

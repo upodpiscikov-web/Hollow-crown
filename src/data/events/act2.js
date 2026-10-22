@@ -565,7 +565,7 @@ defineEvents([
           d.step === 0
             ? `You can see, too, that the silt is not still. A bubble rises. Something that might be a hand turns slowly over, like a sleeper, and sinks again.`
             : `The silt has settled again. Something under it shifts, as if making itself comfortable.`,
-          d.step === 0 ? `You could reach in. Most of what is down there has been waiting a very long time, and is in no hurry.` : `There is more down there. There is always more down there.`,
+          d.step === 0 ? `You could reach in. Most of what is down there has been waiting a very long time, and is in no hurry.` : `You wipe your hand on your coat. The cold does not wipe off. There is more down there, there is always more down there, and every piece you take makes the rest of them a little more interested in you.`,
         ),
         choices: [
           { label: (g, d) => `[Reach in] ${SILT[d.step].risk}% chance a drowned hand finds you first (lose 8 HP, search ends). Prize: ${siltPrize(g, d.step)}.`,

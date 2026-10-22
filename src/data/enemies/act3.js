@@ -132,7 +132,7 @@ defineStatuses([
   },
   {
     id: 'a3_twin_bond', name: 'Twin Voices', kind: 'buff', icon: 'heart',
-    desc: () => 'If its twin falls, it sounds the Return on its next turn and raises them at half HP. Silence both on the same turn.',
+    desc: () => 'If its twin falls, it sounds the Return on its next turn and raises them at half HP (twice per battle). Silence both on the same turn.',
   },
   {
     id: 'a3_saints_grief', name: 'Reliquary', kind: 'buff', icon: 'crown',
@@ -144,7 +144,7 @@ defineStatuses([
     id: 'a3_late_hour', name: 'The Hour Grows Late', kind: 'buff', icon: 'moon',
     desc: (n) => n <= 1 ? 'At the end of his turn, gains 2 Might. Then the count begins again.' : `In ${n} turns, gains 2 Might. Then the count begins again.`,
     turnEnd(g, o, n) {
-      if (n <= 1) { g.apply(o, 'might', 2, o); setStatus(g, o, 'a3_late_hour', 3); } else g.addStatus(o, 'a3_late_hour', -1);
+      if (n <= 1) { g.apply(o, 'might', 2, o); setStatus(g, o, 'a3_late_hour', 4); } else g.addStatus(o, 'a3_late_hour', -1);
     },
   },
   {
@@ -163,7 +163,7 @@ defineStatuses([
   // --- Choir
   {
     id: 'a3_hymn', name: 'Hymn', kind: 'buff', icon: 'echo',
-    desc: (n) => `At the end of its turn, gains ${n} Verse (1 per living Chorister). Each Chorister that dies halves its Verse.`,
+    desc: (n) => `At the end of its turn, gains ${n} Verse (1 per living Chorister, at least 1). Each Chorister that dies halves its Verse.`,
     turnEnd(g, o, n) { g.apply(o, 'a3_verse', n, o); },
   },
   {
@@ -174,22 +174,22 @@ defineStatuses([
   // --- Rival: the Iron King
   {
     id: 'a3_oath_wall', name: 'Oath of the Wall', kind: 'buff', icon: 'oath',
-    desc: () => 'If he still has Block at the start of his next turn, he keeps it and gains 3 Might. Shatter his Block to break the oath: he becomes Weakened.',
+    desc: () => 'If he still has Block at the start of his next turn, he keeps it and gains 2 Might. Shatter his Block to break the oath: he becomes Weakened.',
     turnStart(g, o) {
       g.removeStatus(o, 'a3_oath_wall');
       g.removeStatus(o, 'barricade');
-      if (o.block > 0) { g.apply(o, 'might', 3, o); toast(g, 'The Iron King keeps his oath.'); } else { g.apply(o, 'weak', 2, o); toast(g, 'Oath broken. The Iron King falters.'); }
+      if (o.block > 0) { g.apply(o, 'might', 2, o); toast(g, 'The Iron King keeps his oath.'); } else { g.apply(o, 'weak', 2, o); toast(g, 'Oath broken. The Iron King falters.'); }
     },
   },
   {
     id: 'a3_oath_vengeance', name: 'Oath of Vengeance', kind: 'buff', icon: 'oath',
-    desc: (n) => `Unless he loses ${n} more HP before his next turn, he gains 4 Might. Break the oath and he becomes Weakened.`,
+    desc: (n) => `Unless he loses ${n} more HP before his next turn, he gains 3 Might. Break the oath and he becomes Weakened.`,
     hpLost(g, o, n, amount) {
       if (amount < n) { g.addStatus(o, 'a3_oath_vengeance', -amount); return; }
       g.removeStatus(o, 'a3_oath_vengeance');
       if (o.hp > 0) { g.apply(o, 'weak', 2, o); toast(g, 'Oath broken. The Iron King falters.'); }
     },
-    turnStart(g, o) { g.removeStatus(o, 'a3_oath_vengeance'); g.apply(o, 'might', 4, o); toast(g, 'The Iron King keeps his oath.'); },
+    turnStart(g, o) { g.removeStatus(o, 'a3_oath_vengeance'); g.apply(o, 'might', 3, o); toast(g, 'The Iron King keeps his oath.'); },
   },
   // --- Rival: the Blight Queen
   {
@@ -256,6 +256,14 @@ defineStatuses([
 function heraldFalls(g, e) {
   const twin = g.enemies.find((x) => HERALDS.includes(x.id) && x !== e);
   if (!twin) return;
+  // The Return can be sounded twice a battle; after that the dead stay dead and the survivor grieves.
+  g.cb.heraldRaises = g.cb.heraldRaises || 0;
+  if (g.cb.heraldRaises >= 2) {
+    buff(g, twin, 'might', 2);
+    toast(g, `${twin.name} lifts its horn, but nothing answers. It grieves.`);
+    return;
+  }
+  g.cb.heraldRaises++;
   const list = g.cb.enemies;
   twin.data.revive = { id: e.id, maxHp: e.maxHp, front: list.indexOf(e) < list.indexOf(twin) };
   toast(g, `${twin.name} lifts its horn to sound the Return.`);
@@ -275,7 +283,7 @@ const heraldReturn = {
 // Choir: keep the Hymn count equal to living Choristers.
 function choirSync(g) {
   const c = living(g, 'choir_immaculate')[0];
-  if (c) setStatus(g, c, 'a3_hymn', living(g, 'choir_singer').length);
+  if (c) setStatus(g, c, 'a3_hymn', Math.max(1, living(g, 'choir_singer').length));
 }
 
 // Thousand-Faced: put on a face (removing the others).
@@ -622,9 +630,9 @@ defineEnemies([
 
   // ================================================================ ACT 3 bosses
   {
-    id: 'severin_crane', name: 'Lord Severin Crane', kind: 'boss', act: 3, hp: 460, sprite: 'en_severin_crane', leader: true,
+    id: 'severin_crane', name: 'Lord Severin Crane', kind: 'boss', act: 3, hp: 440, sprite: 'en_severin_crane', leader: true,
     desc: 'The Regent. He has read every loop like a ledger, and balanced each one in his own favour.',
-    init(g, e) { g.addStatus(e, 'a3_late_hour', 3, { silent: true }); },
+    init(g, e) { g.addStatus(e, 'a3_late_hour', 4, { silent: true }); },
     moves: {
       cane: { name: 'Ebony Cane', intent: 'atk', dmg: 14 },
       rapier: { name: 'Courtier\'s Blade', intent: 'atk', dmg: 4, times: 3 },
@@ -665,7 +673,7 @@ defineEnemies([
     },
   },
   {
-    id: 'choir_immaculate', name: 'The Choir Immaculate', kind: 'boss', act: 3, hp: 350, sprite: 'en_choir_immaculate', leader: true,
+    id: 'choir_immaculate', name: 'The Choir Immaculate', kind: 'boss', act: 3, hp: 360, sprite: 'en_choir_immaculate', leader: true,
     desc: 'Forty court singers who would not stop for Ashfall. They have since grown into one throat.',
     init(g, e) { choirSync(g); },
     moves: {
@@ -674,7 +682,7 @@ defineEnemies([
       hush: { name: 'Hush', intent: 'debuff', fx(g, e) { debuff(g, e, 'weak', 2); g.addCard('daze', 'draw'); g.addCard('daze', 'draw'); } },
       breath: {
         name: 'Draw Breath', intent: 'summon',
-        fx(g, e) { e.data.lastBreath = e.turns; block(g, e, 12); if (g.spawn('choir_singer', { minion: true, front: true })) choirSync(g); },
+        fx(g, e) { e.data.lastBreath = e.turns; e.data.breaths = (e.data.breaths || 0) + 1; block(g, e, 12); if (g.spawn('choir_singer', { minion: true, front: true })) choirSync(g); },
       },
       gloria: {
         name: 'Gloria', intent: 'atk', dmg: 8, times: 3,
@@ -683,7 +691,7 @@ defineEnemies([
     },
     ai(g, e) {
       if (g.st(e, 'a3_verse') >= GLORIA) return 'gloria';
-      if (living(g, 'choir_singer').length < 3 && e.turns - (e.data.lastBreath ?? -1) >= 3 && !g.lastMove(e, 'breath')) return 'breath';
+      if (living(g, 'choir_singer').length < 3 && (e.data.breaths || 0) < 2 && e.turns - (e.data.lastBreath ?? -1) >= 3 && !g.lastMove(e, 'breath')) return 'breath';
       return g.aiPick(e, { psalm: 40, antiphon: 35, hush: 25 }, { psalm: 2, antiphon: 1, hush: 1 });
     },
     on: {
@@ -702,16 +710,16 @@ defineEnemies([
 
   // --- The Crowned Rivals
   {
-    id: 'rival_knight', name: 'Aldous, the Iron King', kind: 'boss', act: 3, hp: 500, sprite: 'en_rival_knight',
+    id: 'rival_knight', name: 'Aldous, the Iron King', kind: 'boss', act: 3, hp: 450, sprite: 'en_rival_knight',
     desc: 'In another loop he obeyed one order too many, and put on the Crown so no one else could.',
     moves: {
-      blade: { name: 'Crownsworn Blade', intent: 'atk', dmg: 16 },
+      blade: { name: 'Crownsworn Blade', intent: 'atk', dmg: 14 },
       wall: {
         name: 'Oath of the Wall', intent: 'defbuff',
         fx(g, e) { block(g, e, 22); g.addStatus(e, 'barricade', 1); g.addStatus(e, 'a3_oath_wall', 1); },
       },
       vengeance: { name: 'Oath of Vengeance', intent: 'atkbuff', dmg: 10, fx(g, e) { setStatus(g, e, 'a3_oath_vengeance', 24); } },
-      sunder: { name: 'Sunder', intent: 'atkdebuff', dmg: 8, times: 2, fx(g, e) { debuff(g, e, 'frail', 2); } },
+      sunder: { name: 'Sunder', intent: 'atkdebuff', dmg: 7, times: 2, fx(g, e) { debuff(g, e, 'frail', 2); } },
       kneel: { name: 'Kneel to Your King', intent: 'strongdebuff', fx(g, e) { debuff(g, e, 'weak', 2); debuff(g, e, 'exposed', 1); } },
     },
     ai(g, e) {
@@ -720,13 +728,13 @@ defineEnemies([
     },
   },
   {
-    id: 'rival_witch', name: 'Isolde, the Blight Queen', kind: 'boss', act: 3, hp: 480, sprite: 'en_rival_witch',
+    id: 'rival_witch', name: 'Isolde, the Blight Queen', kind: 'boss', act: 3, hp: 440, sprite: 'en_rival_witch',
     desc: 'She cured the Blight, in another loop. Nothing in her kingdom has rotted since. Nothing in it has grown.',
     init(g, e) { g.addStatus(e, 'a3_crown_of_rot', 1, { silent: true }); e.data.withers = 0; },
     moves: {
-      bloom: { name: 'Blightbloom', intent: 'debuff', fx(g, e) { debuff(g, e, 'rot', 6); } },
-      lash: { name: 'Thorned Lash', intent: 'atkdebuff', dmg: 10, fx(g, e) { debuff(g, e, 'rot', 2); } },
-      reap: { name: 'Reap', intent: 'atk', dmg: (g) => Math.min(30, 8 + 2 * g.st(g.player, 'rot')) },
+      bloom: { name: 'Blightbloom', intent: 'debuff', fx(g, e) { debuff(g, e, 'rot', 5); } },
+      lash: { name: 'Thorned Lash', intent: 'atkdebuff', dmg: 8, fx(g, e) { debuff(g, e, 'rot', 2); } },
+      reap: { name: 'Reap', intent: 'atk', dmg: (g) => Math.min(24, 7 + 2 * g.st(g.player, 'rot')) },
       brew: { name: 'Black Brew', intent: 'defbuff', fx(g, e) { block(g, e, 10); buff(g, e, 'a3_black_draught', 1); } },
       drink: {
         name: 'Drink the Dregs', intent: 'buff',
@@ -750,12 +758,12 @@ defineEnemies([
     },
   },
   {
-    id: 'rival_wren', name: 'Wren, the Thousand-Faced', kind: 'boss', act: 3, hp: 460, sprite: 'en_rival_wren',
+    id: 'rival_wren', name: 'Wren, the Thousand-Faced', kind: 'boss', act: 3, hp: 490, sprite: 'en_rival_wren',
     desc: 'In another loop Wren chose the Crown, and the Crown gave them every face but their own.',
     init(g, e) { e.data.bigHit = 0; },
     moves: {
-      storm: { name: 'Knife Storm', intent: 'atk', dmg: 4, times: 4, fx(g, e) { e.data.bigHit = 0; } },
-      flay: { name: 'Flay', intent: 'atkdebuff', dmg: 12, fx(g, e) { g.addCard('wound', 'discard'); e.data.bigHit = 0; } },
+      storm: { name: 'Knife Storm', intent: 'atk', dmg: 5, times: 4, fx(g, e) { e.data.bigHit = 0; } },
+      flay: { name: 'Flay', intent: 'atkdebuff', dmg: 13, fx(g, e) { g.addCard('wound', 'discard'); e.data.bigHit = 0; } },
       wings: { name: 'Moth Wings', intent: 'def', fx(g, e) { block(g, e, 16); e.data.bigHit = 0; } },
       dust: { name: 'Moth Dust', intent: 'debuff', fx(g, e) { debuff(g, e, 'weak', 2); debuff(g, e, 'frail', 2); e.data.bigHit = 0; } },
       borrowed: {
@@ -777,7 +785,7 @@ defineEnemies([
     },
   },
   {
-    id: 'rival_cantor', name: 'Cael, the Requiem King', kind: 'boss', act: 3, hp: 460, sprite: 'en_rival_cantor', leader: true,
+    id: 'rival_cantor', name: 'Cael, the Requiem King', kind: 'boss', act: 3, hp: 500, sprite: 'en_rival_cantor', leader: true,
     desc: 'A dead man crowned. He keeps the kingdom\'s dead the way a miser keeps coin.',
     init(g, e) { e.data.k = 0; },
     moves: {
@@ -792,7 +800,7 @@ defineEnemies([
         },
       },
       requiem: {
-        name: 'Requiem', intent: 'atk', dmg: 7,
+        name: 'Requiem', intent: 'atk', dmg: 8,
         times: (g) => Math.max(1, KEPT.reduce((t, id) => t + living(g, id).length, 0)),
         fx(g, e) {
           for (const s of g.enemies.filter((x) => KEPT.includes(x.id))) {
@@ -803,7 +811,7 @@ defineEnemies([
           toast(g, 'The kept dead are spent, all at once.');
         },
       },
-      censer: { name: 'Censer', intent: 'atk', dmg: 14 },
+      censer: { name: 'Censer', intent: 'atk', dmg: 15 },
       bleed: { name: 'Bleed for the Dead', intent: 'buff', fx(g, e) { g.loseHp(e, 8, { type: 'hploss' }); buff(g, e, 'might', 3); } },
       rites: { name: 'Last Rites', intent: 'strongdebuff', fx(g, e) { debuff(g, e, 'weak', 2); debuff(g, e, 'frail', 2); } },
     },

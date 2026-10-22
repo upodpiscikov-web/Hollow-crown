@@ -6,7 +6,7 @@ import { randomSeed } from '../engine/rng.js';
 import { h, clear, tap, UI, ROMAN, safe, anim, pickRandom, fmtTime, cap } from './core.js';
 import { spr, sprFit, icon, bgStyle, relicIcon, potionIcon, hasSprite, sprInfo } from './gfx.js';
 import { cardEl } from './card.js';
-import { prose, inline } from './text.js';
+import { prose, inline, splitQuote } from './text.js';
 import { relicTip, potionTip } from './topbar.js';
 import { tip, infoTip, toast, modal, zoomCard, confirmBox } from './overlay.js';
 import { openSettings } from './settings.js';
@@ -64,7 +64,7 @@ const title = {
     this.g = g;
     music('title');
     const hasRun = !!g.run;
-    const quote = pickRandom(safe(() => TEXTS.title_quotes, null)) || 'One of you will wear me.';
+    const tq = splitQuote(pickRandom(safe(() => TEXTS.title_quotes, null)) || 'One of you will wear me.');
     const scr = frame('title', bgStyle('bg_title'), 'title-shade');
     const menu = h('div.title-menu');
     if (hasRun) {
@@ -82,7 +82,7 @@ const title = {
     menu.append(nb, h('div.menu-row', cb, sb));
     scr.appendChild(h('div.title-wrap',
       h('div.logo', h('div.logo-the', 'The'), h('div.logo-main', 'Hollow'), h('div.logo-main', 'Crown'), h('div.logo-rule', h('i'), h('b', '✦'), h('i'))),
-      h('div.title-quote', { html: `<i>“${inline(quote)}”</i>` }),
+      h('div.title-quote', h('div.tq-text', { html: `“${inline(tq.quote)}”` }), tq.attr ? h('div.tq-attr', `— ${tq.attr}`) : null),
       menu));
     scr.appendChild(h('div.title-foot', 'Tap anywhere to wake the hour'));
     root.appendChild(scr);
@@ -225,7 +225,7 @@ const heroes = {
     }));
     const id = this.sel, H = HEROES[id], M = g.meta.heroes[id] || {};
     const un = !!M.unlocked;
-    const quote = safe(() => TEXTS.hero_select[id], '');
+    const quote = splitQuote(safe(() => TEXTS.hero_select[id], '')).quote;
     const detail = h('div.hero-detail');
     const art = h('div.hd-art', h('div.hd-pedestal'), sprFit(H.sprite || 'hero_' + id, 130, 170, 'hd-sprite' + (un ? '' : ' silhouette')));
     if (un) {

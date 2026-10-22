@@ -113,9 +113,24 @@ export function glossaryFor(terms) {
   return [...terms].filter((t) => GLOSSARY[t]).map((t) => ({ term: t, text: GLOSSARY[t] }));
 }
 
+// Typographic quotes/apostrophes (applied to raw text before escaping).
+export function smart(s) {
+  return String(s ?? '')
+    .replace(/(^|[\s(\[\u2014\u2013*_-])"/g, '$1\u201C').replace(/"/g, '\u201D')
+    .replace(/(^|[\s(\[\u2014\u2013*_-])'/g, '$1\u2018').replace(/'/g, '\u2019');
+}
+
+// "Quote text"  Attribution  ->  { quote, attr }. Outer quotes are stripped so the UI draws them once.
+export function splitQuote(text) {
+  const t = String(text ?? '').trim();
+  const m = /^[\u201C"\u201E](.+)[\u201D"]\s*([\s\S]*)$/s.exec(t);
+  if (!m) return { quote: t.replace(/^[\u201C"]|[\u201D"]$/g, ''), attr: '' };
+  return { quote: m[1].trim(), attr: m[2].replace(/^[\u2014\u2013-]+\s*/, '').trim() };
+}
+
 // Event / lore prose: paragraphs on blank lines, *italics*, **bold**, "quotes" kept.
 export function prose(text) {
-  const s = String(text ?? '').trim();
+  const s = smart(String(text ?? '').trim());
   if (!s) return '';
   return s.split(/\n\s*\n/).map((p) => {
     let x = esc(p.trim()).replace(/\n/g, '<br>');
@@ -126,7 +141,7 @@ export function prose(text) {
 
 // Inline-format a single line (choice labels, relic descriptions).
 export function inline(text, terms) {
-  let x = esc(String(text ?? '')).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<i>$1</i>');
+  let x = esc(smart(String(text ?? ''))).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<i>$1</i>');
   if (terms) x = boldTerms(x);
   return x;
 }

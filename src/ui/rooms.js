@@ -5,7 +5,7 @@ import { RENOWN_LEVELS } from '../engine/run.js';
 import { h, clear, tap, longPress, UI, ROMAN, safe, anim, pickRandom, fmtTime, sleep, cap } from './core.js';
 import { spr, sprFit, icon, bgStyle, relicIcon, potionIcon, hasSprite } from './gfx.js';
 import { cardEl } from './card.js';
-import { prose, inline, splitChoice } from './text.js';
+import { prose, inline, splitChoice, splitQuote } from './text.js';
 import { topbar, relicTip, potionTip } from './topbar.js';
 import { tip, infoTip, toast, modal, zoomCard, chooseCards, menuAt, confirmBox } from './overlay.js';
 import { particlesOn, screenFlash, floatText } from './fx.js';
@@ -195,7 +195,7 @@ const rest = simple('rest', (g) => {
     h('div.rest-scene', hero, fire),
     h('div.rest-main',
       h('div.room-title', 'Rest Site'),
-      h('p.rest-line', { html: `<i>“${inline(line)}”</i>` }),
+      h('p.rest-line', { html: `<i>${inline(splitQuote(line).quote)}</i>` }),
       btns,
       h('div.panel-foot', cont))));
   return scr;
@@ -486,7 +486,7 @@ const death = simple('death', (g) => {
   tap(rise, () => backToWaystone(g));
   scr.appendChild(h('div.death-wrap',
     h('div.death-left',
-      h('div.crown-line', { html: `“${inline(line)}”` }),
+      h('div.crown-line', { html: `“${inline(splitQuote(line).quote)}”` }),
       h('div.crown-by', '— the Hollow Crown'),
       h('div.death-title', `${H ? H.name : 'The heir'} has fallen`),
       h('div.death-sub', `Act ${ROMAN[run.act] || run.act}, floor ${run.floor}${kn ? ` · slain by ${kn}` : ''}${run.asc ? ` · Crown Weight ${run.asc}` : ''}`),

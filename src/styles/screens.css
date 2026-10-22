@@ -30,7 +30,9 @@
 .logo-rule { display: flex; align-items: center; gap: 8px; margin-top: 8px; width: 100%; color: var(--gold); } .logo-rule i { flex: 1; height: 2px; background: linear-gradient(90deg, transparent, var(--gold)); } .logo-rule i:last-child { background: linear-gradient(270deg, transparent, var(--gold)); }
 .title-menu { display: flex; flex-direction: column; gap: 10px; width: 250px; }
 .title-menu .btn.big { width: 100%; } .menu-row { display: flex; gap: 10px; } .menu-row .btn { flex: 1; padding: 0 8px; }
-.title-quote { position: absolute; left: 0; right: 0; bottom: 18px; text-align: center; font-size: 16px; opacity: .8; padding: 0 70px; text-shadow: 0 2px 4px #000; }
+.title-quote { position: absolute; left: 0; right: 0; bottom: 16px; text-align: center; padding: 0 70px; text-shadow: 0 2px 4px #000; }
+.tq-text { font-size: 17px; font-style: italic; opacity: .9; line-height: 1.25; }
+.tq-attr { font-family: var(--f-title); font-size: 12px; letter-spacing: .12em; opacity: .5; margin-top: 3px; text-transform: uppercase; }
 .title-foot { display: none; }
 
 /* ---------------------------------------------------------------- hub */
