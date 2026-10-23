@@ -4,7 +4,10 @@ import { h, UI, anim, timeMul } from './core.js';
 import { S, stageRect } from './scale.js';
 
 // ------------------------------------------------------------------ particles
-const P = { cv: null, ctx: null, list: [], raf: 0, w: 0, h: 0 };
+// Pooled: dead particles go back to a free list (no per-frame allocation); swap-remove keeps
+// the live list dense. The loop only runs while something is alive.
+const P = { cv: null, ctx: null, list: [], free: [], raf: 0, w: 0, h: 0 };
+const MAX_LIVE = 700;
 
 export function initParticles() {
   P.cv = document.getElementById('particles');
@@ -21,12 +24,12 @@ function step() {
   const { ctx, list } = P;
   ctx.clearRect(0, 0, P.w, P.h);
   const now = performance.now();
-  let alive = 0;
-  for (let i = list.length - 1; i >= 0; i--) {
+  let n = list.length;
+  for (let i = n - 1; i >= 0; i--) {
     const p = list[i];
+    if (now < p.t0) continue; // delayed spawn
     const t = (now - p.t0) / p.life;
-    if (t >= 1) { list.splice(i, 1); continue; }
-    alive++;
+    if (t >= 1) { list[i] = list[n - 1]; list.pop(); n--; P.free.push(p); continue; }
     const dt = Math.min(0.05, (now - p.tl) / 1000);
     p.tl = now;
     p.vx *= p.drag; p.vy = p.vy * p.drag + p.g * dt;
@@ -35,11 +38,32 @@ function step() {
     ctx.globalAlpha = p.fade ? Math.max(0, 1 - t) : (t > 0.7 ? (1 - t) / 0.3 : 1);
     ctx.fillStyle = p.c;
     const s = p.s * (p.shrink ? 1 - t * 0.7 : 1);
-    ctx.fillRect(Math.round(p.x - s / 2), Math.round(p.y - s / 2), Math.max(1, Math.round(s)), Math.max(1, Math.round(s)));
+    const si = Math.max(1, Math.round(s));
+    ctx.fillRect(Math.round(p.x - s / 2), Math.round(p.y - s / 2), si, si);
+    if (p.streak) { // a short trail of pixels behind a fast particle (sparks, slashes)
+      const k = 0.018;
+      for (let j = 1; j <= p.streak; j++) ctx.fillRect(Math.round(p.x - p.vx * k * j - s / 2), Math.round(p.y - p.vy * k * j - s / 2), si, si);
+    }
   }
   ctx.globalAlpha = 1;
-  if (alive) P.raf = requestAnimationFrame(step);
+  if (list.length) P.raf = requestAnimationFrame(step);
   else { P.raf = 0; ctx.clearRect(0, 0, P.w, P.h); }
+}
+
+function alloc() { return P.free.pop() || {}; }
+function kick() { if (!P.raf && P.list.length) P.raf = requestAnimationFrame(step); }
+
+// Low-level spawn of one particle (viewport CSS px, velocities in CSS px/s). Used for pixel shards.
+export function spawnParticle(o) {
+  if (!P.ctx || P.list.length >= MAX_LIVE) return;
+  const now = performance.now();
+  const p = alloc();
+  p.x = o.x / 2; p.y = o.y / 2; p.vx = (o.vx || 0) / 2; p.vy = (o.vy || 0) / 2;
+  p.g = (o.g ?? 300) / 2; p.drag = o.drag ?? 0.985; p.c = o.c || '#fff'; p.s = o.s || 2;
+  p.life = o.life || 600; p.t0 = now + (o.delay || 0); p.tl = p.t0; p.wob = o.wob || 0; p.ph = Math.random() * 6;
+  p.shrink = o.shrink ?? true; p.fade = !!o.fade; p.streak = o.streak || 0;
+  P.list.push(p);
+  kick();
 }
 
 // Spawn particles at a viewport point (CSS px). kind presets keep call sites short.
@@ -57,6 +81,14 @@ const PRESETS = {
   spark: { n: 12, c: ['#f0d27a', '#e8dcc0'], sp: 150, life: 500, g: 120, s: 2 },
   burn: { n: 20, c: ['#e8a33a', '#c4501e', '#5d5a5e', '#f0d27a'], sp: 50, life: 900, g: -110, s: 2, wob: 30 },
   dust: { n: 30, c: ['#d8cfb8', '#9e9a9c', '#e8dcc0', '#5d5a5e'], sp: 90, life: 1200, g: -20, s: 2, wob: 30, drag: 0.96 },
+  // combat VFX
+  steel: { n: 10, c: ['#fff6d8', '#f0d27a', '#e8dcc0'], sp: 260, life: 320, g: 500, s: 1.5, streak: 2, drag: 0.94 },
+  shard: { n: 14, c: ['#b9d3e0', '#7ab4de', '#e8f4ff', '#4a7ea6'], sp: 220, life: 650, g: 520, s: 2, drag: 0.97 },
+  rot: { n: 14, c: ['#8fae3a', '#6a8a2a', '#b8d45a', '#3e5220'], sp: 45, life: 1000, g: -45, s: 3, wob: 30, drag: 0.95 },
+  plague: { n: 40, c: ['#8fae3a', '#6a8a2a', '#b8d45a', '#3e5220', '#d8e88a'], sp: 120, life: 1100, g: -25, s: 3, wob: 40, drag: 0.94 },
+  motes: { n: 14, c: ['#d8f0a0', '#b8d45a', '#fffbe0'], sp: 18, life: 1000, g: -110, s: 2, wob: 12, drag: 0.99 },
+  wisp: { n: 12, c: ['#e8fff8', '#7fd1c4', '#a9c6c2'], sp: 120, life: 600, g: -30, s: 2, drag: 0.95 },
+  impact: { n: 16, c: ['#fff', '#f0d27a', '#e8dcc0', '#c4501e'], sp: 220, life: 380, g: 300, s: 2, streak: 1, drag: 0.93 },
 };
 
 export function particles(x, y, kind = 'hit', opts = {}) {
@@ -64,21 +96,26 @@ export function particles(x, y, kind = 'hit', opts = {}) {
   const pr = { ...(PRESETS[kind] || PRESETS.hit), ...opts };
   let n = pr.n;
   if (UI.reduced) n = Math.ceil(n / 3);
-  if (P.list.length > 400) return;
+  if (P.list.length > MAX_LIVE - 40) return;
   const now = performance.now();
   const sx = x / 2, sy = y / 2; // canvas is half resolution
+  const dir = pr.dir; // optional bias direction in radians, with spread pr.arc
   for (let i = 0; i < n; i++) {
-    const a = Math.random() * Math.PI * 2;
+    const a = dir != null ? dir + (Math.random() - 0.5) * (pr.arc ?? 1.6) : Math.random() * Math.PI * 2;
     const v = pr.sp * (0.3 + Math.random() * 0.7) / 2;
-    P.list.push({
-      x: sx + (pr.w ? (Math.random() - 0.5) * pr.w / 2 : 0), y: sy + (pr.hgt ? (Math.random() - 0.5) * pr.hgt / 2 : 0),
-      vx: Math.cos(a) * v, vy: Math.sin(a) * v - (pr.up || 0) / 2,
-      g: pr.g / 2, drag: pr.drag || 0.985, c: pr.c[i % pr.c.length], s: pr.s * (Math.random() < 0.3 ? 1.5 : 1),
-      life: pr.life * (0.6 + Math.random() * 0.6), t0: now, tl: now, wob: pr.wob || 0, ph: Math.random() * 6, shrink: true,
-    });
+    const p = alloc();
+    p.x = sx + (pr.w ? (Math.random() - 0.5) * pr.w / 2 : 0); p.y = sy + (pr.hgt ? (Math.random() - 0.5) * pr.hgt / 2 : 0);
+    p.vx = Math.cos(a) * v; p.vy = Math.sin(a) * v - (pr.up || 0) / 2;
+    p.g = pr.g / 2; p.drag = pr.drag || 0.985; p.c = pr.c[i % pr.c.length]; p.s = pr.s * (Math.random() < 0.3 ? 1.5 : 1);
+    p.life = pr.life * (0.6 + Math.random() * 0.6); p.t0 = now + (pr.delay || 0); p.tl = p.t0; p.wob = pr.wob || 0; p.ph = Math.random() * 6;
+    p.shrink = true; p.fade = !!pr.fade; p.streak = pr.streak || 0;
+    P.list.push(p);
   }
-  if (!P.raf) P.raf = requestAnimationFrame(step);
+  kick();
 }
+
+// Particles at a stage (design px) point.
+export function particlesStage(x, y, kind, opts) { particles(S.left + x * S.u, S.top + y * S.u, kind, opts); }
 
 // Particles over an element's area.
 export function particlesOn(el, kind, opts = {}) {

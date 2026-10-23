@@ -1,79 +1,209 @@
 // Characters: hero battle sprites (40x56, facing right) and dialogue portraits (40x40).
 import { defineSprites, PAL, shadeColor, mix } from '../sprite.js';
+import { xf, lean, deg, smear, twinkle, bloom } from '../pose-kit.js';
 
 const sh = (c, f) => shadeColor(c, f);
 // Character accent hues (desaturated to sit inside PAL).
 const ROYAL = '#2f4577', ROYAL_D = '#1f2b4a', ROYAL_L = '#4a6296';
 
+// ------------------------------------------------------------------ hero rigs
+// Each hero is drawn by one parametric function. pose = undefined draws the base
+// battle sprite (pixel-identical to the original art); 'atk' | 'cast' | 'guard' |
+// 'hurt' draw the pose frames registered at the bottom of this file. Poses keep
+// the 40x56 canvas and the foot baseline (y 55): the feet stay planted and the
+// body above them leans/crouches by row band (see xf/bands in ../pose-kit.js).
+
+// Generic greatsword: fist at (gx, gy), blade pointing along angle a (degrees).
+function greatsword(p, gx, gy, a, len, hl = PAL.fog) {
+  const d = [Math.cos(deg(a)), Math.sin(deg(a))], n = [-d[1], d[0]];
+  const P = (k, m) => [gx + d[0] * k + n[0] * m, gy + d[1] * k + n[1] * m];
+  p.poly([P(2, 1.7), P(len, 1.3), P(len + 2, 0), P(len, -1.4), P(2, -1.7)], PAL.steel, { shade: 0.3 });
+  p.line(...P(2.5, -0.7), ...P(len, -0.5), PAL.stone, 1);
+  p.line(...P(2.5, 0.6), ...P(len + 1, 0.3), hl, 1);
+  p.line(...P(1.5, 4.5), ...P(1.5, -4.5), PAL.gold, 2); // crossguard
+  p.px(...P(1.5, 4.5).map(Math.round), PAL.candle);
+  p.line(...P(-1, 0), ...P(-3, 0), PAL.leather, 2); // grip
+  p.circle(...P(-3.8, 0), 1.2, PAL.gold); // pommel
+}
+function knightShield(p, ox, oy, tilt = 0) {
+  const c = Math.cos(deg(tilt)), si = Math.sin(deg(tilt));
+  const T = (x, y) => [32.5 + (x - 32.5) * c - (y - 30) * si + ox, 30 + (x - 32.5) * si + (y - 30) * c + oy];
+  const S = (pts) => pts.map(([x, y]) => T(x, y));
+  const rim = S([[27, 18], [38, 18], [38, 30], [36, 37], [32, 42], [28, 37], [27, 30]]);
+  p.poly(rim, PAL.wood, { shade: 0.35 });
+  p.poly(S([[27, 25], [38, 25], [38, 27], [27, 27]]), PAL.iron);
+  p.path(rim.concat([rim[0]]), PAL.iron, 1);
+  for (const q of S([[29, 19], [36, 19], [29, 26], [36, 26]])) p.px(Math.round(q[0]), Math.round(q[1]), PAL.steel);
+  p.line(...T(31, 29), ...T(34, 35), PAL.bark); p.line(...T(33, 20), ...T(31, 24), PAL.bark);
+  const d = T(36, 22); p.px(Math.round(d[0]), Math.round(d[1]), PAL.bark);
+  const e = T(37.5, 18.5); p.eraseEllipse(e[0] + 0.5, e[1] + 0.5, 1.2, 1.2); // chipped corner
+}
+// Plate arm: shoulder -> elbow -> fist, same shading as the base near arm.
+function plateArm(p, s, e, f) {
+  p.path([s, e, f], PAL.iron, 4);
+  p.line(s[0] - 1, s[1], e[0] - 1, e[1], PAL.stone, 1);
+  p.ellipse(e[0], e[1], 2, 1.6, PAL.steel, { shade: 0.4 }); // couter
+}
+// Pose layers for the knight (drawn un-outlined, see def.under / def.fx in ../sprite.js).
+function knightUnder(p, pose) {
+  if (pose === 'atk') smear(p, 24, 25, 15, 18, 7, 100, -42); // the blade's arc, low behind to high in front
+}
+function knightFx(p, pose) {
+  if (pose === 'cast') {
+    bloom(p, 8, 1, PAL.candle, 7, 180);
+    bloom(p, 21, 23, PAL.gold, 4, 110); // the crown sigil answers
+    bloom(p, 7, 36, PAL.candle, 3, 90);
+    twinkle(p, 13, 2, PAL.candle, 1); twinkle(p, 3, 6, PAL.gold, 1); twinkle(p, 12, 9, PAL.candle, 1);
+    p.px(6, 11, PAL.candle).px(2, 1, PAL.candle).px(15, 5, PAL.gold);
+  }
+}
+const KNIGHT_RIG = {
+  // lean: [row, dx, dy] control points for the body above the hips; legs: far/near
+  // [hip, knee, ankle] (ankles stay on the ground); cape: hem sway; shield: [dx, dy, tilt]
+  atk: { lean: [[14.6, 3, 1], [38, 0, 1]], far: [[25, 39], [31, 45], [33, 52]], near: [[18, 39], [14, 46], [11, 52]], cape: -4, shield: [-19, 2, 0] },
+  cast: { lean: [[14.6, -1, 0], [38, 0, 0]], far: [[25, 38], [28, 46], [29, 52]], near: [[18, 38], [16, 46], [15, 52]], cape: -1, shield: [0, 1, 0] },
+  guard: { lean: [[14.6, 1, 2], [38, 0, 1]], far: [[25, 39], [31, 46], [32, 52]], near: [[18, 39], [13, 46], [12, 52]], cape: -1, shield: [1, -6, 0] },
+  hurt: { lean: [[14.6, -5, 2], [24, -3, 2], [38, 1, 1]], far: [[26, 39], [31, 46], [33, 52]], near: [[19, 39], [14, 45], [14, 52]], cape: 4, shield: [0, 1, 16] },
+};
+function drawKnight(p, pose) {
+  const steel = PAL.steel, iron = PAL.iron;
+  const R = KNIGHT_RIG[pose];
+  const U = R ? xf(p, lean(R.lean)) : p;
+  const G = (y) => (R ? U.at(y) : p); // rigid detail group riding the lean at row y
+  // tattered cape behind the near shoulder
+  const capeSway = R ? R.cape : 0;
+  const cape = [[12, 14], [20, 15], [19, 38], [16, 47], [13, 44], [11, 50], [8, 46], [5, 51], [3, 46], [4, 36], [7, 22]].map(([x, y]) => [y > 30 ? x + Math.round(capeSway * (y - 30) / 20) : x, y]);
+  U.poly(cape, mix(ROYAL_D, PAL.ink, 0.2), { shade: 0.35 });
+  U.line(8, 26, 6 + Math.round(capeSway * 0.7), 44, mix(ROYAL_D, PAL.void, 0.5)); U.line(12, 30, 11 + Math.round(capeSway * 0.8), 46, mix(ROYAL_D, PAL.void, 0.5));
+  // greatsword trailing behind (near hand), blade down-back
+  if (!pose) {
+    p.poly([[10, 34], [13, 35], [5, 54], [2, 54]], steel, { shade: 0.3 });
+    p.line(11, 35, 4, 52, PAL.stone, 1);
+    p.line(12, 35, 5, 52, PAL.fog, 1);
+  }
+  if (pose === 'cast') { // planted in the earth beside him while he raises his hand
+    p.poly([[6, 37], [9, 37], [8.5, 54], [6.5, 54]], steel, { shade: 0.3 });
+    p.line(7, 38, 7, 53, PAL.fog, 1);
+    p.line(3, 36, 12, 36, PAL.gold, 2); p.px(3, 36, PAL.candle);
+    p.line(7.5, 35, 7.5, 31, PAL.leather, 2); p.circle(7.5, 30.5, 1.3, PAL.gold);
+  }
+  if (pose === 'atk') knightShield(p, ...R.shield); // shield arm swung back behind the body
+  // legs: far (steps forward, right side) then near (planted back, left side)
+  const L = R || { far: [[25, 38], [28, 46], [29, 52]], near: [[18, 38], [16, 46], [15, 52]] };
+  {
+    const [h, k, a] = L.far;
+    p.path([h, k, a], iron, 5);
+    p.poly([[a[0] - 3, a[1] - 1], [a[0] + 3, a[1] - 1], [a[0] + 6, a[1] + 3], [a[0] - 3, a[1] + 3]], iron, { shade: 0.3 });
+    p.ellipse(k[0], k[1], 2.5, 2, iron, { shade: 0.4 });
+  }
+  {
+    const [h, k, a] = L.near;
+    p.path([h, k, a], steel, 5);
+    p.poly([[a[0] - 3, a[1] - 1], [a[0] + 3, a[1] - 1], [a[0] + 5, a[1] + 3], [a[0] - 4, a[1] + 3]], steel, { shade: 0.3 });
+    p.ellipse(k[0], k[1], 3, 2.2, steel, { shade: 0.4 });
+  }
+  // breastplate + faulds
+  U.poly([[14, 15], [29, 15], [31, 27], [30, 38], [14, 38], [12, 27]], steel, { shade: 0.35 });
+  // tabard, tattered hem
+  U.poly([[16, 17], [28, 17], [29, 31], [30, 42], [28, 40], [26, 45], [24, 41], [22, 46], [20, 42], [18, 45], [16, 41], [14, 43], [15, 31]], ROYAL, { shade: 0.3 });
+  U.line(15, 30, 16, 41, ROYAL_D); U.line(24, 34, 25, 41, ROYAL_D);
+  // belt
+  G(32).rect(15, 31, 15, 2, PAL.leather, { shade: 0.3 });
+  G(32).rect(21, 31, 2, 2, PAL.gold);
+  // sigil: a crown, cracked through
+  const S = G(23);
+  S.rect(19, 23, 7, 3, PAL.gold, { shade: 0.25 });
+  S.px(19, 22, PAL.gold).px(19, 21, PAL.candle).px(22, 22, PAL.gold).px(22, 21, PAL.gold).px(22, 20, PAL.candle).px(25, 22, PAL.gold).px(25, 21, PAL.candle);
+  S.rect(19, 26, 7, 1, sh(PAL.gold, -0.35));
+  S.path([[23, 20], [22, 23], [23, 24], [22, 27]], ROYAL_D, 1);
+  if (pose === 'cast') S.px(22, 21, '#fff3c8').px(19, 21, '#fff3c8').px(25, 21, '#fff3c8');
+  // gorget
+  U.rect(18, 13, 8, 3, iron, { shade: 0.3 });
+  // far pauldron
+  U.ellipse(29, 17, 3.5, 3, iron, { shade: 0.4 });
+  // head
+  U.ellipse(22.5, 8, 4.5, 5.5, PAL.skin, { shade: 0.3 });
+  U.poly([[17, 9], [17, 4], [20, 1], [25, 1], [28, 3], [27, 5], [24, 4], [21, 5], [20, 8], [19, 12]], PAL.dusk, { shade: 0.3 });
+  U.px(22, 2, PAL.fog).px(24, 2, PAL.stone).px(19, 4, PAL.stone);
+  U.poly([[20, 10], [23, 11], [26, 10], [27, 11], [26, 13], [21, 14], [19, 12]], mix(PAL.skin, PAL.dusk, 0.55));
+  U.px(27, 7, PAL.skin).px(27, 8, PAL.skin); // nose
+  if (pose === 'hurt') {
+    U.line(23, 6, 25, 7, PAL.dusk); // brow knotted
+    U.line(23, 8, 25, 7, PAL.void); // eye screwed shut
+    U.rect(24, 11, 3, 2, PAL.void).line(25, 11, 26, 11, PAL.bone); // gritted grimace
+  } else if (pose === 'atk' || pose === 'guard') {
+    U.line(23, 6, 26, 7, PAL.dusk); // brow down, fierce
+    U.px(24, 7, PAL.void).px(25, 8, PAL.bone);
+    if (pose === 'atk') U.rect(25, 11, 2, 2, PAL.void).px(26, 11, PAL.bone); // battle shout
+  } else {
+    U.rect(23, 6, 3, 1, PAL.dusk); // brow
+    if (pose === 'cast') U.px(24, 6, PAL.void).px(25, 6, PAL.bone); // eyes up to the raised hand
+    else U.px(24, 7, PAL.void).px(25, 7, PAL.bone); // eye
+  }
+  U.line(22, 5, 23, 10, sh(PAL.skin, -0.3)); // scar
+  if (!pose) {
+    // shield on far arm
+    p.poly([[27, 18], [38, 18], [38, 30], [36, 37], [32, 42], [28, 37], [27, 30]], PAL.wood, { shade: 0.35 });
+    p.rect(27, 25, 11, 2, iron);
+    p.path([[27, 18], [38, 18], [38, 30], [36, 37], [32, 42], [28, 37], [27, 30], [27, 18]], iron, 1);
+    p.px(29, 19, PAL.steel).px(36, 19, PAL.steel).px(29, 26, PAL.steel).px(36, 26, PAL.steel);
+    p.line(31, 29, 34, 35, PAL.bark); p.line(33, 20, 31, 24, PAL.bark);
+    // battle damage on the plate
+    p.px(13, 27, PAL.iron).px(14, 33, PAL.iron).px(29, 35, PAL.ash).px(17, 49, PAL.iron).px(36, 22, PAL.bark);
+    p.erase(37, 18, 2, 2).erase(38, 20, 1, 1); // chipped shield corner
+    // near arm hanging, gripping the sword
+    p.path([[14, 20], [12, 26], [11, 31]], iron, 4);
+    p.line(13, 21, 11, 26, PAL.stone, 1);
+    p.path([[16, 21], [14, 27], [13, 31]], sh(iron, -0.45), 1);
+    p.ellipse(12, 26, 2, 1.6, steel, { shade: 0.4 }); // couter
+    p.ellipse(14.5, 17.5, 4.5, 3.5, steel, { shade: 0.45 }); // pauldron
+    p.ellipse(14, 20.5, 4, 1.6, steel, { shade: 0.4 });
+    p.line(10, 21, 18, 21, PAL.iron, 1);
+    p.line(6, 32, 15, 36, PAL.gold, 2); // crossguard
+    p.px(6, 32, PAL.candle);
+    p.ellipse(11.5, 31.5, 2.2, 2, iron, { shade: 0.35 }); // gauntlet
+    p.px(12, 30, PAL.steel);
+    return;
+  }
+  // ---- pose frames: shield, near arm and greatsword
+  if (pose !== 'atk') knightShield(p, ...R.shield);
+  U.px(13, 27, PAL.iron).px(14, 33, PAL.iron); // battle damage
+  const o = U.off(17.5), sx = 14.5 + o[0], sy = 17.5 + o[1]; // near shoulder
+  const pauldron = () => {
+    p.ellipse(sx, sy, 4.5, 3.5, steel, { shade: 0.45 });
+    p.ellipse(sx - 0.5, sy + 3, 4, 1.6, steel, { shade: 0.4 });
+    p.line(sx - 4.5, sy + 3.5, sx + 3.5, sy + 3.5, PAL.iron, 1);
+  };
+  const gauntlet = (x, y) => { p.ellipse(x, y, 2.2, 2, iron, { shade: 0.35 }); p.px(Math.round(x + 0.5), Math.round(y - 1.5), PAL.steel); };
+  if (pose === 'atk') {
+    // rising slash at full extension: arm thrown forward, blade high in front
+    pauldron();
+    plateArm(p, [sx + 1, sy + 3], [sx + 6.5, sy + 5.5], [sx + 12, sy + 6]);
+    greatsword(p, sx + 12, sy + 6, -54, 15, '#f4f7fa');
+    gauntlet(sx + 12, sy + 6);
+  } else if (pose === 'cast') {
+    // gauntlet thrust skyward, the crown's light gathering in the palm
+    plateArm(p, [sx - 1, sy + 1], [sx - 5, sy - 6], [sx - 5, sy - 12]);
+    pauldron();
+    p.ellipse(sx - 5, sy - 13, 2.2, 2.4, iron, { shade: 0.35 });
+    p.px(sx - 7, sy - 16, steel).px(sx - 7, sy - 15, steel).px(sx - 5, sy - 17, steel).px(sx - 5, sy - 16, steel).px(sx - 3, sy - 16, steel).px(sx - 3, sy - 15, steel); // spread fingers
+  } else if (pose === 'guard') {
+    // braced behind the raised shield, greatsword held low and ready
+    pauldron();
+    plateArm(p, [sx - 0.5, sy + 3], [sx - 2.5, sy + 8.5], [sx - 3, sy + 13]);
+    greatsword(p, sx - 3, sy + 13, 150, 16);
+    gauntlet(sx - 3, sy + 13);
+  } else if (pose === 'hurt') {
+    // knocked back: sword arm flung behind, blade dragging
+    pauldron();
+    plateArm(p, [sx - 1, sy + 3], [sx - 4, sy + 7], [sx - 7, sy + 10]);
+    greatsword(p, sx - 7, sy + 10, 96, 16);
+    gauntlet(sx - 7, sy + 10);
+  }
+}
+
 defineSprites({
-  hero_knight: {
-    w: 40, h: 56,
-    draw(p) {
-      const steel = PAL.steel, iron = PAL.iron;
-      // tattered cape behind the near shoulder
-      p.poly([[12, 14], [20, 15], [19, 38], [16, 47], [13, 44], [11, 50], [8, 46], [5, 51], [3, 46], [4, 36], [7, 22]], mix(ROYAL_D, PAL.ink, 0.2), { shade: 0.35 });
-      p.line(8, 26, 6, 44, mix(ROYAL_D, PAL.void, 0.5)); p.line(12, 30, 11, 46, mix(ROYAL_D, PAL.void, 0.5));
-      // greatsword trailing behind (near hand), blade down-back
-      p.poly([[10, 34], [13, 35], [5, 54], [2, 54]], steel, { shade: 0.3 });
-      p.line(11, 35, 4, 52, PAL.stone, 1);
-      p.line(12, 35, 5, 52, PAL.fog, 1);
-      // far leg (steps forward, right side)
-      p.path([[25, 38], [28, 46], [29, 52]], iron, 5);
-      p.poly([[26, 51], [32, 51], [35, 55], [26, 55]], iron, { shade: 0.3 });
-      p.ellipse(28, 46, 2.5, 2, iron, { shade: 0.4 });
-      // near leg (planted back, left side)
-      p.path([[18, 38], [16, 46], [15, 52]], steel, 5);
-      p.poly([[12, 51], [18, 51], [20, 55], [11, 55]], steel, { shade: 0.3 });
-      p.ellipse(16, 46, 3, 2.2, steel, { shade: 0.4 });
-      // breastplate + faulds
-      p.poly([[14, 15], [29, 15], [31, 27], [30, 38], [14, 38], [12, 27]], steel, { shade: 0.35 });
-      // tabard, tattered hem
-      p.poly([[16, 17], [28, 17], [29, 31], [30, 42], [28, 40], [26, 45], [24, 41], [22, 46], [20, 42], [18, 45], [16, 41], [14, 43], [15, 31]], ROYAL, { shade: 0.3 });
-      p.line(15, 30, 16, 41, ROYAL_D); p.line(24, 34, 25, 41, ROYAL_D);
-      // belt
-      p.rect(15, 31, 15, 2, PAL.leather, { shade: 0.3 });
-      p.rect(21, 31, 2, 2, PAL.gold);
-      // sigil: a crown, cracked through
-      p.rect(19, 23, 7, 3, PAL.gold, { shade: 0.25 });
-      p.px(19, 22, PAL.gold).px(19, 21, PAL.candle).px(22, 22, PAL.gold).px(22, 21, PAL.gold).px(22, 20, PAL.candle).px(25, 22, PAL.gold).px(25, 21, PAL.candle);
-      p.rect(19, 26, 7, 1, sh(PAL.gold, -0.35));
-      p.path([[23, 20], [22, 23], [23, 24], [22, 27]], ROYAL_D, 1);
-      // gorget
-      p.rect(18, 13, 8, 3, iron, { shade: 0.3 });
-      // far pauldron
-      p.ellipse(29, 17, 3.5, 3, iron, { shade: 0.4 });
-      // head
-      p.ellipse(22.5, 8, 4.5, 5.5, PAL.skin, { shade: 0.3 });
-      p.poly([[17, 9], [17, 4], [20, 1], [25, 1], [28, 3], [27, 5], [24, 4], [21, 5], [20, 8], [19, 12]], PAL.dusk, { shade: 0.3 });
-      p.px(22, 2, PAL.fog).px(24, 2, PAL.stone).px(19, 4, PAL.stone);
-      p.poly([[20, 10], [23, 11], [26, 10], [27, 11], [26, 13], [21, 14], [19, 12]], mix(PAL.skin, PAL.dusk, 0.55));
-      p.px(27, 7, PAL.skin).px(27, 8, PAL.skin); // nose
-      p.rect(23, 6, 3, 1, PAL.dusk); // brow
-      p.px(24, 7, PAL.void).px(25, 7, PAL.bone); // eye
-      p.line(22, 5, 23, 10, sh(PAL.skin, -0.3)); // scar
-      // shield on far arm
-      p.poly([[27, 18], [38, 18], [38, 30], [36, 37], [32, 42], [28, 37], [27, 30]], PAL.wood, { shade: 0.35 });
-      p.rect(27, 25, 11, 2, iron);
-      p.path([[27, 18], [38, 18], [38, 30], [36, 37], [32, 42], [28, 37], [27, 30], [27, 18]], iron, 1);
-      p.px(29, 19, PAL.steel).px(36, 19, PAL.steel).px(29, 26, PAL.steel).px(36, 26, PAL.steel);
-      p.line(31, 29, 34, 35, PAL.bark); p.line(33, 20, 31, 24, PAL.bark);
-      // battle damage on the plate
-      p.px(13, 27, PAL.iron).px(14, 33, PAL.iron).px(29, 35, PAL.ash).px(17, 49, PAL.iron).px(36, 22, PAL.bark);
-      p.erase(37, 18, 2, 2).erase(38, 20, 1, 1); // chipped shield corner
-      // near arm hanging, gripping the sword
-      p.path([[14, 20], [12, 26], [11, 31]], iron, 4);
-      p.line(13, 21, 11, 26, PAL.stone, 1);
-      p.path([[16, 21], [14, 27], [13, 31]], sh(iron, -0.45), 1);
-      p.ellipse(12, 26, 2, 1.6, steel, { shade: 0.4 }); // couter
-      p.ellipse(14.5, 17.5, 4.5, 3.5, steel, { shade: 0.45 }); // pauldron
-      p.ellipse(14, 20.5, 4, 1.6, steel, { shade: 0.4 });
-      p.line(10, 21, 18, 21, PAL.iron, 1);
-      p.line(6, 32, 15, 36, PAL.gold, 2); // crossguard
-      p.px(6, 32, PAL.candle);
-      p.ellipse(11.5, 31.5, 2.2, 2, iron, { shade: 0.35 }); // gauntlet
-      p.px(12, 30, PAL.steel);
-    },
-  },
+  hero_knight: { w: 40, h: 56, draw: (p) => drawKnight(p) },
   hero_witch: {
     w: 40, h: 56,
     draw(p) {
@@ -652,3 +782,13 @@ defineSprites({
     },
   },
 });
+
+// ------------------------------------------------------------------ hero pose frames
+// hero_<id>_atk / _cast / _guard / _hurt: same 40x56 canvas and foot baseline as
+// hero_<id>, swapped in by the combat animator during motions.
+const HERO_RIGS = { knight: drawKnight };
+const HERO_FX = { knight: knightFx };
+const HERO_UNDER = { knight: knightUnder };
+const POSE_DEFS = {};
+for (const id in HERO_RIGS) for (const pose of ['atk', 'cast', 'guard', 'hurt']) POSE_DEFS[`hero_${id}_${pose}`] = { w: 40, h: 56, draw: (p) => HERO_RIGS[id](p, pose), under: (p) => HERO_UNDER[id](p, pose), fx: (p) => HERO_FX[id](p, pose) };
+defineSprites(POSE_DEFS);

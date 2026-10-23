@@ -6,6 +6,9 @@
 //   defineSprites({
 //     wolf: { w: 48, h: 40, draw(p) { p.ellipse(24, 26, 14, 8, PAL.ash, { shade: 0.3 }); ... } },
 //   });
+//
+// A def may also have fx(p) / under(p): drawn after post-processing (no outline,
+// alpha kept) on top of / behind the sprite, for light and motion effects.
 
 export const SPRITES = {};
 export function defineSprites(obj) {
@@ -234,13 +237,7 @@ function postProcess(p, def) {
   }
 }
 
-// Render a sprite to raw pixels {w, h, data} (works in Node).
-export function renderSprite(id, opts = {}) {
-  const def = SPRITES[id];
-  if (!def) throw new Error('unknown sprite ' + id);
-  const pad = def.outline === false ? 0 : 1;
-  const p = new Painter(def.w + pad * 2, def.h + pad * 2);
-  // Offset drawing by pad so outlines are never clipped.
+function padded(p, pad) {
   const P = new Proxy(p, {
     get(t, k) {
       const v = t[k];
@@ -255,8 +252,34 @@ export function renderSprite(id, opts = {}) {
       return (...a) => (v.apply(t, a), P);
     },
   });
+  return P;
+}
+
+// Render a sprite to raw pixels {w, h, data} (works in Node).
+export function renderSprite(id, opts = {}) {
+  const def = SPRITES[id];
+  if (!def) throw new Error('unknown sprite ' + id);
+  const pad = def.outline === false ? 0 : 1;
+  const p = new Painter(def.w + pad * 2, def.h + pad * 2);
+  // Offset drawing by pad so outlines are never clipped.
+  const P = padded(p, pad);
   def.draw(P, opts);
   postProcess(p, def);
+  // Optional effect layers (pose frames: swing smears, casting light), drawn after
+  // outline/rim/hard-alpha so they stay bright, soft-edged and un-outlined:
+  // `under` shows only where the sprite is see-through, `fx` goes on top.
+  if (def.under) {
+    const q = new Painter(p.w, p.h);
+    def.under(padded(q, pad), opts);
+    const a = p.d, b = q.d;
+    for (let i = 0; i < a.length; i += 4) {
+      const ab = b[i + 3]; if (!ab || a[i + 3] === 255) continue;
+      const aa = a[i + 3] / 255, bb = ab / 255, o = aa + bb * (1 - aa);
+      for (let k = 0; k < 3; k++) a[i + k] = Math.round((a[i + k] * aa + b[i + k] * bb * (1 - aa)) / o);
+      a[i + 3] = Math.round(o * 255);
+    }
+  }
+  if (def.fx) def.fx(P, opts);
   return { w: p.w, h: p.h, data: p.d };
 }
 
