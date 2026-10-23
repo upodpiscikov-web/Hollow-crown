@@ -16,7 +16,7 @@ buttons + speed & auto buttons + timed Brace; an act should take about **15 minu
 | Momentum meter | `cb.act.meter` | +1 per card played, +1 per Strike/Guard, +1 per enemy hit taken, +2 per successful Brace. Resets per combat; Special resets it to 0. |
 | Timed Brace | `braceWindow()` in `combat.js` | Before a heavy enemy attack the engine awaits `g.ui.brace(...)`. Success → that attack deals 60% damage and +2 meter. At most 2 windows per enemy phase; light hits never trigger it. |
 | Auto suggestions | `g.suggestPlay()` | Heuristic "next sensible move" for the Auto button. |
-| Pacing | `src/engine/pace.js` | Act 1: 9 floors, 4 routes, enemy HP ×0.7. Other acts unchanged (until approved). |
+| Pacing | `src/engine/pace.js` | Act 1: original 15-floor map (6 routes) with short fights; per-act enemy HP/damage knobs for normals, elites and bosses (see BALANCE_NOTES.md). |
 | Opening card choice | `run.screen === 'starter'` | Each run starts by picking 1 of 3 hero cards (attack / skill / power), then the blessing. |
 
 Heroes' Specials: Knight **Shield Bash** (12 dmg + 8 Block, targets an enemy), Witch **Plague Burst**

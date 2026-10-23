@@ -51,7 +51,7 @@ eq(game(2).moveDmg(game(2).makeEnemy('p_normal'), mk('normal').moves.hit), 1, 'a
 
 // --- act 1 default knobs are the ones documented in BALANCE_NOTES.md
 Object.assign(PACE, JSON.parse(saved));
-eq(paceOf(1).floors, 9, 'act 1 has 9 floors'); eq(paceOf(1).paths, 4, 'act 1 has 4 routes');
+eq(paceOf(1).floors, 15, 'act 1 has the full 15 floors again'); eq(paceOf(1).paths, 6, 'act 1 has 6 routes');
 eq(paceOf(1).dmg, 1, 'act 1 damage is tuned in enemies/act1.js, not by a multiplier');
 
 Object.assign(PACE, JSON.parse(saved));

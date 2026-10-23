@@ -14,7 +14,7 @@ export const ACTION_DEFAULTS = {
   meterMax: 6,
 };
 
-export const BRACE_MUL = 0.6; // damage taken from a hit you Braced against
+export const BRACE_MUL = 0.64; // damage taken from a hit you Braced against (tuned in BALANCE_NOTES.md: was 0.6)
 
 export const actionMethods = {
   actCfg() {

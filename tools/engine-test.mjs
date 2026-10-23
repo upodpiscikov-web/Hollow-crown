@@ -197,7 +197,7 @@ const E = (g) => g.cb.enemies[0];
   const s1 = g.suggestPlay();
   eq(s1 && s1.kind, 'card', 'suggestPlay picks a card');
 }
-// --- pacing: Act 1 enemies get the multiplier; short act-1 map
+// --- pacing: Act 1 enemies get the multiplier; the map follows pace.js (full length again since v3)
 {
   PACE[1].hp = 0.7;
   const g = await fresh();
@@ -205,9 +205,11 @@ const E = (g) => g.cb.enemies[0];
   PACE[1].hp = 1;
   const { generateMap } = await import('../src/engine/map.js');
   const { newStream } = await import('../src/engine/rng.js');
+  const { paceOf } = await import('../src/engine/pace.js');
   const m1 = generateMap(newStream(5), 1, 0), m2 = generateMap(newStream(5), 2, 0);
-  eq(m1.floors < m2.floors, true, 'act 1 map is shorter than act 2');
-  eq(Object.values(m1.nodes).filter((n) => n.f === 0).length <= 4, true, 'act 1 map has few routes');
+  eq(m1.floors, paceOf(1).floors + 1, 'act 1 map length follows pace.js (floors + boss)');
+  eq(m1.floors, m2.floors, 'act 1 map is as long as act 2 again');
+  eq(Object.values(m1.nodes).filter((n) => n.f === 0).length <= paceOf(1).paths, true, 'act 1 routes follow pace.js');
 }
 // --- opening card choice
 {
